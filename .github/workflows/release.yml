@@ -44,26 +44,68 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build debug APK
-        working-directory: SolarAI
-        run: ./gradlew assembleDebug --stacktrace
-
       # tag → ใช้ชื่อ tag ตรง ๆ / branch release/vX → ตัด 'release/' ออก
       - name: Resolve version
         id: ver
         run: |
           if [ "$GITHUB_REF_TYPE" = tag ]; then
-            echo "version=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            VERSION="$GITHUB_REF_NAME"
           else
-            echo "version=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
+            VERSION="${GITHUB_REF_NAME#release/}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "number=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      # มี secret KEYSTORE_BASE64 → build release ที่เซ็นด้วย key ถาวร (อัปเดตทับได้)
+      # ไม่มี → ถอยไป debug build เพื่อไม่ให้การปล่อย release พังตอนยังไม่ได้ตั้ง secret
+      - name: Restore keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::ยังไม่ได้ตั้ง secret KEYSTORE_BASE64 — ปล่อยเป็น debug build (ติดตั้งทับของเดิมไม่ได้)"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build APK
+        working-directory: SolarAI
+        env:
+          VERSION_NAME: ${{ steps.ver.outputs.number }}
+          VERSION_CODE: ${{ github.run_number }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ "${{ steps.keystore.outputs.signed }}" = true ]; then
+            KEYSTORE_FILE="$RUNNER_TEMP/release.keystore" ./gradlew assembleRelease --stacktrace
+          else
+            ./gradlew assembleDebug --stacktrace
           fi
 
       - name: Rename APK
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          cp SolarAI/app/build/outputs/apk/debug/app-debug.apk "solar-ai-${VERSION}.apk"
+          if [ "${{ steps.keystore.outputs.signed }}" = true ]; then
+            SRC=SolarAI/app/build/outputs/apk/release/app-release.apk
+          else
+            SRC=SolarAI/app/build/outputs/apk/debug/app-debug.apk
+          fi
+          cp "$SRC" "solar-ai-${VERSION}.apk"
           ls -la solar-ai-*.apk
+
+      # ยืนยันว่า APK เซ็นด้วย key จริงก่อนปล่อยออกไป
+      - name: Verify signature
+        if: steps.keystore.outputs.signed == 'true'
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs "solar-ai-${VERSION}.apk"
 
       - name: Create release
         env:
@@ -83,12 +125,19 @@ jobs:
 
           ### หมายเหตุ
 
-          - แอปนี้เป็น **debug build** เซ็นด้วย debug key ที่ CI สร้างใหม่ทุกครั้ง
-            ถ้าติดตั้งทับเวอร์ชันเดิมไม่ได้ ให้**ถอนการติดตั้งของเดิมก่อน**
+          BUILD_NOTE
           - หน้าตาแอป (CSS/ฟอนต์) ฝังอยู่ในไฟล์แล้ว เปิดได้แม้ไม่มีเน็ต
             ต่ออินเทอร์เน็ตเฉพาะตอนกดวิเคราะห์ (เรียก Claude API)
           - API Key เก็บอยู่ในเครื่องคุณเท่านั้น ไม่ได้ฝังมากับไฟล์ APK
           NOTES
+
+          # เติมหมายเหตุเรื่องการเซ็นตามชนิด build ที่ปล่อยจริง
+          if [ "${{ steps.keystore.outputs.signed }}" = true ]; then
+            NOTE="- เซ็นด้วย release key ถาวร — ติดตั้งทับเวอร์ชันเดิมได้เลย ไม่ต้องถอนก่อน"
+          else
+            NOTE="- เป็น **debug build** เซ็นด้วย key ที่ CI สร้างใหม่ทุกครั้ง ถ้าติดตั้งทับของเดิมไม่ได้ ให้**ถอนการติดตั้งเดิมก่อน**"
+          fi
+          sed -i "s|BUILD_NOTE|${NOTE}|" notes.md
 
           # ถ้า trigger ด้วย branch, gh จะสร้าง tag ให้ที่ commit นี้
           gh release create "$VERSION" \
