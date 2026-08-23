@@ -5,10 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat Analyst — mockup</title>
 <style>
-  :root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--ink:#e2e8f0;--dim:#94a3b8;--faint:#64748b;
-        --amber:#f59e0b;--green:#10b981;--red:#f43f5e;--cyan:#22d3ee;--violet:#a78bfa}
+  /* ── ธีม 5 แบบ · เปลี่ยนได้จากมุมขวาบน จำค่าไว้ใน localStorage ── */
+  :root,[data-theme="midnight"]{--bg:#0f172a;--panel:#1e293b;--line:#334155;--ink:#e2e8f0;--dim:#94a3b8;
+        --faint:#64748b;--amber:#f59e0b;--green:#10b981;--red:#f43f5e;--cyan:#22d3ee;--violet:#a78bfa;
+        --inbg:#0b1220;--me:#334155}
+  [data-theme="ocean"]{--bg:#0b1a2b;--panel:#12293f;--line:#1e4260;--ink:#e0f2fe;--dim:#93b8d4;
+        --faint:#5f89a8;--amber:#38bdf8;--green:#2dd4bf;--red:#fb7185;--cyan:#67e8f9;--violet:#818cf8;
+        --inbg:#081422;--me:#1e4260}
+  [data-theme="forest"]{--bg:#0c1a12;--panel:#14281c;--line:#22452f;--ink:#dcfce7;--dim:#9dc7ac;
+        --faint:#6b9a7c;--amber:#84cc16;--green:#34d399;--red:#f87171;--cyan:#5eead4;--violet:#a3e635;
+        --inbg:#08130d;--me:#22452f}
+  [data-theme="mono"]{--bg:#0a0a0a;--panel:#171717;--line:#333;--ink:#f5f5f5;--dim:#a3a3a3;
+        --faint:#737373;--amber:#fafafa;--green:#d4d4d4;--red:#e5e5e5;--cyan:#d4d4d4;--violet:#a3a3a3;
+        --inbg:#000;--me:#2a2a2a}
+  [data-theme="daylight"]{--bg:#f4f6fa;--panel:#ffffff;--line:#d7dfe8;--ink:#111827;--dim:#4b5563;
+        --faint:#7d8794;--amber:#b45309;--green:#047857;--red:#be123c;--cyan:#0e7490;--violet:#6d28d9;
+        --inbg:#f1f5f9;--me:#e2e8f0}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;background:var(--bg);color:var(--ink);
+  body{margin:0;background:var(--bg);color:var(--ink);transition:background .2s,color .2s;
        font-family:"IBM Plex Sans Thai","Noto Sans Thai","Prompt",system-ui,-apple-system,"Segoe UI",sans-serif;
        font-size:14px;line-height:1.6}
   .mono{font-family:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace}
@@ -17,30 +31,30 @@
   h1{font-size:16px;margin:0;font-weight:700}
   .sub{font-size:11px;color:var(--dim)}
   .pill{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid;white-space:nowrap}
-  .pill.ok{color:var(--green);border-color:#065f46;background:#064e3b40}
+  .pill.ok{color:var(--green);border-color:var(--green);background:color-mix(in srgb, var(--green) 12%, transparent)}
   .pill.off{color:var(--faint);border-color:var(--line)}
   main{display:grid;grid-template-columns:1fr 380px;gap:14px;padding:14px;max-width:1400px;margin:0 auto}
   @media(max-width:1000px){main{grid-template-columns:1fr}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
   #chat{height:min(62vh,620px);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
   .msg{max-width:88%;padding:10px 13px;border-radius:12px;white-space:pre-wrap}
-  .me{align-self:flex-end;background:#334155}
-  .bot{align-self:flex-start;background:#0b1220;border:1px solid var(--line)}
+  .me{align-self:flex-end;background:var(--me)}
+  .bot{align-self:flex-start;background:var(--inbg);border:1px solid var(--line)}
   .bot b{color:var(--amber)}
-  .warn{border-color:#7c2d12;background:#2a1206}
-  .warn b{color:#fb923c}
-  .kv{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #1f2937}
+  .warn{border-color:var(--red);background:color-mix(in srgb, var(--red) 12%, var(--inbg))}
+  .warn b{color:var(--red)}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed var(--line)}
   .kv:last-child{border-bottom:0}
   .kv span:last-child{font-weight:700}
   form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
-  input,select{background:#0b1220;border:1px solid var(--line);color:var(--ink);border-radius:8px;
+  input,select{background:var(--inbg);border:1px solid var(--line);color:var(--ink);border-radius:8px;
                padding:9px 11px;font:inherit;width:100%}
   input:focus,select:focus{outline:0;border-color:var(--amber)}
-  button{background:var(--amber);color:#0b1220;border:0;border-radius:8px;padding:9px 16px;
+  button{background:var(--amber);color:var(--inbg);border:0;border-radius:8px;padding:9px 16px;
          font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
   button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);font-weight:400}
   .examples{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
-  .examples button{background:#0b1220;color:var(--cyan);border:1px solid var(--line);
+  .examples button{background:var(--inbg);color:var(--cyan);border:1px solid var(--line);
                    font-size:11px;font-weight:400;padding:6px 10px}
   aside h2{font-size:12px;margin:0 0 8px;color:var(--cyan);letter-spacing:.04em;text-transform:uppercase}
   aside section{padding:13px;border-bottom:1px solid var(--line)}
@@ -49,12 +63,12 @@
   .param label{font-size:12px;color:var(--dim)}
   .param input{padding:5px 8px;font-size:12px;text-align:right}
   .tag{font-size:10px;padding:1px 6px;border-radius:4px;margin-left:6px}
-  .tag.user{background:#134e4a;color:#5eead4}
-  .tag.def{background:#3f3f46;color:#d4d4d8}
+  .tag.user{background:color-mix(in srgb, var(--green) 25%, var(--inbg));color:var(--green)}
+  .tag.def{background:var(--line);color:var(--dim)}
   .gate{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-bottom:6px}
   .gate .m{flex:0 0 16px}
   .pass{color:var(--green)}.fail{color:var(--red)}
-  .formula{background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:9px;
+  .formula{background:var(--inbg);border:1px solid var(--line);border-radius:8px;padding:9px;
            font-size:11px;color:var(--dim);overflow-x:auto}
   .conf{font-size:12px;color:var(--dim)}
   .conf b{color:var(--amber)}
@@ -70,7 +84,15 @@
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <span class="pill ok">ออฟไลน์ · ไม่ต้องใช้ API key</span>
-    <span class="pill off" title="ยังไม่เปิดใช้ในเวอร์ชันนี้">โหมด AI ensemble — ปิดอยู่</span>
+    <span id="aiPill" class="pill off">โหมด AI — ปิดอยู่</span>
+    <select id="theme" onchange="setTheme(this.value)" style="width:auto;font-size:12px;padding:5px 8px"
+            title="เลือกธีม">
+      <option value="midnight">🌙 Midnight</option>
+      <option value="ocean">🌊 Ocean</option>
+      <option value="forest">🌿 Forest</option>
+      <option value="mono">◐ Mono</option>
+      <option value="daylight">☀️ Daylight</option>
+    </select>
   </div>
 </header>
 
@@ -377,6 +399,18 @@ function rerun(){
   });
   compute(false);
 }
+
+/* ── ธีม ── */
+function setTheme(name){
+  document.documentElement.setAttribute('data-theme', name);
+  try { localStorage.setItem('chatAnalystTheme', name); } catch(e) {}
+}
+(function initTheme(){
+  let saved = 'midnight';
+  try { saved = localStorage.getItem('chatAnalystTheme') || 'midnight'; } catch(e) {}
+  document.getElementById('theme').value = saved;
+  setTheme(saved);
+})();
 
 push('<b>สวัสดีครับ</b>\nพิมพ์โจทย์ธุรกิจมาได้เลย ผมจะเลือกวิธีคำนวณให้ ดึงตัวเลขจากคำถาม ' +
      'ตรวจว่าข้อมูลพอไหม แล้วคำนวณด้วยสูตรจริง\n\n' +
