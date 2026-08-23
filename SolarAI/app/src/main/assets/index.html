@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>C&I Solar AI Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap');
+* { -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Prompt', sans-serif; overscroll-behavior: none; }
+.fm { font-family: 'Fira Code', monospace; }
+.agent-card { transition: all 0.3s; }
+.agent-card.active { border-color:#f59e0b!important; box-shadow:0 0 12px rgba(245,158,11,.3); }
+.agent-card.done   { border-color:#10b981!important; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.spin { display:inline-block; animation:spin 1s linear infinite; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+.fade-in { animation:fadeIn .4s ease forwards; }
+pre { white-space:pre-wrap; word-break:break-word; }
+::-webkit-scrollbar { width:4px; } 
+::-webkit-scrollbar-thumb { background:#334155; border-radius:4px; }
+</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+<!-- Header -->
+<header class="bg-slate-800 border-b border-slate-700 py-3 px-4 shadow-md sticky top-0 z-10">
+    <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="bg-amber-500 text-slate-900 p-2 rounded-lg text-lg"><i class="fa-solid fa-solar-panel"></i></div>
+            <div>
+                <h1 class="text-base font-bold text-white">C&I Solar AI Engine</h1>
+                <p class="text-[10px] text-slate-400">6-Stage Pipeline · claude-sonnet-5 · Native API</p>
+            </div>
+        </div>
+        <div class="text-[10px] bg-emerald-900/50 px-2 py-1 rounded-full text-emerald-400 border border-emerald-800 fm">
+            <i class="fa-solid fa-mobile-screen mr-1"></i>Android
+        </div>
+    </div>
+</header>
+
+<div class="p-4 space-y-4 max-w-2xl mx-auto">
+
+    <!-- API Key -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
+        <h2 class="text-sm font-semibold mb-2 text-purple-400 flex items-center">
+            <i class="fa-solid fa-key mr-2"></i> Anthropic API Key
+        </h2>
+        <input type="password" id="apiKey" placeholder="sk-ant-api03-..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-purple-500 fm"
+            oninput="saveKey(this.value)">
+        <p class="text-[10px] text-slate-500 mt-1.5">
+            🔒 เก็บในเครื่องเท่านั้น ·
+            <span class="text-purple-400">console.anthropic.com</span>
+        </p>
+    </div>
+
+    <!-- Input -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
+        <h2 class="text-sm font-semibold mb-3 text-amber-400 flex items-center">
+            <i class="fa-solid fa-file-invoice-dollar mr-2"></i> ข้อมูลโปรเจค
+        </h2>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">ค่าไฟเฉลี่ย/เดือน (บาท) <span class="text-red-400">*</span></label>
+                <input type="number" id="monthlyBill" value="650000"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-lg text-white focus:outline-none focus:border-amber-500 font-bold"
+                    placeholder="เช่น 650000">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">ประเภทกิจการ</label>
+                    <select id="bizType" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                        <option>โรงงาน</option>
+                        <option>ห้างสรรพสินค้า</option>
+                        <option selected>โรงแรม</option>
+                        <option>โรงพยาบาล</option>
+                        <option>คลังสินค้า</option>
+                        <option>อาคารสำนักงาน</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">ค่าไฟ (บ./หน่วย)</label>
+                    <input type="number" id="tariff" value="4.70" step="0.1"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">ราคา EPC (บ./วัตต์)</label>
+                <input type="number" id="epcRate" value="22" step="0.5"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3 pt-1">
+                <button id="runBtn" onclick="runPipeline()"
+                    class="bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-semibold py-3.5 rounded-lg flex items-center justify-center shadow-md text-sm">
+                    <i class="fa-solid fa-brain mr-2" id="btnIcon"></i>
+                    <span id="btnLabel">เริ่มวิเคราะห์</span>
+                </button>
+                <button onclick="resetAll()"
+                    class="bg-slate-700 active:bg-slate-600 text-slate-200 font-semibold py-3.5 rounded-lg flex items-center justify-center border border-slate-600 text-sm">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> ล้าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Status -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
+        <h2 class="text-sm font-semibold mb-3 text-cyan-400 flex items-center">
+            <i class="fa-solid fa-id-badge mr-2"></i> 6-Stage AI Pipeline
+        </h2>
+        <div class="space-y-1.5">
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent1">
+                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a1i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>1. Technical Sizing</span>
+                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            </div>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent2">
+                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a2i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>2. Financial Modeler</span>
+                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            </div>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent3">
+                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a3i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>3. Risk Auditor</span>
+                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            </div>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent4">
+                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a4i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>4. Auto-Correction</span>
+                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            </div>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent5">
+                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a5i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>5. Proposal Synthesizer</span>
+                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            </div>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent6">
+                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a6i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>6. Consensus Judge</span>
+                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Console -->
+    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400 fm flex items-center"><i class="fa-solid fa-terminal mr-2 text-amber-400"></i>Execution Log</span>
+            <span class="text-[10px] text-slate-500 fm" id="consoleStatus">● IDLE</span>
+        </div>
+        <div class="h-36 overflow-y-auto space-y-1 fm text-[11px]" id="consoleBox">
+            <div class="text-slate-600 italic">พร้อมทำงาน...</div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="hidden space-y-4">
+        <div class="bg-slate-800 border border-amber-500/30 rounded-xl p-4 fade-in">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-semibold text-amber-400"><i class="fa-solid fa-gears mr-2"></i>วิศวกรรม & การเงิน</h3>
+                <span class="text-[10px] text-amber-400 fm bg-amber-500/10 px-2 py-0.5 rounded">Stage 1–2</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 text-center bg-slate-900 p-3 rounded-lg mb-3">
+                <div class="bg-slate-800 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">ขนาดระบบ</span>
+                    <span class="text-sm font-bold text-white" id="r_kwp">—</span>
+                </div>
+                <div class="bg-slate-800 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">EPC</span>
+                    <span class="text-sm font-bold text-white" id="r_epc">—</span>
+                </div>
+                <div class="bg-slate-800 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">IRR</span>
+                    <span class="text-sm font-bold text-amber-400" id="r_irr">—</span>
+                </div>
+                <div class="bg-slate-800 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">Payback</span>
+                    <span class="text-sm font-bold text-emerald-400" id="r_payback">—</span>
+                </div>
+            </div>
+            <pre class="text-xs text-slate-300 leading-relaxed" id="r_tech"></pre>
+        </div>
+        <div class="bg-slate-800 border border-rose-500/30 rounded-xl p-4 fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-semibold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i>ความเสี่ยง</h3>
+                <span class="text-[10px] text-rose-400 fm bg-rose-500/10 px-2 py-0.5 rounded">Stage 3</span>
+            </div>
+            <pre class="text-xs text-slate-300 leading-relaxed" id="r_risk"></pre>
+        </div>
+        <div class="bg-slate-800 border border-cyan-500/30 rounded-xl p-4 fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-semibold text-cyan-400"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>ทางเลือกและข้อเสนอ</h3>
+                <span class="text-[10px] text-cyan-400 fm bg-cyan-500/10 px-2 py-0.5 rounded">Stage 4–5</span>
+            </div>
+            <pre class="text-xs text-slate-300 leading-relaxed" id="r_alt"></pre>
+        </div>
+        <div class="bg-slate-800 border border-emerald-500/30 rounded-xl p-4 fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-semibold text-emerald-400"><i class="fa-solid fa-gavel mr-2"></i>บทสรุป Consensus Judge</h3>
+                <span class="text-[10px] text-emerald-400 fm bg-emerald-500/10 px-2 py-0.5 rounded">Stage 6</span>
+            </div>
+            <pre class="text-xs text-slate-300 leading-relaxed" id="r_consensus"></pre>
+        </div>
+    </div>
+
+    <div class="h-8"></div>
+</div>
+
+<script>
+/* ============================================================
+   ANDROID BRIDGE — ใช้แทน fetch() เพื่อหลีกเลี่ยง CORS
+   ============================================================ */
+
+// Callback registry สำหรับรับผลจาก Java
+window._claudeCallbacks = {};
+window._claudeCallback = function(id, resultStr) {
+    if (window._claudeCallbacks[id]) {
+        window._claudeCallbacks[id](resultStr);
+        delete window._claudeCallbacks[id];
+    }
+};
+
+// Model ID ของ Anthropic API — เปลี่ยนที่เดียวใช้ได้ทุก stage
+const CLAUDE_MODEL = 'claude-sonnet-5';
+
+function callClaudeNative(system, userMsg) {
+    return new Promise((resolve, reject) => {
+        const key = document.getElementById('apiKey').value.trim();
+        if (!key) { reject(new Error('ไม่พบ API Key')); return; }
+
+        const id = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        const body = JSON.stringify({
+            model: CLAUDE_MODEL,
+            max_tokens: 1000,
+            system: system,
+            messages: [{ role: 'user', content: userMsg }]
+        });
+
+        window._claudeCallbacks[id] = function(resultStr) {
+            try {
+                const data = JSON.parse(resultStr);
+                if (data.error) reject(new Error(data.error.message || 'API Error'));
+                else resolve(data.content.map(b => b.text || '').join(''));
+            } catch(e) { reject(new Error('Parse error: ' + e.message)); }
+        };
+
+        // เรียกผ่าน Android Bridge (Java จัดการ HTTPS จริง)
+        if (window.AndroidBridge) {
+            AndroidBridge.callClaude(body, key, id);
+        } else {
+            // Fallback: ถ้ารันบน PC browser ใช้ fetch ปกติ
+            fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': key,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: body
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) reject(new Error(data.error.message));
+                else resolve(data.content.map(b => b.text||'').join(''));
+            })
+            .catch(reject);
+        }
+    });
+}
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+let running = false;
+
+function saveKey(v) {
+    if (window.AndroidBridge) AndroidBridge.saveApiKey(v);
+    localStorage.setItem('anthropic_key', v);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    // โหลด key จาก Android หรือ localStorage
+    const key = (window.AndroidBridge ? AndroidBridge.getApiKey() : null)
+                || localStorage.getItem('anthropic_key') || '';
+    if (key) document.getElementById('apiKey').value = key;
+});
+
+function log(html, type='info') {
+    const box = document.getElementById('consoleBox');
+    const t = new Date().toLocaleTimeString('th-TH');
+    const colors = {info:'text-slate-300', success:'text-emerald-400', warn:'text-amber-400', error:'text-red-400'};
+    const el = document.createElement('div');
+    el.className = colors[type]||'text-slate-300';
+    el.innerHTML = `<span class="text-slate-600">[${t}]</span> ${html}`;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+}
+
+function setStatus(s) { document.getElementById('consoleStatus').textContent = '● ' + s; }
+
+function agentSet(n, state) {
+    const card = document.getElementById('agent'+n);
+    const icon = document.getElementById('a'+n+'i');
+    card.classList.remove('active','done');
+    if (state === 'active') {
+        card.classList.add('active');
+        icon.className = 'fa-solid fa-spinner spin text-amber-400';
+        icon.style.fontSize = '10px';
+    } else if (state === 'done') {
+        card.classList.add('done');
+        icon.className = 'fa-solid fa-circle-check text-emerald-400';
+        icon.style.fontSize = '10px';
+    } else {
+        icon.className = 'fa-solid fa-circle text-slate-700';
+        icon.style.fontSize = '8px';
+    }
+}
+
+function fmt(n) { return Number(n).toLocaleString('th-TH'); }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ============================================================
+   PIPELINE
+   ============================================================ */
+async function runPipeline() {
+    if (running) return;
+    const bill    = parseFloat(document.getElementById('monthlyBill').value);
+    const tariff  = parseFloat(document.getElementById('tariff').value) || 4.70;
+    const epcRate = parseFloat(document.getElementById('epcRate').value) || 22;
+    const biz     = document.getElementById('bizType').value;
+
+    if (!bill || bill <= 0) { alert('กรุณากรอกค่าไฟ'); return; }
+    if (!document.getElementById('apiKey').value.trim()) { alert('กรุณากรอก API Key'); return; }
+
+    running = true;
+    document.getElementById('runBtn').disabled = true;
+    document.getElementById('btnLabel').textContent = 'กำลังวิเคราะห์...';
+    document.getElementById('btnIcon').className = 'fa-solid fa-spinner spin mr-2';
+    document.getElementById('consoleBox').innerHTML = '';
+    document.getElementById('results').classList.add('hidden');
+    setStatus('RUNNING');
+    for (let i=1;i<=6;i++) agentSet(i,'idle');
+
+    const kwp = Math.max(30, Math.round((bill / tariff) / 130));
+    const epc = kwp * epcRate * 1000;
+    const annualSaving = kwp * 1450 * tariff;
+    const ctx = `ค่าไฟ ${fmt(bill)} บาท/เดือน | ${biz} | ~${kwp} kWp | EPC ${fmt(epc)} บาท | ${tariff} บ./หน่วย`;
+
+    log(`เริ่ม — ${ctx}`);
+    await delay(100);
+
+    let r1='', r2='', r3='', r4='', r5='', r6='';
+
+    try {
+        agentSet(1,'active'); setStatus('Stage 1');
+        log('[Stage 1] Technical Sizing...');
+        r1 = await callClaudeNative(
+            'คุณคือวิศวกรระบบโซลาร์ C&I ผู้เชี่ยวชาญในไทย ตอบเป็นภาษาไทย มีตัวเลขจริง ไม่เกิน 200 คำ',
+            `วิเคราะห์: ${ctx}
+1. ขนาดระบบ kWp ที่แนะนำ+เหตุผล
+2. จำนวนแผง (500W) และพื้นที่ติดตั้ง
+3. การผลิตไฟ/ปี (PSH=5.0hr, PR=80%)
+4. % ทดแทนค่าไฟได้
+5. ข้อกำหนดวิศวกรรม (Transformer/Breaker)`
+        );
+        agentSet(1,'done');
+        log('[Stage 1 ✓] เสร็จสิ้น', 'success');
+
+        agentSet(2,'active'); setStatus('Stage 2');
+        log('[Stage 2] Financial Modeling...');
+        r2 = await callClaudeNative(
+            'คุณคือนักการเงินด้านพลังงาน คำนวณแม่นยำ ตอบเป็นภาษาไทย ไม่เกิน 200 คำ',
+            `คำนวณการเงิน: ${ctx} | ผลิต ~${kwp*1450} kWh/ปี
+1. EPC รวม (บาท)
+2. ประหยัด/ปี (บาท)
+3. Simple Payback (ปี)
+4. IRR (25ปี, degradation 0.5%/ปี, O&M 1%/ปี)
+5. NPV (r=8%, 25ปี)
+6. ROI 25ปี — คุ้มค่าหรือไม่?`
+        );
+        agentSet(2,'done');
+        log('[Stage 2 ✓] เสร็จสิ้น', 'success');
+
+        const irrM = r2.match(/IRR[^\d]*(\d+\.?\d*)\s*%/i);
+        const pbM  = r2.match(/(?:payback|คืนทุน)[^\d]*(\d+\.?\d*)\s*ปี/i);
+        document.getElementById('r_kwp').textContent = kwp + ' kWp';
+        document.getElementById('r_epc').textContent = (epc/1e6).toFixed(2) + ' ล้าน';
+        document.getElementById('r_irr').textContent = irrM ? irrM[1]+'%' : 'ดูผล↓';
+        document.getElementById('r_payback').textContent = pbM ? pbM[1]+' ปี' : 'ดูผล↓';
+
+        agentSet(3,'active'); setStatus('Stage 3');
+        log('[Stage 3] Risk Audit...');
+        r3 = await callClaudeNative(
+            'คุณคือผู้ตรวจสอบความเสี่ยงโครงการพลังงาน ตอบเป็นภาษาไทย ไม่เกิน 200 คำ',
+            `ตรวจความเสี่ยง: ${ctx}
+🔴 HIGH RISK + วิธีรับมือ
+🟡 MED RISK + วิธีรับมือ  
+🟢 LOW RISK
+💡 OPPORTUNITY
+ครอบคลุม: Grid/PEA, โครงสร้าง, กฎหมาย, ค่าไฟอนาคต`
+        );
+        agentSet(3,'done');
+        log('[Stage 3 ✓] เสร็จสิ้น', 'success');
+
+        agentSet(4,'active'); setStatus('Stage 4');
+        log('[Stage 4] Generating Alternatives...');
+        r4 = await callClaudeNative(
+            'คุณคือที่ปรึกษาพลังงานอัจฉริยะ ตอบเป็นภาษาไทย ไม่เกิน 250 คำ',
+            `สร้าง 4 ทางเลือก: ${ctx}
+A: Cost Optimized (EPC ราคาประหยัด)
+B: Hybrid + ESS Battery
+C: PPA Model (Zero CAPEX)  
+D: Phased Installation
+แต่ละ option: kWp, ทุน, ประหยัด/ปี, payback, ข้อดี/เสีย`
+        );
+        agentSet(4,'done');
+        log('[Stage 4 ✓] เสร็จสิ้น', 'success');
+
+        agentSet(5,'active'); setStatus('Stage 5');
+        log('[Stage 5] Sales Proposal...');
+        r5 = await callClaudeNative(
+            'คุณคือผู้เชี่ยวชาญขายโซลาร์ C&I เขียน pitch โน้มน้าวใจ ตอบภาษาไทย ไม่เกิน 150 คำ',
+            `เขียนข้อเสนอสำหรับ ${biz} ค่าไฟ ${fmt(bill)} บาท/เดือน ระบบ ${kwp} kWp
+- เปิดด้วยตัวเลขน่าสนใจ
+- เหตุผลทำทันที (ค่าไฟขาขึ้น, ESG)
+- CO₂ reduction (0.4633 kgCO2/kWh)
+- Call to action`
+        );
+        agentSet(5,'done');
+        log('[Stage 5 ✓] เสร็จสิ้น', 'success');
+
+        agentSet(6,'active'); setStatus('Stage 6');
+        log('[Stage 6] Consensus Validation...');
+        r6 = await callClaudeNative(
+            'คุณคือผู้ตัดสินขั้นสุดท้าย ตรวจความสอดคล้อง ตอบภาษาไทย ไม่เกิน 150 คำ',
+            `ตรวจสอบโครงการ ${kwp} kWp สำหรับ ${biz}:
+วิศวกรรม: ${r1.substring(0,120)}...
+การเงิน: ${r2.substring(0,120)}...
+
+สรุป:
+✅ จุดแข็ง
+⚠️ สิ่งต้องระวัง
+📋 ขั้นตอนถัดไป 3 ข้อ
+🏆 คำตัดสิน: ลงทุน / ไม่ลงทุน / แนะนำ PPA`
+        );
+        agentSet(6,'done');
+        log('[Stage 6 ✓] เสร็จสิ้น', 'success');
+
+        document.getElementById('r_tech').textContent = r1 + '\n\n─── การเงิน ───\n' + r2;
+        document.getElementById('r_risk').textContent = r3;
+        document.getElementById('r_alt').textContent  = r4 + '\n\n─── ข้อเสนอ ───\n' + r5;
+        document.getElementById('r_consensus').textContent = r6;
+        document.getElementById('results').classList.remove('hidden');
+
+        setStatus('COMPLETED ✓');
+        log('✅ วิเคราะห์ครบ 6 Stage — Real Claude API', 'success');
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+    } catch(err) {
+        log('❌ ' + err.message, 'error');
+        setStatus('ERROR');
+    } finally {
+        running = false;
+        document.getElementById('runBtn').disabled = false;
+        document.getElementById('btnLabel').textContent = 'วิเคราะห์ใหม่';
+        document.getElementById('btnIcon').className = 'fa-solid fa-brain mr-2';
+    }
+}
+
+function resetAll() {
+    if (running) return;
+    document.getElementById('consoleBox').innerHTML = '<div class="text-slate-600 italic">พร้อมทำงาน...</div>';
+    setStatus('IDLE');
+    document.getElementById('results').classList.add('hidden');
+    for (let i=1;i<=6;i++) agentSet(i,'idle');
+    document.getElementById('btnLabel').textContent = 'เริ่มวิเคราะห์';
+    document.getElementById('btnIcon').className = 'fa-solid fa-brain mr-2';
+}
+</script>
+</body>
+</html>
