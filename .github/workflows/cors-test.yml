@@ -71,11 +71,11 @@ jobs:
       - name: 2) รันหน้าเทสต์จริงในเบราว์เซอร์ Chromium
         run: |
           set +e
-          npm i -D playwright@1.47.2 >/dev/null 2>&1
-          npx playwright install --with-deps chromium >/dev/null 2>&1
+          npm i -D playwright@1.47.2 2>&1 | tail -3
+          npx playwright install --with-deps chromium 2>&1 | tail -3
           python3 -m http.server 8080 --directory mockup >/tmp/serve.log 2>&1 &
           sleep 2
-          cat > /tmp/run.js <<'JS'
+          cat > run.js <<'JS'
           const { chromium } = require('playwright');
           (async () => {
             const b = await chromium.launch();
@@ -96,7 +96,8 @@ jobs:
             await b.close();
           })().catch(e => { console.log('FATAL:: ' + e.message); process.exit(0); });
           JS
-          node /tmp/run.js > /tmp/browser.txt 2>&1
+          node run.js > /tmp/browser.txt 2>&1
+          rm -f run.js
           {
             echo "## ส่วนที่ 2 — หน้าเทสต์จริงในเบราว์เซอร์ (Chromium, origin \`http://localhost:8080\`)"
             echo
