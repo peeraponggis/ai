@@ -21,6 +21,7 @@
 | [`03-experiments/sim_agreement.py`](03-experiments/sim_agreement.py) | สคริปต์จำลองผลของ ρ ต่อการโหวตและการ calibrate (รันได้เลย) | ✅ |
 | `03-experiments/` | การวัดผลจริงกับโมเดลฟรี + ชุดข้อมูลทดสอบภาษาไทย | ⏳ กำลังรัน |
 | [`04-frameworks/01-revenue-optimization-blue-book.md`](04-frameworks/01-revenue-optimization-blue-book.md) | 13 วิธีจาก Blue Book + กฎแบ่งงาน 3 ชั้นระหว่างโค้ดกับ LLM | ✅ |
+| [`04-frameworks/02-management-theory-model-governance.md`](04-frameworks/02-management-theory-model-governance.md) | DMAIC/BSC/Decision Matrix → SOP กำกับดูแลโมเดล | ✅ |
 
 ## สถานะปัจจุบัน
 
