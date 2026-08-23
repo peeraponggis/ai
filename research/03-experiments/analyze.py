@@ -113,39 +113,75 @@ def main():
         if not it:
             continue
         if r.get('error') and not r.get('content'):
+            # ไม่มีคำตอบ = ไม่ได้ตอบผิด ต้องไม่นับเป็นข้อที่ตอบพลาด
+            # ไม่งั้นโมเดลที่ถูก rate limit จนไม่ได้ตอบเลย จะถูกรายงานว่าแม่น 0%
             errors[r['provider']] += 1
+            continue
         correct[r['provider']][r['item_id']] = 1 if is_correct(it, r.get('content')) else 0
         keyed[r['provider']][r['item_id']] = answer_key(it, r.get('content'))
 
-    provs = sorted(correct)
-    common = sorted(set.intersection(*[set(correct[p]) for p in provs])) if provs else []
+    provs = sorted(set(correct) | set(errors))
+    err_kinds = defaultdict(lambda: defaultdict(int))
+    for r in raw:
+        if r.get('error') and not r.get('content'):
+            # ย่อข้อความ error ให้เหลือชนิด เพื่อให้เห็นว่าล้มเพราะอะไรจริง ๆ
+            m = re.search(r'HTTP\s*(\d{3})', str(r['error']))
+            kind = f'HTTP {m.group(1)}' if m else str(r['error']).split(':')[0][:40]
+            err_kinds[r['provider']][kind] += 1
+    TOTAL = len(items)
+    MIN_ANSWERED = max(30, TOTAL // 3)   # ตอบน้อยกว่านี้ ประมาณค่า p ไม่ได้
     L = []
     L.append('# ผลการวัดจริง — โมเดลฟรีบนชุดทดสอบภาษาไทย\n')
-    L.append(f'ชุดทดสอบ {len(items)} ข้อ · ผู้ให้บริการ {len(provs)} ราย · '
-             f'ข้อที่ทุกเจ้าตอบครบ {len(common)} ข้อ\n')
+    L.append(f'ชุดทดสอบ {TOTAL} ข้อ · ผู้ให้บริการ {len(provs)} ราย\n')
+    L.append('> p วัดจาก**ข้อที่โมเดลตอบจริง**เท่านั้น ข้อที่เรียกไม่สำเร็จถูกตัดออกจากตัวหาร\n'
+             '> เพราะ "ไม่ได้ตอบ" กับ "ตอบผิด" เป็นคนละเรื่อง — อัตราการตอบรายงานแยกอีกคอลัมน์\n')
 
     L.append('## 1. ความแม่นรายโมเดล (p) พร้อมช่วงเชื่อมั่น 95% (Wilson)\n')
-    L.append('| โมเดล | ตอบครบ | ถูก | p̂ | ช่วง 95% | เรียก error | ผ่านเกณฑ์ p>0.5 |')
-    L.append('|---|---|---|---|---|---|---|')
+    L.append('| โมเดล | ตอบจริง | อัตราตอบ | ถูก | p̂ | ช่วง 95% | เรียก error | สถานะ |')
+    L.append('|---|---|---|---|---|---|---|---|')
+    keep = []
     for p_ in provs:
-        vals = [correct[p_][i] for i in common]
-        k, n = sum(vals), len(vals)
-        est, lo, hi = wilson(k, n)
-        L.append(f'| `{p_}` | {n} | {k} | {est:.1%} | {lo:.1%} – {hi:.1%} | {errors[p_]} | '
-                 f'{"✅" if lo > 0.5 else "❌ ตัดออก"} |')
+        ids = sorted(correct.get(p_, {}))
+        n = len(ids)
+        k = sum(correct[p_][i] for i in ids)
+        est, lo, hi = wilson(k, n) if n else (0.0, 0.0, 0.0)
+        if n < MIN_ANSWERED:
+            status = f'❌ ตอบน้อยเกินไป (<{MIN_ANSWERED})'
+        elif lo > 0.5:
+            status = '✅ นำเข้าโหวต'
+            keep.append(p_)
+        else:
+            status = '❌ ตัดออก (p อาจต่ำกว่า 0.5)'
+        L.append(f'| `{p_}` | {n} | {n / TOTAL:.0%} | {k} | '
+                 f'{est:.1%} | {lo:.1%} – {hi:.1%} | {errors[p_]} | {status} |')
+
+    # เทียบ φ และการโหวตได้เฉพาะข้อที่โมเดลที่ผ่านเกณฑ์ตอบครบทุกตัว
+    common = sorted(set.intersection(*[set(correct[p]) for p in keep])) if keep else []
+    L.append(f'\nข้อที่โมเดลผ่านเกณฑ์ตอบครบทุกตัว: {len(common)} ข้อ\n')
+
+    if any(err_kinds.values()):
+        L.append('### สาเหตุที่เรียกไม่สำเร็จ\n')
+        L.append('| โมเดล | สาเหตุ |')
+        L.append('|---|---|')
+        for p_ in provs:
+            if not err_kinds[p_]:
+                continue
+            top = sorted(err_kinds[p_].items(), key=lambda kv: -kv[1])[:4]
+            L.append(f'| `{p_}` | ' + ' · '.join(f'{k} ×{v}' for k, v in top) + ' |')
+        L.append('')
 
     L.append('\n### แยกตามหมวด\n')
-    sets = sorted({items[i]['set'] for i in common})
-    L.append('| โมเดล | ' + ' | '.join(sets) + ' |')
+    sets = sorted({it['set'] for it in items.values()})
+    L.append('| โมเดล | ' + ' | '.join(s + ' (n)' for s in sets) + ' |')
     L.append('|---' * (len(sets) + 1) + '|')
     for p_ in provs:
         cells = []
         for s in sets:
-            ids = [i for i in common if items[i]['set'] == s]
-            cells.append(f'{sum(correct[p_][i] for i in ids) / len(ids):.0%}' if ids else '—')
+            ids = [i for i in correct.get(p_, {}) if items[i]['set'] == s]
+            cells.append(f'{sum(correct[p_][i] for i in ids) / len(ids):.0%} ({len(ids)})'
+                         if ids else '— (0)')
         L.append(f'| `{p_}` | ' + ' | '.join(cells) + ' |')
 
-    keep = [p_ for p_ in provs if wilson(sum(correct[p_][i] for i in common), len(common))[1] > 0.5]
     L.append(f'\n**โมเดลที่ผ่านเกณฑ์และนำเข้าโหวต: {len(keep)} ตัว** — '
              f'{", ".join("`" + k + "`" for k in keep) if keep else "ไม่มี"}\n')
 

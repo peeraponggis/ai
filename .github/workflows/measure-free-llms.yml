@@ -45,7 +45,7 @@ jobs:
               --limit "$LIMIT" --only "$KEY" --timeout 25 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
             echo "สะสมแล้ว $(wc -l < raw_answers.jsonl) รายการ"
             cd ../..
-            git add research/03-experiments/raw_answers.jsonl
+            git add -f research/03-experiments/raw_answers.jsonl
             git commit -m "measure: partial results after $KEY" || true
             git pull --rebase origin claude/list-github-files-25syp1 || true
             git push origin HEAD:claude/list-github-files-25syp1 || true
@@ -60,7 +60,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/03-experiments/raw_answers.jsonl research/03-experiments/RESULTS.md
+          git add -f research/03-experiments/raw_answers.jsonl research/03-experiments/RESULTS.md
           git commit -m "Record free-LLM measurement run (${{ steps.cfg.outputs.limit }} items)" || exit 0
           git pull --rebase origin claude/list-github-files-25syp1
           git push origin HEAD:claude/list-github-files-25syp1
