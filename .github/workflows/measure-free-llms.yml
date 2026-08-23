@@ -41,7 +41,7 @@ jobs:
           # minimax-m2.7 ตอบ 429 ทุกครั้งทั้งรอบ 1.5 วิ และรอบ 8 วิ จึงไม่ใช่เรื่อง
           # จังหวะการยิง แต่เป็นโควตาศูนย์ของโมเดลนั้นในระดับฟรี
           # เว้นว่างไว้ = ยิงทุกตัวใน PROVIDERS
-          MODELS: 'deepseek-v4-flash gpt-oss-20b mistral-nemo'
+          MODELS: ${{ vars.MEASURE_MODELS || 'mistral-nemo gemini-flash-lite llama-3.1-8b minimax-m2.7' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

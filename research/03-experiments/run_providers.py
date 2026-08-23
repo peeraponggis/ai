@@ -95,7 +95,10 @@ def main():
         for line in open(args.out, encoding='utf-8'):
             try:
                 r = json.loads(line)
-                done.add((r['provider'], r['item_id']))
+                # ข้ามเฉพาะข้อที่ได้คำตอบจริงแล้ว ข้อที่ error ต้องยิงซ้ำได้
+                # ไม่งั้นโมเดลที่โดน 429 รอบก่อน จะถูกข้ามถาวรและไม่มีวันได้ข้อมูล
+                if r.get('content'):
+                    done.add((r['provider'], r['item_id']))
             except Exception:
                 pass
         print(f"พบผลเดิม {len(done)} รายการ — จะข้ามข้อที่ทำแล้ว", file=sys.stderr)
