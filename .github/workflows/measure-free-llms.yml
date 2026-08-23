@@ -29,14 +29,28 @@ jobs:
         working-directory: research/03-experiments
         run: python3 make_testset.py > testset_v1.jsonl
 
-      - name: ยิงไปยังผู้ให้บริการฟรี
+      # ยิงทีละโมเดลแล้ว commit ผลทันที — รอบก่อนหน้ารันยาวจน job ใกล้ timeout
+      # แล้วข้อมูลทั้งหมดยังอยู่แค่บนดิสก์ของ runner ถ้าโดนตัดคือเสียทั้งหมด
+      - name: ยิงไปยังผู้ให้บริการฟรี (commit ทีละโมเดล)
         working-directory: research/03-experiments
+        env:
+          LIMIT: ${{ steps.cfg.outputs.limit }}
         run: |
-          python3 run_providers.py \
-            --testset testset_v1.jsonl \
-            --out raw_answers.jsonl \
-            --limit "${{ steps.cfg.outputs.limit }}" 2>&1 | tail -40
-          echo "เก็บคำตอบได้ $(wc -l < raw_answers.jsonl) รายการ"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for KEY in $(python3 -c "from run_providers import PROVIDERS; print(' '.join(p['key'] for p in PROVIDERS))"); do
+            echo "=== $KEY ==="
+            timeout 900 python3 -u run_providers.py \
+              --testset testset_v1.jsonl --out raw_answers.jsonl \
+              --limit "$LIMIT" --only "$KEY" --timeout 25 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
+            echo "สะสมแล้ว $(wc -l < raw_answers.jsonl) รายการ"
+            cd ../..
+            git add research/03-experiments/raw_answers.jsonl
+            git commit -m "measure: partial results after $KEY" || true
+            git pull --rebase origin claude/list-github-files-25syp1 || true
+            git push origin HEAD:claude/list-github-files-25syp1 || true
+            cd research/03-experiments
+          done
 
       - name: วิเคราะห์ผล
         working-directory: research/03-experiments

@@ -38,7 +38,7 @@ SYSTEM = ('คุณเป็นผู้ช่วยวิเคราะห์
           '"ANSWER: <คำตอบ>" โดย <คำตอบ> ต้องเป็นค่าเดียวสั้น ๆ ไม่มีหน่วย ไม่มีเครื่องหมายคั่นหลักพัน')
 
 
-def ask(provider, question, timeout=60):
+def ask(provider, question, timeout=25):
     body = json.dumps({
         'model': provider['model'],
         'messages': [{'role': 'system', 'content': SYSTEM},
@@ -61,6 +61,8 @@ def main():
     ap.add_argument('--out', default='raw_answers.jsonl')
     ap.add_argument('--limit', type=int, default=0, help='จำกัดจำนวนข้อ (ไว้ทดสอบ)')
     ap.add_argument('--retries', type=int, default=2)
+    ap.add_argument('--only', default='', help='รันเฉพาะ provider นี้ (ใช้แบ่งงานเป็นก้อนแล้ว commit ทีละก้อน)')
+    ap.add_argument('--timeout', type=int, default=25, help='วินาทีต่อ 1 request')
     args = ap.parse_args()
 
     items = [json.loads(l) for l in open(args.testset, encoding='utf-8')]
@@ -80,6 +82,8 @@ def main():
     last_call = {p['key']: 0.0 for p in PROVIDERS}
     with open(args.out, 'a', encoding='utf-8') as fh:
         for prov in PROVIDERS:
+            if args.only and prov['key'] != args.only:
+                continue
             ok = err = 0
             for it in items:
                 if (prov['key'], it['id']) in done:
@@ -90,7 +94,7 @@ def main():
                 content, error = None, None
                 for attempt in range(args.retries + 1):
                     try:
-                        content = ask(prov, it['question'])
+                        content = ask(prov, it['question'], timeout=args.timeout)
                         break
                     except Exception as e:
                         error = f'{type(e).__name__}: {e}'
