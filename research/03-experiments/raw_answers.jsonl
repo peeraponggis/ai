@@ -214,3 +214,21 @@
 {"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C015", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
 {"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C016", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
 {"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C017", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A000", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A001", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A002", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A003", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A004", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A005", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A006", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A007", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A008", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A009", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A010", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A011", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A012", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A013", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A014", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
