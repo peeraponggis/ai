@@ -425,7 +425,10 @@ function jaccard(a, b){
   return uni ? inter / uni : 0;
 }
 function numbersIn(s){
-  return (String(s).replace(/,/g, '').match(/-?\d+\.?\d*/g) || [])
+  // ตัดเลขลำดับหัวข้อ ("1." "2)") ทิ้งก่อน ไม่งั้นจะนับว่าโมเดล "เห็นตรงกันที่เลข 1"
+  // ทั้งที่เป็นแค่รูปแบบการจัดหน้า — ผลรันจริงเคยรายงาน 1 (2/2) · 2 (2/2) แบบนี้
+  const clean = String(s).replace(/,/g, '').replace(/(^|\n)\s*\d+[.)]\s/g, '$1');
+  return (clean.match(/-?\d+\.?\d*/g) || [])
     .map(Number).filter(n => isFinite(n) && Math.abs(n) >= 1);
 }
 function consensus(answers){
@@ -456,9 +459,11 @@ function consensus(answers){
   const counts = new Map();
   answers.forEach(a => new Set(numbersIn(a.text))
     .forEach(v => counts.set(v, (counts.get(v) || 0) + 1)));
+  // แสดงเฉพาะตัวเลขที่มีความหมาย — จำนวนเต็มเล็ก ๆ มักเป็นลำดับหรือหน่วยเวลา
+  const meaningful = v => Math.abs(v) >= 100 || !Number.isInteger(v);
   const shared = Array.from(counts.entries())
-    .filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1)
-    .sort((a, b) => b[1] - a[1]).slice(0, 5);
+    .filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1 && meaningful(e[0]))
+    .sort((a, b) => b[1] - a[1] || Math.abs(b[0]) - Math.abs(a[0])).slice(0, 5);
 
   return {pick: pick, agree: agree, words: agreeWords, nums: agreeNums, shared: shared};
 }
