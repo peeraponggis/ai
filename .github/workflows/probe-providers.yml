@@ -1,0 +1,25 @@
+name: Probe Providers
+
+# ตรวจสุขภาพผู้ให้บริการอย่างเร็ว (เจ้าละ 1 request) — ใช้วินิจฉัยตอน measure ค้าง
+# สั่ง: git push origin HEAD:probe/now
+on:
+  push:
+    branches: ['probe/*']
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: ตรวจทุกเจ้า
+        working-directory: research/03-experiments
+        run: python3 -u probe_providers.py
+      - name: ลบ branch ที่ใช้สั่งงาน
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || true
