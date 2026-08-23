@@ -38,7 +38,10 @@ android {
                 storeFile file(keystorePath)
                 storePassword signingValue('KEYSTORE_PASSWORD', 'storePassword')
                 keyAlias signingValue('KEY_ALIAS', 'keyAlias')
-                keyPassword signingValue('KEY_PASSWORD', 'keyPassword')
+                // keystore แบบ PKCS12 ใช้รหัสผ่านเดียวกันทั้ง store และ key
+                // ถ้าไม่ได้ตั้ง KEY_PASSWORD แยก ให้ใช้รหัสผ่านของ store
+                keyPassword signingValue('KEY_PASSWORD', 'keyPassword') ?:
+                        signingValue('KEYSTORE_PASSWORD', 'storePassword')
             }
         }
     }

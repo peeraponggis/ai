@@ -62,14 +62,33 @@ jobs:
         id: keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
-            echo "signed=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::ยังไม่ได้ตั้ง secret KEYSTORE_BASE64 — ปล่อยเป็น debug build (ติดตั้งทับของเดิมไม่ได้)"
             echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          # เช็ค secret ที่ขาดตั้งแต่ตอนนี้ ไม่ต้องรอ Gradle ฟ้องเป็น NullPointerException
+          MISSING=
+          [ -n "$KEYSTORE_PASSWORD" ] || MISSING="$MISSING KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ]         || MISSING="$MISSING KEY_ALIAS"
+          if [ -n "$MISSING" ]; then
+            echo "::error::ยังไม่ได้ตั้ง secret เหล่านี้:$MISSING (ตั้งที่ Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+          # ตรวจว่ารหัสผ่านและ alias ตรงกับ keystore จริง ก่อนเสียเวลา build
+          if ! keytool -list -keystore "$RUNNER_TEMP/release.keystore" \
+                 -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::เปิด keystore ไม่ได้ — KEYSTORE_PASSWORD ผิด หรือไม่มี alias '$KEY_ALIAS' ใน keystore"
+            exit 1
+          fi
+          echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Build APK
         working-directory: SolarAI
