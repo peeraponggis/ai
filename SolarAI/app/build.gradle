@@ -15,6 +15,11 @@ def signingValue = { String env, String prop ->
 }
 def keystorePath = signingValue('KEYSTORE_FILE', 'storeFile')
 
+// CI ส่งเลขเวอร์ชันมาให้ตอนปล่อย release — versionCode ต้องเพิ่มขึ้นเรื่อย ๆ
+// ไม่งั้น Android จะไม่ยอมให้ติดตั้งทับของเดิม
+def appVersionCode = Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+def appVersionName = System.getenv('VERSION_NAME') ?: '1.0'
+
 android {
     namespace 'com.solarai.app'
     compileSdk 34
@@ -23,10 +28,8 @@ android {
         applicationId "com.solarai.app"
         minSdk 24
         targetSdk 34
-        // CI ส่งเลขเวอร์ชันมาให้ตอนปล่อย release — versionCode ต้องเพิ่มขึ้นเรื่อย ๆ
-        // ไม่งั้น Android จะไม่ยอมให้ติดตั้งทับของเดิม
-        versionCode (System.getenv('VERSION_CODE') ?: '1') as Integer
-        versionName System.getenv('VERSION_NAME') ?: '1.0'
+        versionCode appVersionCode
+        versionName appVersionName
     }
 
     signingConfigs {
