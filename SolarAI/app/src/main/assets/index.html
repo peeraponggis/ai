@@ -4,13 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>C&I Solar AI Engine</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- CSS/ฟอนต์ทั้งหมดฝังอยู่ในแอป ไม่ต้องโหลดจาก CDN → เปิดได้ทันทีแม้เน็ตช้า
+     tailwind.css สร้างจาก tools/css (ดู tools/css/README.md ก่อนแก้ class ใหม่) -->
+<link rel="stylesheet" href="vendor/tailwind.css">
+<link rel="stylesheet" href="vendor/fontawesome/css/fontawesome.min.css">
+<link rel="stylesheet" href="vendor/fontawesome/css/solid.min.css">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap');
 * { -webkit-tap-highlight-color: transparent; }
 body { font-family: 'Prompt', sans-serif; overscroll-behavior: none; }
-.fm { font-family: 'Fira Code', monospace; }
+/* Fira Code ไม่มีอักษรไทย จึงให้ตกไป Prompt ก่อน monospace ของระบบ */
+.fm { font-family: 'Fira Code', 'Prompt', monospace; }
 .agent-card { transition: all 0.3s; }
 .agent-card.active { border-color:#f59e0b!important; box-shadow:0 0 12px rgba(245,158,11,.3); }
 .agent-card.done   { border-color:#10b981!important; }

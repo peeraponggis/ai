@@ -49,7 +49,11 @@ cd SolarAI
 2. กรอกค่าไฟ/เดือน, ประเภทกิจการ, ค่าไฟต่อหน่วย, ราคา EPC
 3. กด **เริ่มวิเคราะห์** → ระบบจะเรียก Claude 6 ครั้งตามลำดับ
    (Technical Sizing → Financial → Risk → Alternatives → Proposal → Consensus)
-4. ต้องต่ออินเทอร์เน็ต — ทั้งการเรียก API และ CSS/ฟอนต์จาก CDN
+4. ต้องต่ออินเทอร์เน็ตเฉพาะตอนเรียก API — หน้าตาแอป (Tailwind CSS, Font Awesome,
+   ฟอนต์ Prompt/Fira Code) ฝังอยู่ในแอปแล้ว เปิดได้ทันทีแม้เน็ตช้าหรือไม่มีเน็ต
+
+ถ้าจะเพิ่ม Tailwind class ใหม่ใน `index.html` ต้อง generate CSS ใหม่ — ดู
+[tools/css/README.md](tools/css/README.md) (GitHub Actions ทำให้อัตโนมัติอยู่แล้ว)
 
 Model ที่ใช้กำหนดไว้ที่ตัวแปร `CLAUDE_MODEL` ใน `app/src/main/assets/index.html`
 (ปัจจุบันคือ `claude-sonnet-5`) เปลี่ยนที่เดียวมีผลทุก stage

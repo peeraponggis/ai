@@ -18,9 +18,11 @@
 SolarAI/                                  โปรเจกต์ Android (เปิดโฟลเดอร์นี้ใน Android Studio)
 ├── app/src/main/
 │   ├── assets/index.html                 UI + pipeline logic ทั้งหมด
+│   ├── assets/vendor/                    Tailwind CSS, Font Awesome, ฟอนต์ (ฝังในแอป)
 │   ├── java/com/solarai/app/MainActivity.java   WebView + AndroidBridge → Anthropic API
 │   ├── res/                              ไอคอนและ strings
 │   └── AndroidManifest.xml
+├── tools/css/                            ตัว generate vendor/tailwind.css
 ├── gradlew, gradle/                      Gradle wrapper 8.9
 └── BUILD_INSTRUCTIONS.md                 วิธี build APK
 .github/workflows/build.yml               CI: build APK อัตโนมัติทุก push
@@ -37,3 +39,6 @@ SolarAI-AndroidProject.zip                ไฟล์ zip ต้นฉบับ
 GitHub Actions (ไม่ต้องติดตั้งอะไร), Android Studio หรือ `./gradlew assembleDebug`
 
 ใช้งานต้องมี Anthropic API Key ของตัวเอง (https://console.anthropic.com)
+
+CSS และฟอนต์ทั้งหมดฝังอยู่ในแอป ไม่พึ่ง CDN — หน้าจอจึงขึ้นครบแม้เน็ตช้า
+ต่ออินเทอร์เน็ตเฉพาะตอนเรียก Claude API เท่านั้น
