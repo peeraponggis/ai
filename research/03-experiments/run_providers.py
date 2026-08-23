@@ -13,17 +13,26 @@
 import argparse, json, os, sys, time, urllib.request, urllib.error
 
 # min_gap = วินาทีขั้นต่ำระหว่าง request ของเจ้านั้น (จากข้อจำกัดที่ผู้ให้บริการประกาศ)
+UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+      '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+
 PROVIDERS = [
     {'key': 'llm7-fast',      'url': 'https://api.llm7.io/v1/chat/completions',
      'model': 'fast',    'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
     {'key': 'llm7-default',   'url': 'https://api.llm7.io/v1/chat/completions',
      'model': 'default', 'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
-    {'key': 'llm7-deepseek',  'url': 'https://api.llm7.io/v1/chat/completions',
-     'model': 'deepseek-r1', 'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
+    {'key': 'llm7-pro',       'url': 'https://api.llm7.io/v1/chat/completions',
+     'model': 'pro',     'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
+    {'key': 'llm7-gpt4o-mini', 'url': 'https://api.llm7.io/v1/chat/completions',
+     'model': 'gpt-4o-mini-2024-07-18', 'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
+    {'key': 'llm7-mistral',   'url': 'https://api.llm7.io/v1/chat/completions',
+     'model': 'mistral-small-3.1-24b-instruct-2503',
+     'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
+    # Pollinations: ต้องมี User-Agent แบบเบราว์เซอร์ ไม่งั้นโดน Cloudflare ตอบ 403 (error 1010)
     {'key': 'poll-openai',    'url': 'https://text.pollinations.ai/openai',
-     'model': 'openai',      'headers': {}, 'min_gap': 16.0},
+     'model': 'openai',      'headers': {'User-Agent': UA}, 'min_gap': 16.0},
     {'key': 'poll-mistral',   'url': 'https://text.pollinations.ai/openai',
-     'model': 'mistral',     'headers': {}, 'min_gap': 16.0},
+     'model': 'mistral',     'headers': {'User-Agent': UA}, 'min_gap': 16.0},
 ]
 
 SYSTEM = ('คุณเป็นผู้ช่วยวิเคราะห์ข้อมูล ตอบเป็นภาษาไทย '
