@@ -23,6 +23,8 @@
 | [`04-frameworks/01-revenue-optimization-blue-book.md`](04-frameworks/01-revenue-optimization-blue-book.md) | 13 วิธีจาก Blue Book + กฎแบ่งงาน 3 ชั้นระหว่างโค้ดกับ LLM | ✅ |
 | [`04-frameworks/02-management-theory-model-governance.md`](04-frameworks/02-management-theory-model-governance.md) | DMAIC/BSC/Decision Matrix → SOP กำกับดูแลโมเดล | ✅ |
 | [`04-frameworks/03-blueprint-gap-analysis.md`](04-frameworks/03-blueprint-gap-analysis.md) | ตรวจ blueprint ระบบโซลาร์เทียบผลวัดจริง + ช่องโหว่ 5 จุด | ✅ |
+| [`05-product/01-chat-analyst-plan.md`](05-product/01-chat-analyst-plan.md) | แผน Chat Analyst ใช้ได้ทุกงาน + สถาปัตยกรรม 3 ชั้น | ✅ |
+| [`../mockup/chat-analyst.html`](../mockup/chat-analyst.html) | mockup ใช้งานได้จริง เปิดในเบราว์เซอร์ได้เลย | ✅ v0.1 |
 
 ## สถานะปัจจุบัน
 
