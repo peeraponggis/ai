@@ -1,0 +1,106 @@
+name: Release APK
+
+# build APK แล้วสร้าง GitHub Release พร้อมแนบไฟล์ .apk
+# ให้ดาวน์โหลดตรงจาก tablet ได้เลย ไม่ต้อง login
+#
+# สั่งปล่อยเวอร์ชันใหม่ได้ 2 วิธี:
+#   1. push tag:    git tag v1.0.1 && git push origin v1.0.1
+#   2. push branch: git push origin HEAD:release/v1.0.1
+#      (สำหรับ environment ที่ push tag ไม่ได้ — CI จะสร้าง tag ให้เอง
+#       แล้วลบ branch ทิ้งหลัง release เสร็จ)
+on:
+  push:
+    tags: ['v*']
+    branches: ['release/v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: SolarAI/tools/css/package-lock.json
+
+      - name: Rebuild Tailwind CSS
+        working-directory: SolarAI/tools/css
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build debug APK
+        working-directory: SolarAI
+        run: ./gradlew assembleDebug --stacktrace
+
+      # tag → ใช้ชื่อ tag ตรง ๆ / branch release/vX → ตัด 'release/' ออก
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "version=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Rename APK
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          cp SolarAI/app/build/outputs/apk/debug/app-debug.apk "solar-ai-${VERSION}.apk"
+          ls -la solar-ai-*.apk
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          cat > notes.md <<'NOTES'
+          ## ติดตั้งบน tablet / มือถือ Android
+
+          1. กดดาวน์โหลดไฟล์ `.apk` ด้านล่างจากเครื่องที่จะติดตั้งได้เลย
+          2. เปิดไฟล์ที่ดาวน์โหลด → เครื่องจะถามสิทธิ์ **"ติดตั้งแอปที่ไม่รู้จัก"** → อนุญาต
+          3. กดติดตั้ง → เปิดแอป → ใส่ Anthropic API Key ของตัวเอง (`sk-ant-api03-...`)
+             จาก https://console.anthropic.com
+          4. กรอกค่าไฟ/เดือน แล้วกด **เริ่มวิเคราะห์**
+
+          ต้องใช้ Android 7.0 (API 24) ขึ้นไป
+
+          ### หมายเหตุ
+
+          - แอปนี้เป็น **debug build** เซ็นด้วย debug key ที่ CI สร้างใหม่ทุกครั้ง
+            ถ้าติดตั้งทับเวอร์ชันเดิมไม่ได้ ให้**ถอนการติดตั้งของเดิมก่อน**
+          - หน้าตาแอป (CSS/ฟอนต์) ฝังอยู่ในไฟล์แล้ว เปิดได้แม้ไม่มีเน็ต
+            ต่ออินเทอร์เน็ตเฉพาะตอนกดวิเคราะห์ (เรียก Claude API)
+          - API Key เก็บอยู่ในเครื่องคุณเท่านั้น ไม่ได้ฝังมากับไฟล์ APK
+          NOTES
+
+          # ถ้า trigger ด้วย branch, gh จะสร้าง tag ให้ที่ commit นี้
+          gh release create "$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "Solar AI $VERSION" \
+            --notes-file notes.md \
+            "solar-ai-${VERSION}.apk"
+
+      # branch release/* มีไว้ trigger อย่างเดียว ไม่ต้องเก็บไว้
+      - name: Clean up trigger branch
+        if: github.ref_type == 'branch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME"
