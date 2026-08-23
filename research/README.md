@@ -22,6 +22,7 @@
 | `03-experiments/` | การวัดผลจริงกับโมเดลฟรี + ชุดข้อมูลทดสอบภาษาไทย | ⏳ กำลังรัน |
 | [`04-frameworks/01-revenue-optimization-blue-book.md`](04-frameworks/01-revenue-optimization-blue-book.md) | 13 วิธีจาก Blue Book + กฎแบ่งงาน 3 ชั้นระหว่างโค้ดกับ LLM | ✅ |
 | [`04-frameworks/02-management-theory-model-governance.md`](04-frameworks/02-management-theory-model-governance.md) | DMAIC/BSC/Decision Matrix → SOP กำกับดูแลโมเดล | ✅ |
+| [`04-frameworks/03-blueprint-gap-analysis.md`](04-frameworks/03-blueprint-gap-analysis.md) | ตรวจ blueprint ระบบโซลาร์เทียบผลวัดจริง + ช่องโหว่ 5 จุด | ✅ |
 
 ## สถานะปัจจุบัน
 
