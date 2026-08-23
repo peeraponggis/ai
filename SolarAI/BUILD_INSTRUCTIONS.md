@@ -44,33 +44,18 @@ cd SolarAI
 
 ## การใช้งานแอป
 
-1. เปิดแอป → **ข้ามช่อง API Key ไปได้เลย** (เว้นว่างไว้)
-2. กรอกค่าไฟ/เดือน, ประเภทกิจการ, ค่าไฟต่อหน่วย, ราคา EPC
-3. กด **เริ่มวิเคราะห์** → ได้รายงานครบ 6 ส่วนทันที
-   (Technical Sizing → Financial → Risk → Alternatives → Proposal → Consensus)
+1. เปิดแอป → กรอกค่าไฟเฉลี่ย/เดือน, ประเภทกิจการ, อัตราค่าไฟ, ราคา EPC
+2. กด **เริ่มวิเคราะห์** → ได้ผลครบ 6 stage ทันที
 
-**ใช้ฟรี ไม่ต้องมี API Key** — การคำนวณทั้งหมดทำในเครื่อง ไม่มีค่าใช้จ่าย ไม่ต้องต่อเน็ต
-ถ้าใส่ API Key ของ Anthropic ลงไป ระบบจะให้ Claude เขียนวิเคราะห์เชิงลึกแทน (มีค่าใช้จ่ายตามการใช้งาน)
-และถ้าเรียก API ไม่สำเร็จ จะถอยกลับไปใช้ผลคำนวณในเครื่องให้อัตโนมัติ
-4. ทั้งหน้าตาแอปและเครื่องคำนวณอยู่ในไฟล์ APK ทั้งหมด ใช้งานแบบออฟไลน์ได้เต็มรูปแบบ
+ไม่ต้องใส่ API key ไม่ต้องสมัครอะไร ไม่ต้องต่ออินเทอร์เน็ต — สูตรคำนวณทั้งหมด
+อยู่ใน `app/src/main/assets/index.html` และแสดงไว้ในหน้าแอปด้วย
 
-ถ้าจะเพิ่ม Tailwind class ใหม่ใน `index.html` ต้อง generate CSS ใหม่ — ดู
-[tools/css/README.md](tools/css/README.md) (GitHub Actions ทำให้อัตโนมัติอยู่แล้ว)
+## ทำไมถึงไม่ต้องต่อเน็ต
 
-Model ที่ใช้กำหนดไว้ที่ตัวแปร `CLAUDE_MODEL` ใน `app/src/main/assets/index.html`
-(ปัจจุบันคือ `claude-sonnet-5`) เปลี่ยนที่เดียวมีผลทุก stage
-
-## ทำไม APK นี้ถึงเรียก Anthropic API ได้?
-
-Android WebView ใช้ Java `HttpURLConnection` ซึ่ง:
-- ✅ ไม่มี CORS restriction (CORS เป็นแค่ browser policy)
-- ✅ เรียก api.anthropic.com ได้โดยตรง
-- ✅ API Key เก็บใน Android SharedPreferences
-- ✅ JavaScript ↔ Java ผ่าน `AndroidBridge` interface
-
-หมายเหตุด้านความปลอดภัย: API Key ถูกเก็บเป็น plain text ใน SharedPreferences
-ของแอป (อ่านได้เฉพาะแอปนี้ในเครื่องที่ไม่ root) เหมาะกับการใช้งานส่วนตัว/ภายในองค์กร
-ไม่ควรแจกจ่าย APK ที่ฝัง key ให้บุคคลภายนอก
+ทุกอย่างอยู่ในไฟล์ APK: หน้าเว็บ, CSS, ฟอนต์ และสูตรคำนวณ (JavaScript)
+`MainActivity` ทำหน้าที่แค่เปิด WebView โหลด `file:///android_asset/index.html`
+ไม่มีโค้ดเรียกเครือข่ายเหลืออยู่ และ `AndroidManifest.xml` ไม่ได้ขอสิทธิ์
+`INTERNET` ด้วยซ้ำ — ต่อให้อยากส่งข้อมูลออกก็ทำไม่ได้
 
 ## การเซ็น APK (signing key)
 
