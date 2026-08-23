@@ -1,0 +1,117 @@
+name: Web Smoke Test
+
+# ทดสอบหน้าเว็บจริงในเบราว์เซอร์ที่มีเน็ต — ถามคำถามจริง วัดว่าโมเดลตอบได้ไหม
+# สั่ง: git push origin HEAD:smoke/now
+on:
+  push:
+    branches: ['smoke/*']
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: ติดตั้งเบราว์เซอร์
+        run: |
+          npm i -D playwright@1.47.2 2>&1 | tail -2
+          npx playwright install --with-deps chromium 2>&1 | tail -2
+
+      - name: รันหน้าเว็บและถามจริง
+        run: |
+          set +e
+          python3 -m http.server 8080 --directory docs >/tmp/serve.log 2>&1 &
+          sleep 2
+          cat > smoke.js <<'JS'
+          const { chromium } = require('playwright');
+          const THEMES = ['midnight','ocean','forest','mono','daylight'];
+          (async () => {
+            const b = await chromium.launch();
+            const p = await b.newPage({viewport:{width:1280,height:900}});
+            const errs = [];
+            p.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
+            await p.goto('http://localhost:8080/index.html');
+            await p.waitForTimeout(400);
+
+            // ถามคำถามที่มีทั้งการคำนวณและการอธิบาย
+            await p.selectOption('#mode', 'std');
+            await p.fill('#q', 'ค่าไฟเดือนละ 85000 บาท ถ้าประหยัดได้ 30% จะประหยัดปีละเท่าไร และควรติดโซลาร์กี่ kWp');
+            await p.click('#send');
+            await p.waitForFunction(() => !document.querySelector('#send').disabled,
+                                    null, {timeout: 180000}).catch(() => console.log('TIMEOUT'));
+
+            console.log('=== บทสนทนา ===');
+            console.log(await p.$eval('#chat', e => e.innerText));
+            console.log('=== แผงสถานะ ===');
+            console.log(await p.$eval('aside section', e => e.innerText.replace(/\n/g, ' | ')));
+
+            // กางคำตอบดิบของทุกโมเดล
+            const det = await p.$('#chat details');
+            if (det) {
+              await det.evaluate(d => d.open = true);
+              console.log('=== คำตอบดิบรายโมเดล ===');
+              console.log(await det.evaluate(d => d.innerText));
+            }
+
+            // ภาพหน้าจอทุกธีม
+            for (const t of THEMES) {
+              await p.selectOption('#theme', t);
+              await p.waitForTimeout(400);
+              await p.screenshot({path: 'shot-' + t + '.png', fullPage: false});
+            }
+            console.log('=== JS ERRORS ===');
+            console.log(errs.length ? errs.join('\n') : 'ไม่มี');
+            await b.close();
+          })().catch(e => { console.log('FATAL ' + e.message); process.exit(0); });
+          JS
+          node smoke.js > /tmp/smoke.txt 2>&1
+          rm -f smoke.js
+          cat /tmp/smoke.txt
+          exit 0
+
+      - name: เก็บภาพหน้าจอ
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: shot-*.png
+
+      - name: บันทึกผลลง repo
+        run: |
+          mkdir -p research/05-product
+          {
+            echo "# ผลทดสอบหน้าเว็บ AI Chat กับโมเดลจริง"
+            echo
+            echo "รันบน GitHub Actions เมื่อ $(date -u '+%Y-%m-%d %H:%M UTC') · commit \`$GITHUB_SHA\`"
+            echo
+            echo "เสิร์ฟ \`docs/index.html\` ผ่าน http://localhost:8080 แล้วเปิดด้วย Chromium ตัวเต็ม"
+            echo "กดถามคำถามจริงหนึ่งข้อในโหมดมาตรฐาน (3 โมเดล)"
+            echo
+            echo '```'
+            cat /tmp/smoke.txt
+            echo '```'
+          } > research/05-product/02-web-smoke-result.md
+          mkdir -p docs/shots && cp shot-*.png docs/shots/ 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/05-product/02-web-smoke-result.md docs/shots
+          git commit -m "ผลทดสอบหน้าเว็บ AI Chat กับโมเดลจริง" || exit 0
+          git push origin HEAD:claude/list-github-files-25syp1
+
+      - name: สรุปขึ้นหน้า summary
+        if: always()
+        run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/smoke.txt >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: ลบ branch ที่ใช้สั่งงาน
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || true
