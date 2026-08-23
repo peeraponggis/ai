@@ -15,7 +15,7 @@ permissions:
 jobs:
   measure:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,9 +40,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for KEY in $(python3 -c "from run_providers import PROVIDERS; print(' '.join(p['key'] for p in PROVIDERS))"); do
             echo "=== $KEY ==="
-            timeout 900 python3 -u run_providers.py \
+            timeout 1500 python3 -u run_providers.py \
               --testset testset_v1.jsonl --out raw_answers.jsonl \
-              --limit "$LIMIT" --only "$KEY" --timeout 25 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
+              --limit "$LIMIT" --only "$KEY" --timeout 25 --gap 4 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
             echo "สะสมแล้ว $(wc -l < raw_answers.jsonl) รายการ"
             cd ../..
             git add -f research/03-experiments/raw_answers.jsonl

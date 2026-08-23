@@ -63,6 +63,9 @@ def main():
     ap.add_argument('--retries', type=int, default=2)
     ap.add_argument('--only', default='', help='รันเฉพาะ provider นี้ (ใช้แบ่งงานเป็นก้อนแล้ว commit ทีละก้อน)')
     ap.add_argument('--timeout', type=int, default=25, help='วินาทีต่อ 1 request')
+    ap.add_argument('--gap', type=float, default=0.0,
+                    help='บังคับระยะห่างขั้นต่ำระหว่าง request (วินาที) — โควตาจำกัดต่อบัญชี '
+                         'รอบ 1.5 วิ เจอ 429 ประมาณครึ่งหนึ่งของการเรียก')
     args = ap.parse_args()
 
     items = [json.loads(l) for l in open(args.testset, encoding='utf-8')]
@@ -88,7 +91,8 @@ def main():
             for it in items:
                 if (prov['key'], it['id']) in done:
                     continue
-                gap = prov['min_gap'] - (time.time() - last_call[prov['key']])
+                wait = max(prov['min_gap'], args.gap)
+                gap = wait - (time.time() - last_call[prov['key']])
                 if gap > 0:
                     time.sleep(gap)
                 content, error = None, None
@@ -98,7 +102,7 @@ def main():
                         break
                     except Exception as e:
                         error = f'{type(e).__name__}: {e}'
-                        time.sleep(min(2 ** attempt * prov['min_gap'], 30))
+                        time.sleep(min(2 ** attempt * max(prov['min_gap'], args.gap), 45))
                 last_call[prov['key']] = time.time()
                 fh.write(json.dumps({'provider': prov['key'], 'model': prov['model'],
                                      'item_id': it['id'], 'set': it['set'],
