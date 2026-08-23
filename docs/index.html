@@ -138,6 +138,8 @@
       <div class="kv"><span>โมเดลที่ตอบสำเร็จ</span><span id="s-ok">—</span></div>
       <div class="kv"><span>ความสอดคล้องกัน</span><span id="s-agree">—</span></div>
       <div class="bar"><i id="s-bar"></i></div>
+      <div class="kv"><span>วัดจาก</span><span id="s-kind" style="font-weight:400">—</span></div>
+      <div class="kv"><span>ถ้อยคำตรงกัน</span><span id="s-words" style="font-weight:400">—</span></div>
       <div class="kv"><span>เวลาที่ใช้</span><span id="s-time">—</span></div>
       <div class="note" id="s-note" style="margin-top:6px">ยังไม่ได้ถาม</div>
     </section>
@@ -321,7 +323,27 @@ const CALC = (() => {
     const vatBefore = /(\d+\.?\d*)[^0-9%]{0,14}(?:vat|แวต|ภาษี)\s*(\d+\.?\d*)\s*%/gi;
     while ((m = vatBefore.exec(t))) addVat(parseFloat(m[1]), m[2]);
 
-    // 3) นิพจน์เลขคณิตล้วน — ต้องมีตัวดำเนินการและตัวเลขอย่างน้อยสองตัว
+    // 3) เปอร์เซ็นต์ที่อ้างถึงจำนวนเงินที่พูดไว้ก่อนหน้าในประโยคเดียวกัน
+    //    เช่น "ค่าไฟเดือนละ 85000 บาท ถ้าประหยัดได้ 30%" — ไม่มีคำว่า "ของ"
+    //    จึงต้องมองย้อนกลับไปหาจำนวนก้อนล่าสุด และต้องมีคำบอกเจตนากำกับ
+    //    ไม่งั้นจะไปจับ "ดอกเบี้ย 6.5%" ที่ไม่ได้หมายถึงเปอร์เซ็นต์ของอะไร
+    const INTENT = /(ประหยัด|ลด|ส่วนลด|เพิ่ม|โต|เติบโต|discount|off|ภาษี|vat|แวต)/i;
+    const loose = /(\d+\.?\d*)\s*%/g;
+    while ((m = loose.exec(t))){
+      const at = m.index;
+      const before = t.slice(0, at);
+      if (/(?:ของ|of)\s*$/.test(before.replace(/\d+\.?\d*\s*%\s*$/, ''))) continue;
+      const ctx = t.slice(Math.max(0, at - 40), at + 12);
+      if (!INTENT.test(ctx)) continue;
+      const prev = before.match(/(\d[\d.]*)(?!.*\d)/);   // จำนวนสุดท้ายก่อนหน้า %
+      if (!prev) continue;
+      const base = parseFloat(prev[1]);
+      if (!(base >= 100)) continue;                       // เล็กเกินไป ไม่น่าใช่จำนวนเงิน
+      const rate = parseFloat(m[1]);
+      push(m[1] + '% ของ ' + fmt(base) + ' (ตีความจากประโยค)', fmt(base * rate / 100));
+    }
+
+    // 4) นิพจน์เลขคณิตล้วน — ต้องมีตัวดำเนินการและตัวเลขอย่างน้อยสองตัว
     const exprRe = /\(?\d+\.?\d*(?:\s*[+\-*/^]\s*\(?\d+\.?\d*\)?)+/g;
     while ((m = exprRe.exec(t))){
       const src = m[0].trim();
@@ -409,16 +431,24 @@ function numbersIn(s){
 function consensus(answers){
   const n = answers.length;
   if (n === 0) return null;
-  if (n === 1) return {pick: 0, agree: null, shared: [], };
+  if (n === 1) return {pick: 0, agree: null, words: null, nums: null, shared: []};
   const bags = answers.map(a => bag(a.text));
+  const nums = answers.map(a => new Set(numbersIn(a.text)));
+  const hasNums = nums.every(s => s.size > 0);
   const sum = new Array(n).fill(0);
-  let total = 0, pairs = 0;
+  let tw = 0, tn = 0, pairs = 0;
   for (let i = 0; i < n; i++)
     for (let j = i + 1; j < n; j++){
-      const s = jaccard(bags[i], bags[j]);
-      sum[i] += s; sum[j] += s; total += s; pairs++;
+      const w = jaccard(bags[i], bags[j]);
+      const v = hasNums ? jaccard(nums[i], nums[j]) : 0;
+      // เลือกตัวแทนด้วยคะแนนรวม แต่รายงานแยกกันเพื่อไม่ให้ตัวเลขเดียวกลบสองเรื่อง
+      const combined = hasNums ? (0.4 * w + 0.6 * v) : w;
+      sum[i] += combined; sum[j] += combined;
+      tw += w; tn += v; pairs++;
     }
-  const agree = pairs ? total / pairs : null;
+  const agreeWords = pairs ? tw / pairs : null;
+  const agreeNums  = hasNums && pairs ? tn / pairs : null;
+  const agree = agreeNums !== null ? agreeNums : agreeWords;
   let pick = 0;
   for (let i = 1; i < n; i++) if (sum[i] > sum[pick]) pick = i;
 
@@ -430,13 +460,14 @@ function consensus(answers){
     .filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1)
     .sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  return {pick: pick, agree: agree, shared: shared};
+  return {pick: pick, agree: agree, words: agreeWords, nums: agreeNums, shared: shared};
 }
-function agreeLabel(a){
+function agreeLabel(a, isNum){
   if (a === null || a === undefined) return {t: 'วัดไม่ได้ (โมเดลเดียว)', c: 'var(--faint)'};
-  if (a >= 0.55) return {t: 'สูง — ตอบไปทางเดียวกัน', c: 'var(--green)'};
-  if (a >= 0.30) return {t: 'ปานกลาง — มีส่วนต่างกัน', c: 'var(--amber)'};
-  return {t: 'ต่ำ — โมเดลไม่ลงรอยกัน', c: 'var(--red)'};
+  const what = isNum ? 'ตัวเลข' : 'เนื้อความ';
+  if (a >= 0.55) return {t: what + 'ตรงกันมาก', c: 'var(--green)'};
+  if (a >= 0.30) return {t: what + 'ตรงกันบางส่วน', c: 'var(--amber)'};
+  return {t: what + 'ไม่ตรงกัน', c: 'var(--red)'};
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -573,7 +604,7 @@ async function ask(text){
                         esc(f.err) + '</td></tr>').join('') +
       '</table></div><div class="note" style="margin-top:6px">มักเกิดจากเรียกถี่เกิน (429) ' +
       'หรือผู้ให้บริการล่มชั่วคราว — ลองใหม่อีกครั้งใน 10 วินาที</div>';
-    updatePanel(0, null, secs, 'ทุกโมเดลล้มเหลว');
+    updatePanel(0, null, secs, 'ทุกโมเดลล้มเหลว', false, null);
     return done();
   }
 
@@ -602,7 +633,7 @@ async function ask(text){
   saveHistory();
 
   // ── ประกอบผลลัพธ์ ─────────────────────────────────────────────
-  const al = agreeLabel(con.agree);
+  const al = agreeLabel(con.agree, con.nums !== null);
   let html = '<div class="meta">' +
       '<span class="tag l2">L2 · ' + answers.length + '/' + chosen.length + ' โมเดลตอบ</span>' +
       (synth ? '<span class="tag l2">สังเคราะห์แล้ว</span>'
@@ -613,7 +644,8 @@ async function ask(text){
 
   if (con.agree !== null && con.agree < 0.30){
     html += '<div class="foot" style="border-color:var(--red)">' +
-      '<b style="color:var(--red)">⚠ โมเดลตอบไม่ตรงกัน</b> — มักแปลว่าคำถามกำกวม ' +
+      '<b style="color:var(--red)">⚠ โมเดลตอบไม่ตรงกัน</b> (วัดจาก' +
+      (con.nums !== null ? 'ตัวเลขในคำตอบ' : 'ถ้อยคำ') + ') — มักแปลว่าคำถามกำกวม ' +
       'หรือเป็นเรื่องที่โมเดลไม่รู้จริง ควรกางคำตอบดิบทั้งหมดแล้วตัดสินเอง (ชั้น L3)</div>';
   }
   if (con.shared && con.shared.length){
@@ -639,7 +671,8 @@ async function ask(text){
   chat.scrollTop = chat.scrollHeight;
   chosen.forEach(c => dot(c.i, ''));
   updatePanel(answers.length, con.agree, secs,
-              failures.length ? failures.length + ' โมเดลไม่ตอบ' : 'สำเร็จ');
+              failures.length ? failures.length + ' โมเดลไม่ตอบ' : 'สำเร็จ',
+              con.nums !== null, con.words);
   done();
 }
 
@@ -651,8 +684,8 @@ function done(){
   $('#q').focus();
 }
 
-function updatePanel(ok, agree, secs, note){
-  const al = agreeLabel(agree);
+function updatePanel(ok, agree, secs, note, isNum, words){
+  const al = agreeLabel(agree, isNum);
   $('#s-ok').textContent = String(ok || 0);
   $('#s-agree').textContent = (agree === null || agree === undefined)
     ? '—' : (agree * 100).toFixed(0) + '%';
@@ -661,6 +694,10 @@ function updatePanel(ok, agree, secs, note){
     ? '0' : (agree * 100).toFixed(0) + '%';
   $('#s-bar').style.background = al.c;
   $('#s-time').textContent = secs + ' วิ';
+  $('#s-kind').textContent = (agree === null || agree === undefined) ? '—'
+    : (isNum ? 'วัดจากตัวเลขในคำตอบ' : 'วัดจากถ้อยคำ');
+  $('#s-words').textContent = (words === null || words === undefined)
+    ? '—' : (words * 100).toFixed(0) + '%';
   $('#s-note').textContent = note + ((agree === null || agree === undefined) ? '' : ' · ' + al.t);
 }
 
@@ -753,7 +790,7 @@ $('#clear').addEventListener('click', function(){
   S.history = [];
   chat.innerHTML = '';
   try { localStorage.removeItem('aiChatHist'); } catch(e){}
-  updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม');
+  updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม', false, null);
   welcome();
 });
 ['#mode', '#sys', '#opt-calc', '#opt-mem', '#opt-raw']
