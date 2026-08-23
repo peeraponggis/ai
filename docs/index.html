@@ -451,7 +451,10 @@ function numbersIn(s){
     .map(Number).filter(n => isFinite(n) && Math.abs(n) >= 1);
 }
 // ตัวเลขที่ถือว่าเป็นสาระ ไม่ใช่เลขจิปาถะ — ใช้ทั้งตอนวัดและตอนแสดงผล
-const SIGNIFICANT = v => Math.abs(v) >= 100 || !Number.isInteger(v);
+// เกณฑ์ 10 ไม่ใช่ 100 เพราะขนาดระบบ (42 / 47 / 53 kWp) คือจุดที่โมเดล
+// เห็นต่างกันจริง ถ้าตัดทิ้งจะมองไม่เห็นข้อขัดแย้งที่สำคัญที่สุดในคำตอบ
+// เลขลำดับหัวข้อถูกตัดไปแล้วตั้งแต่ numbersIn จึงไม่กลับมาปนอีก
+const SIGNIFICANT = v => Math.abs(v) >= 10 || !Number.isInteger(v);
 
 function consensus(answers){
   const n = answers.length;
@@ -483,14 +486,31 @@ function consensus(answers){
   const counts = new Map();
   answers.forEach(a => new Set(numbersIn(a.text))
     .forEach(v => counts.set(v, (counts.get(v) || 0) + 1)));
-  const shared = Array.from(counts.entries())
-    .filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1 && SIGNIFICANT(e[0]))
+  const sig = Array.from(counts.entries()).filter(e => SIGNIFICANT(e[0]));
+  const byCount = c => sig.filter(e => e[1] === c)
+    .sort((a, b) => Math.abs(b[0]) - Math.abs(a[0]));
+  const unanimous = byCount(n);                      // ทุกโมเดลพูดตรงกัน
+  const lone = sig.filter(e => e[1] === 1).length;   // มีโมเดลเดียวที่พูดถึง
+  const shared = sig.filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1)
     .sort((a, b) => b[1] - a[1] || Math.abs(b[0]) - Math.abs(a[0])).slice(0, 5);
 
   const sizes = nums.map(x => x.size);
   const lopsided = hasNums && Math.max.apply(null, sizes) >= 2 * Math.min.apply(null, sizes);
   return {pick: pick, agree: agree, words: agreeWords, nums: agreeNums,
-          shared: shared, lopsided: lopsided};
+          shared: shared, unanimous: unanimous, lone: lone, lopsided: lopsided};
+}
+
+// สรุปด้วยจำนวนจริง ไม่ใช่คำตัดสินจากคะแนนเดียว
+// เพราะคะแนน Jaccard ต่ำได้ทั้งที่ข้อสรุปตรงกัน เพียงเพราะแต่ละโมเดล
+// แสดงตัวเลขระหว่างทางคนละชุด — ผลจริงเคยขึ้น 'ไม่ตรงกัน' ทั้งที่
+// ตัวเลขคำตอบตรงกัน 3/3 ทุกตัว
+function verdict(con, n){
+  if (!con || con.unanimous === undefined)
+    return {t: 'วัดไม่ได้ (โมเดลเดียว)', c: 'var(--faint)', bad: false};
+  const u = con.unanimous.length;
+  if (u === 0) return {t: 'ไม่มีตัวเลขที่ทุกโมเดลตรงกัน', c: 'var(--red)', bad: true};
+  if (con.lone === 0) return {t: 'ตัวเลขตรงกันทั้งหมด (' + u + ')', c: 'var(--green)', bad: false};
+  return {t: 'ตรงกัน ' + u + ' · ต่างกัน ' + con.lone, c: 'var(--amber)', bad: false};
 }
 function agreeLabel(a, isNum){
   if (a === null || a === undefined) return {t: 'วัดไม่ได้ (โมเดลเดียว)', c: 'var(--faint)'};
@@ -663,7 +683,8 @@ async function ask(text){
   saveHistory();
 
   // ── ประกอบผลลัพธ์ ─────────────────────────────────────────────
-  const al = agreeLabel(con.agree, con.nums !== null);
+  const al = con.nums !== null ? verdict(con, answers.length)
+                              : agreeLabel(con.agree, false);
   let html = '<div class="meta">' +
       '<span class="tag l2">L2 · ' + answers.length + '/' + chosen.length + ' โมเดลตอบ</span>' +
       (synth ? '<span class="tag l2">สังเคราะห์แล้ว</span>'
@@ -672,9 +693,10 @@ async function ask(text){
       '<span class="tag" style="color:' + al.c + ';border-color:' + al.c + '">' + al.t + '</span>' +
       '<span class="tag">' + secs + ' วิ</span></div>' + md(finalText);
 
-  if (con.agree !== null && con.agree < 0.30){
+  const warn = con.nums !== null ? al.bad : (con.agree !== null && con.agree < 0.30);
+  if (warn){
     html += '<div class="foot" style="border-color:var(--red)">' +
-      '<b style="color:var(--red)">⚠ โมเดลตอบไม่ตรงกัน</b> (วัดจาก' +
+      '<b style="color:var(--red)">⚠ ไม่มีข้อสรุปที่โมเดลตรงกันเลย</b> (วัดจาก' +
       (con.nums !== null ? 'ตัวเลขในคำตอบ' : 'ถ้อยคำ') + ') — มักแปลว่าคำถามกำกวม ' +
       'หรือเป็นเรื่องที่โมเดลไม่รู้จริง ควรกางคำตอบดิบทั้งหมดแล้วตัดสินเอง (ชั้น L3)</div>';
   }
@@ -683,9 +705,15 @@ async function ask(text){
       'คะแนนจึงต่ำจากการที่ตัวเลขมีไม่เท่ากัน ไม่ใช่จากการขัดแย้งกัน</div>';
   }
   if (con.shared && con.shared.length){
-    html += '<div class="foot">ตัวเลขที่โมเดลส่วนใหญ่พูดตรงกัน: ' +
-      con.shared.map(e => '<span class="mono"><b>' + CALC.fmt(e[0]) + '</b> (' +
-                          e[1] + '/' + answers.length + ')</span>').join(' · ') + '</div>';
+    const row = (list, head, color) => list.length
+      ? '<div class="foot"><span style="color:' + color + '">' + head + '</span> ' +
+        list.map(e => '<span class="mono"><b>' + CALC.fmt(e[0]) + '</b> (' +
+                      e[1] + '/' + answers.length + ')</span>').join(' · ') + '</div>'
+      : '';
+    const uni = con.unanimous.slice(0, 5);
+    const uniSet = new Set(uni.map(e => e[0]));
+    html += row(uni, 'ตัวเลขที่ทุกโมเดลตรงกัน:', 'var(--green)');
+    html += row(con.shared.filter(e => !uniSet.has(e[0])), 'ตัวเลขที่ส่วนใหญ่ตรงกัน:', 'var(--dim)');
   }
   if (failures.length){
     html += '<div class="foot">ไม่ตอบ ' + failures.length + ' ตัว: ' +
@@ -719,7 +747,10 @@ function done(){
 }
 
 function updatePanel(ok, agree, secs, note, isNum, words){
-  const al = agreeLabel(agree, isNum);
+  // ปัดเศษก่อนแล้วค่อยตัดสินสี ไม่งั้นแผงจะโชว์ 30% ขณะที่ป้ายใช้เกณฑ์ <30%
+  const rounded = (agree === null || agree === undefined)
+    ? agree : Math.round(agree * 100) / 100;
+  const al = agreeLabel(rounded, isNum);
   $('#s-ok').textContent = String(ok || 0);
   $('#s-agree').textContent = (agree === null || agree === undefined)
     ? '—' : (agree * 100).toFixed(0) + '%';
