@@ -35,14 +35,16 @@ jobs:
         working-directory: research/03-experiments
         env:
           LIMIT: ${{ steps.cfg.outputs.limit }}
+          # ยิงห่าง 8 วินาที — 4 วิยังติด 429 หนักจนโมเดลแรกไม่จบใน 19 นาที
+          GAP: '8'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for KEY in $(python3 -c "from run_providers import PROVIDERS; print(' '.join(p['key'] for p in PROVIDERS))"); do
             echo "=== $KEY ==="
-            timeout 1500 python3 -u run_providers.py \
+            timeout 1200 python3 -u run_providers.py \
               --testset testset_v1.jsonl --out raw_answers.jsonl \
-              --limit "$LIMIT" --only "$KEY" --timeout 25 --gap 4 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
+              --limit "$LIMIT" --only "$KEY" --timeout 25 --gap "$GAP" 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
             echo "สะสมแล้ว $(wc -l < raw_answers.jsonl) รายการ"
             cd ../..
             git add -f research/03-experiments/raw_answers.jsonl

@@ -69,8 +69,26 @@ def main():
     args = ap.parse_args()
 
     items = [json.loads(l) for l in open(args.testset, encoding='utf-8')]
-    if args.limit:
-        items = items[:args.limit]
+    if args.limit and args.limit < len(items):
+        # สุ่มแบบแบ่งชั้น ไม่ใช่ตัดหัวมา N ข้อ
+        # ชุดทดสอบเรียงตามหมวด (A numeric, B extract, C classify) ถ้าตัดหัว
+        # --limit 60 จะได้ numeric 40 extract 20 classify 0 คือหายไปทั้งหมวด
+        # แล้วผลจะดูเหมือนวัดครบทั้งที่ไม่ได้วัดเลยหนึ่งหมวด
+        groups = {}
+        for it in items:
+            groups.setdefault(it.get('set', '?'), []).append(it)
+        total, keep, order = len(items), [], {id(it): n for n, it in enumerate(items)}
+        for name in sorted(groups):
+            g = groups[name]
+            take = max(1, round(len(g) * args.limit / total))
+            keep.extend(g[:take])
+        keep.sort(key=lambda it: order[id(it)])
+        items = keep[:args.limit] if len(keep) > args.limit else keep
+        seen = {}
+        for it in items:
+            seen[it.get('set', '?')] = seen.get(it.get('set', '?'), 0) + 1
+        print(f'จำกัดเหลือ {len(items)} ข้อ แบ่งตามหมวด: '
+              + ' '.join(f'{k}={v}' for k, v in sorted(seen.items())), flush=True)
 
     done = set()
     if os.path.exists(args.out):
