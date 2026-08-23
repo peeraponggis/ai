@@ -247,8 +247,13 @@ $('#theme').addEventListener('change', e => setTheme(e.target.value));
    ══════════════════════════════════════════════════════════════════ */
 const CALC = (() => {
   function normalize(t){
-    return t
-      .replace(/,/g, '')                       // ตัดตัวคั่นหลักพัน
+    let u = String(t).replace(/,/g, '');       // ตัดตัวคั่นหลักพันแบบจุลภาค
+    for (let i = 0; i < 4; i++){               // และแบบช่องว่าง ("85 000")
+      const n = u.replace(/(\d)[ \u00a0\u2009\u202f](\d{3})(?!\d)/g, '$1$2');
+      if (n === u) break;
+      u = n;
+    }
+    return u
       .replace(/[×✕✖]/g, '*').replace(/[÷∕]/g, '/')
       .replace(/[–—−]/g, '-')
       .replace(/คูณ/g, '*').replace(/หารด้วย/g, '/').replace(/หาร/g, '/')
@@ -409,6 +414,19 @@ function humanError(err){
    แล้วเลือก "ตัวแทน" เป็นคำตอบที่คล้ายเพื่อนมากที่สุด (medoid)
    ตามแนวคิด self-consistency ที่ปรับใช้กับคำตอบปลายเปิด
    ══════════════════════════════════════════════════════════════════ */
+// รวมหลักพันที่คั่นด้วยช่องว่างแบบ SI ให้เป็นตัวเลขเดียว
+// GPT-OSS เขียน "25 500 บาท" ซึ่งถ้าไม่รวมก่อน จะถูกอ่านเป็น 25 กับ 500
+// แล้วทำให้ความสอดคล้องเชิงตัวเลขพังทั้งที่ตอบตรงกับโมเดลอื่น
+function joinSpacedDigits(str){
+  let out = String(str);
+  for (let i = 0; i < 4; i++){
+    const next = out.replace(/(\d)[ \u00a0\u2009\u202f](\d{3})(?!\d)/g, '$1$2');
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
+
 const STOP = new Set(['และ','หรือ','ที่','ของ','ใน','เป็น','การ','ได้','ให้','ก็','ว่า','จะ','กับ','มี','คือ',
                       'the','a','an','is','are','to','of','and','or','in','for','it','this','that']);
 function bag(s){
@@ -427,7 +445,8 @@ function jaccard(a, b){
 function numbersIn(s){
   // ตัดเลขลำดับหัวข้อ ("1." "2)") ทิ้งก่อน ไม่งั้นจะนับว่าโมเดล "เห็นตรงกันที่เลข 1"
   // ทั้งที่เป็นแค่รูปแบบการจัดหน้า — ผลรันจริงเคยรายงาน 1 (2/2) · 2 (2/2) แบบนี้
-  const clean = String(s).replace(/,/g, '').replace(/(^|\n)\s*\d+[.)]\s/g, '$1');
+  const clean = joinSpacedDigits(String(s).replace(/,/g, ''))
+    .replace(/(^|\n)\s*\d+[.)]\s/g, '$1');
   return (clean.match(/-?\d+\.?\d*/g) || [])
     .map(Number).filter(n => isFinite(n) && Math.abs(n) >= 1);
 }
