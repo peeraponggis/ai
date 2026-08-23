@@ -19,7 +19,8 @@
 | [`01-theory/02-confidence-calibration.md`](01-theory/02-confidence-calibration.md) | วิธีวัด p และ ρ, การ calibrate ความเห็นพ้อง, โปรโตคอลการทดลอง | ✅ ฉบับแรก |
 | [`02-providers/01-free-provider-survey.md`](02-providers/01-free-provider-survey.md) | ผลวัดจริง: เจ้าไหน/โมเดลไหนใช้ได้ฟรีจริง | ✅ 7 โมเดลจาก 5 ค่าย |
 | [`03-experiments/sim_agreement.py`](03-experiments/sim_agreement.py) | สคริปต์จำลองผลของ ρ ต่อการโหวตและการ calibrate (รันได้เลย) | ✅ |
-| `03-experiments/` | การวัดผลจริงกับโมเดลฟรี + ชุดข้อมูลทดสอบภาษาไทย | ⏳ |
+| `03-experiments/` | การวัดผลจริงกับโมเดลฟรี + ชุดข้อมูลทดสอบภาษาไทย | ⏳ กำลังรัน |
+| [`04-frameworks/01-revenue-optimization-blue-book.md`](04-frameworks/01-revenue-optimization-blue-book.md) | 13 วิธีจาก Blue Book + กฎแบ่งงาน 3 ชั้นระหว่างโค้ดกับ LLM | ✅ |
 
 ## สถานะปัจจุบัน
 
