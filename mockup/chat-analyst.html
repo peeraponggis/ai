@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Analyst — mockup</title>
+<style>
+  :root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--ink:#e2e8f0;--dim:#94a3b8;--faint:#64748b;
+        --amber:#f59e0b;--green:#10b981;--red:#f43f5e;--cyan:#22d3ee;--violet:#a78bfa}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:"IBM Plex Sans Thai","Noto Sans Thai","Prompt",system-ui,-apple-system,"Segoe UI",sans-serif;
+       font-size:14px;line-height:1.6}
+  .mono{font-family:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 18px;
+         display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  h1{font-size:16px;margin:0;font-weight:700}
+  .sub{font-size:11px;color:var(--dim)}
+  .pill{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid;white-space:nowrap}
+  .pill.ok{color:var(--green);border-color:#065f46;background:#064e3b40}
+  .pill.off{color:var(--faint);border-color:var(--line)}
+  main{display:grid;grid-template-columns:1fr 380px;gap:14px;padding:14px;max-width:1400px;margin:0 auto}
+  @media(max-width:1000px){main{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  #chat{height:min(62vh,620px);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:88%;padding:10px 13px;border-radius:12px;white-space:pre-wrap}
+  .me{align-self:flex-end;background:#334155}
+  .bot{align-self:flex-start;background:#0b1220;border:1px solid var(--line)}
+  .bot b{color:var(--amber)}
+  .warn{border-color:#7c2d12;background:#2a1206}
+  .warn b{color:#fb923c}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #1f2937}
+  .kv:last-child{border-bottom:0}
+  .kv span:last-child{font-weight:700}
+  form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+  input,select{background:#0b1220;border:1px solid var(--line);color:var(--ink);border-radius:8px;
+               padding:9px 11px;font:inherit;width:100%}
+  input:focus,select:focus{outline:0;border-color:var(--amber)}
+  button{background:var(--amber);color:#0b1220;border:0;border-radius:8px;padding:9px 16px;
+         font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+  button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);font-weight:400}
+  .examples{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
+  .examples button{background:#0b1220;color:var(--cyan);border:1px solid var(--line);
+                   font-size:11px;font-weight:400;padding:6px 10px}
+  aside h2{font-size:12px;margin:0 0 8px;color:var(--cyan);letter-spacing:.04em;text-transform:uppercase}
+  aside section{padding:13px;border-bottom:1px solid var(--line)}
+  aside section:last-child{border-bottom:0}
+  .param{display:grid;grid-template-columns:1fr 96px;gap:6px;align-items:center;margin-bottom:6px}
+  .param label{font-size:12px;color:var(--dim)}
+  .param input{padding:5px 8px;font-size:12px;text-align:right}
+  .tag{font-size:10px;padding:1px 6px;border-radius:4px;margin-left:6px}
+  .tag.user{background:#134e4a;color:#5eead4}
+  .tag.def{background:#3f3f46;color:#d4d4d8}
+  .gate{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-bottom:6px}
+  .gate .m{flex:0 0 16px}
+  .pass{color:var(--green)}.fail{color:var(--red)}
+  .formula{background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:9px;
+           font-size:11px;color:var(--dim);overflow-x:auto}
+  .conf{font-size:12px;color:var(--dim)}
+  .conf b{color:var(--amber)}
+  footer{padding:10px 18px;color:var(--faint);font-size:11px;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Chat Analyst <span class="sub mono">mockup v0.1</span></h1>
+    <div class="sub">ถามเป็นภาษาคน · คำนวณด้วยสูตรจริงในเครื่อง · ตรวจย้อนได้ทุกตัวเลข</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="pill ok">ออฟไลน์ · ไม่ต้องใช้ API key</span>
+    <span class="pill off" title="ยังไม่เปิดใช้ในเวอร์ชันนี้">โหมด AI ensemble — ปิดอยู่</span>
+  </div>
+</header>
+
+<main>
+  <div class="card" style="display:flex;flex-direction:column">
+    <div id="chat"></div>
+    <div class="examples">
+      <button onclick="ask(this.textContent)">ค่าไฟเดือนละ 650,000 บาท ติดโซลาร์คุ้มไหม</button>
+      <button onclick="ask(this.textContent)">ลูกค้าจ่ายเดือนละ 2,500 บาท อยู่ 30 เดือน มาร์จิ้น 40% จ่ายค่าหาลูกค้าได้เท่าไร</button>
+      <button onclick="ask(this.textContent)">ขึ้นราคาจาก 100 เป็น 110 บาท ยอดขายลดจาก 1,000 เหลือ 900 ชิ้น ควรขึ้นราคาไหม</button>
+      <button onclick="ask(this.textContent)">งบ 500,000 บาท ช่องทาง A ได้ ROI 3 เท่า B ได้ 2 เท่า ควรแบ่งยังไง</button>
+      <button onclick="ask(this.textContent)">ควรขึ้นราคาไหม</button>
+    </div>
+    <form onsubmit="ask(document.getElementById('q').value);return false">
+      <input id="q" placeholder="พิมพ์โจทย์ธุรกิจของคุณ…" autocomplete="off">
+      <button type="submit">ถาม</button>
+    </form>
+  </div>
+
+  <aside class="card">
+    <section>
+      <h2>วิธีที่เลือกใช้</h2>
+      <div id="method" class="sub">— ยังไม่มีคำถาม —</div>
+    </section>
+    <section>
+      <h2>พารามิเตอร์ (แก้ได้)</h2>
+      <div id="params" class="sub">—</div>
+      <button class="ghost" style="margin-top:8px;font-size:11px;padding:5px 10px" onclick="rerun()">คำนวณใหม่</button>
+    </section>
+    <section>
+      <h2>เกณฑ์ข้อมูลขั้นต่ำ</h2>
+      <div id="gates" class="sub">—</div>
+    </section>
+    <section>
+      <h2>สูตรที่ใช้</h2>
+      <div id="formula" class="formula mono">—</div>
+    </section>
+    <section>
+      <h2>ความมั่นใจ</h2>
+      <div id="conf" class="conf">—</div>
+    </section>
+  </aside>
+</main>
+
+<footer>
+  ตัวเลขทุกตัวคำนวณด้วย JavaScript ในเครื่องนี้ ไม่มีการเรียก AI และไม่มีข้อมูลออกนอกเครื่อง ·
+  ชั้นเลือกวิธี/ดึงค่าตอนนี้ใช้กฎ (rule-based) ยังไม่ใช่ LLM
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   L1 — COMPUTE ENGINE: สูตรจริง แหล่งเดียว ไม่มีโมเดลมาเกี่ยวข้อง
+   ═══════════════════════════════════════════════════════════════ */
+const fmt  = n => Math.round(n).toLocaleString('th-TH');
+const fmt1 = n => Number(n).toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1});
+const money = n => (Math.abs(n) >= 1e6 ? (n/1e6).toFixed(2)+' ล้านบาท' : fmt(n)+' บาท');
+
+const npv = (rate, cf) => cf.reduce((a,c,t) => a + c/Math.pow(1+rate,t), 0);
+function irr(cf){                       // bisection — เสถียรกว่า Newton
+  let lo=-0.9, hi=3;
+  if (npv(lo,cf)*npv(hi,cf) > 0) return null;
+  for (let i=0;i<200;i++){ const m=(lo+hi)/2; (npv(lo,cf)*npv(m,cf)<=0) ? hi=m : lo=m; }
+  return (lo+hi)/2;
+}
+
+const ENGINE = {
+  'solar.finance': {
+    label:'โซลาร์: ขนาดระบบ + ผลตอบแทน',
+    formula:['kWp   = (ค่าไฟ/tariff × 12 × 0.7) / (PSH × PR × 365)',
+             'EPC   = kWp × epcRate × 1000',
+             'ผลิต  = kWp × PSH × PR × 365',
+             'CF(t) = ประหยัด×(1−degrade)^t − EPC×O&M',
+             'NPV   = Σ CF/(1+r)^t   ·   IRR: bisection'],
+    gates: p => [
+      {ok: p.bill > 0,   text:'ค่าไฟต่อเดือน > 0'},
+      {ok: p.tariff > 0, text:'อัตราค่าไฟต่อหน่วย > 0'},
+    ],
+    run(p){
+      const yieldKwp = p.psh * (p.pr/100) * 365;
+      const unitsYr  = p.bill / p.tariff * 12;
+      const kwp   = Math.max(10, Math.round(unitsYr * 0.7 / yieldKwp / 5) * 5);
+      const gen   = kwp * yieldKwp;
+      const epc   = kwp * p.epcRate * 1000;
+      const save  = Math.min(gen, unitsYr) * p.tariff;
+      const om    = epc * p.om/100;
+      const cf    = [-epc];
+      for (let y=1; y<=p.years; y++) cf.push(save*Math.pow(1-p.degrade/100, y-1) - om);
+      const r = irr(cf), pb = (save-om) > 0 ? epc/(save-om) : null;
+      return {rows:[['ขนาดระบบ', fmt(kwp)+' kWp'], ['เงินลงทุน EPC', money(epc)],
+                    ['ผลิตไฟปีแรก', fmt(gen)+' kWh/ปี'], ['ประหยัดปีแรก', money(save)],
+                    ['คืนทุน', pb ? fmt1(pb)+' ปี' : 'ไม่คุ้ม'],
+                    ['IRR ('+p.years+' ปี)', r!==null ? fmt1(r*100)+'%' : 'คำนวณไม่ได้'],
+                    ['NPV @ '+fmt1(p.discount)+'%', money(npv(p.discount/100, cf))]],
+              verdict: (r!==null && r > p.discount/100)
+                ? 'ผลตอบแทนสูงกว่าต้นทุนเงินทุนที่ตั้งไว้ → คุ้มค่าลงทุน'
+                : 'ผลตอบแทนต่ำกว่าต้นทุนเงินทุน → ควรต่อรองราคา EPC หรือพิจารณา PPA'};
+    }
+  },
+
+  'customer.ltv': {
+    label:'ลูกค้า: LTV และเพดาน CAC',
+    formula:['LTV   = Σ (ARPU × margin) × r^t / (1+d)^t   [t = 1..อายุลูกค้า]',
+             'เพดาน CAC = LTV / 3      (เกณฑ์ LTV:CAC ≥ 3:1)'],
+    gates: p => [
+      {ok: p.arpu > 0,        text:'รายได้ต่อลูกค้าต่อเดือน > 0'},
+      {ok: p.lifetimeM >= 1,  text:'อายุลูกค้า ≥ 1 เดือน'},
+      {ok: p.margin > 0 && p.margin <= 100, text:'อัตรากำไรขั้นต้น 0–100%'},
+    ],
+    run(p){
+      const dM = Math.pow(1 + p.discount/100, 1/12) - 1;   // แปลงเป็นรายเดือน
+      let ltv = 0;
+      for (let t=1; t<=p.lifetimeM; t++) ltv += p.arpu * (p.margin/100) / Math.pow(1+dM, t);
+      return {rows:[['LTV (คิดลดแล้ว)', money(ltv)],
+                    ['กำไรต่อเดือน', money(p.arpu*p.margin/100)],
+                    ['อายุลูกค้า', p.lifetimeM+' เดือน'],
+                    ['เพดาน CAC (3:1)', money(ltv/3)]],
+              verdict:'จ่ายค่าหาลูกค้าใหม่ได้ไม่เกิน '+money(ltv/3)+' ต่อราย จึงจะรักษาอัตรา LTV:CAC ที่ 3:1'};
+    }
+  },
+
+  'price.ped': {
+    label:'ราคา: ความยืดหยุ่นของอุปสงค์',
+    formula:['ε = (%ΔQ) / (%ΔP)   ใช้ midpoint formula',
+             '|ε| < 1 → ขึ้นราคาแล้วรายได้รวมเพิ่ม',
+             '|ε| > 1 → ขึ้นราคาแล้วรายได้รวมลด'],
+    gates: p => [
+      {ok: p.p1>0 && p.p2>0 && p.p1!==p.p2, text:'ต้องมีราคา 2 ระดับที่ต่างกันจริง'},
+      {ok: p.q1>0 && p.q2>0,                text:'ต้องมียอดขายของทั้งสองราคา'},
+    ],
+    run(p){
+      const dQ = (p.q2-p.q1)/((p.q1+p.q2)/2), dP = (p.p2-p.p1)/((p.p1+p.p2)/2);
+      const e = dQ/dP, r1 = p.p1*p.q1, r2 = p.p2*p.q2;
+      return {rows:[['ε (ความยืดหยุ่น)', fmt1(e)],
+                    ['ลักษณะ', Math.abs(e)<1 ? 'Inelastic — ไม่ค่อยไวต่อราคา' : 'Elastic — ไวต่อราคา'],
+                    ['รายได้ที่ราคาเดิม', money(r1)], ['รายได้ที่ราคาใหม่', money(r2)],
+                    ['ผลต่าง', (r2-r1>=0?'+':'')+money(r2-r1)]],
+              verdict: Math.abs(e)<1
+                ? 'ขึ้นราคาได้ — อุปสงค์ไม่ไวต่อราคาในช่วงนี้ รายได้รวมเพิ่มขึ้น'
+                : 'ไม่ควรขึ้นราคา — ยอดหายมากกว่าที่ราคาชดเชย ควรใช้กลยุทธ์ปริมาณแทน'};
+    }
+  },
+
+  'budget.allocation': {
+    label:'งบประมาณ: จัดสรรให้ผลตอบแทนสูงสุด',
+    formula:['max Z = Σ ROIᵢ × xᵢ   s.t. Σ xᵢ ≤ B , xᵢ ≤ capᵢ',
+             'กรณีไม่มีเพดานต่อช่องทาง คำตอบคือทุ่มให้ ROI สูงสุดก่อน'],
+    gates: p => [
+      {ok: p.budget > 0, text:'งบรวม > 0'},
+      {ok: p.roiA > 0 && p.roiB > 0, text:'ต้องรู้ ROI ของทุกช่องทาง'},
+      {ok: p.capA > 0, text:'ต้องมีเพดานรับงบของช่องทางที่ ROI สูงสุด (ไม่งั้นคำตอบคือทุ่มทั้งหมด)'},
+    ],
+    run(p){
+      const ch = [{n:'A', roi:p.roiA, cap:p.capA}, {n:'B', roi:p.roiB, cap:p.budget}]
+                 .sort((a,b)=>b.roi-a.roi);
+      let left = p.budget, alloc = [], ret = 0;
+      for (const c of ch){ const x = Math.min(left, c.cap); alloc.push([c.n, x]); ret += x*c.roi; left -= x; }
+      return {rows:[...alloc.map(([n,x])=>['ช่องทาง '+n, money(x)]),
+                    ['งบคงเหลือ', money(left)], ['ผลตอบแทนคาดหวัง', money(ret)],
+                    ['ROI รวม', fmt1(ret/p.budget)+' เท่า']],
+              verdict:'ทุ่มงบให้ช่องทาง ROI สูงสุดก่อนจนเต็มเพดาน แล้วค่อยไหลไปช่องทางถัดไป'};
+    }
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   L2 — ROUTER + EXTRACTOR (ตอนนี้เป็นกฎ · ภายหลังเปลี่ยนเป็น LLM ensemble)
+   ═══════════════════════════════════════════════════════════════ */
+const DEFAULTS = {
+  bill:0, tariff:4.70, epcRate:22, psh:5.0, pr:80, discount:6.5, years:25, degrade:0.5, om:1.0,
+  arpu:0, lifetimeM:0, margin:40,
+  p1:0, p2:0, q1:0, q2:0,
+  budget:0, roiA:0, roiB:0, capA:0
+};
+const LABELS = {
+  bill:'ค่าไฟ/เดือน (บาท)', tariff:'ค่าไฟ (บ./หน่วย)', epcRate:'EPC (บ./วัตต์)', psh:'PSH (ชม./วัน)',
+  pr:'Performance Ratio (%)', discount:'Discount rate (%/ปี)', years:'อายุโครงการ (ปี)',
+  degrade:'Degradation (%/ปี)', om:'O&M (%/ปี)',
+  arpu:'รายได้/ลูกค้า/เดือน', lifetimeM:'อายุลูกค้า (เดือน)', margin:'กำไรขั้นต้น (%)',
+  p1:'ราคาเดิม', p2:'ราคาใหม่', q1:'ยอดขายเดิม', q2:'ยอดขายใหม่',
+  budget:'งบรวม', roiA:'ROI ช่องทาง A (เท่า)', roiB:'ROI ช่องทาง B (เท่า)', capA:'เพดานช่องทาง A'
+};
+const FIELDS = {
+  'solar.finance':  ['bill','tariff','epcRate','discount','years','psh','pr','degrade','om'],
+  'customer.ltv':   ['arpu','lifetimeM','margin','discount'],
+  'price.ped':      ['p1','p2','q1','q2'],
+  'budget.allocation':['budget','roiA','roiB','capA']
+};
+
+const nums = t => (t.replace(/,/g,'').match(/\d+(?:\.\d+)?/g) || []).map(Number);
+
+function route(text){
+  const t = text.toLowerCase();
+  if (/ค่าไฟ|โซลาร์|solar|kwp|หลังคา/.test(t))            return 'solar.finance';
+  if (/ltv|cac|ลูกค้า.*(อยู่|มาร์จิ้น|กำไร)|หาลูกค้า/.test(t)) return 'customer.ltv';
+  if (/ราคา|ขึ้นราคา|ลดราคา|ยอดขาย.*ชิ้น|ped/.test(t))      return 'price.ped';
+  if (/งบ|จัดสรร|roi|ช่องทาง|budget/.test(t))              return 'budget.allocation';
+  return null;
+}
+
+// ดึงค่าด้วยกฎ + จำไว้ว่าค่าไหนมาจากผู้ใช้ ค่าไหนเป็นค่าตั้งต้น (ต้องบอกผู้ใช้ได้เสมอ)
+function extract(method, text){
+  const p = {...DEFAULTS}, from = {};
+  const n = nums(text);
+  const grab = (re, key) => { const m = text.replace(/,/g,'').match(re); if (m){ p[key]=Number(m[1]); from[key]='user'; } };
+  if (method === 'solar.finance'){
+    grab(/ค่าไฟ\D{0,12}(\d+(?:\.\d+)?)/, 'bill');
+    grab(/(\d+(?:\.\d+)?)\s*บาทต่อหน่วย|หน่วยละ\s*(\d+(?:\.\d+)?)/, 'tariff');
+  }
+  if (method === 'customer.ltv'){
+    if (n[0]) { p.arpu=n[0]; from.arpu='user'; }
+    if (n[1]) { p.lifetimeM=n[1]; from.lifetimeM='user'; }
+    if (n[2]) { p.margin=n[2]; from.margin='user'; }
+  }
+  if (method === 'price.ped'){
+    if (n.length >= 4){ [p.p1,p.p2,p.q1,p.q2] = n.slice(0,4); ['p1','p2','q1','q2'].forEach(k=>from[k]='user'); }
+  }
+  if (method === 'budget.allocation'){
+    if (n[0]) { p.budget=n[0]; from.budget='user'; }
+    if (n[1]) { p.roiA=n[1];  from.roiA='user'; }
+    if (n[2]) { p.roiB=n[2];  from.roiB='user'; }
+    p.capA = p.capA || Math.round(p.budget*0.6);   // ค่าตั้งต้น: เพดาน 60% ของงบ
+  }
+  return {p, from};
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   L3 — แสดงผล
+   ═══════════════════════════════════════════════════════════════ */
+let state = {method:null, p:null, from:{}};
+
+const el = id => document.getElementById(id);
+function push(html, cls=''){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (cls || 'bot');
+  d.innerHTML = html;
+  el('chat').appendChild(d);
+  el('chat').scrollTop = el('chat').scrollHeight;
+}
+
+function ask(text){
+  text = (text || '').trim();
+  if (!text) return;
+  el('q').value = '';
+  push(text.replace(/</g,'&lt;'), 'me');
+
+  const method = route(text);
+  if (!method){
+    push('<b>ยังจับโจทย์ไม่ได้</b>\nลองระบุให้ชัดว่าเป็นเรื่อง: ค่าไฟ/โซลาร์ · LTV ลูกค้า · ราคา · จัดสรรงบ\n' +
+         '<span class="sub">(ชั้นเลือกวิธีตอนนี้ใช้กฎง่าย ๆ — ในระบบจริงจะให้ LLM หลายตัวช่วยกันตัดสิน)</span>', 'bot warn');
+    return;
+  }
+  const {p, from} = extract(method, text);
+  state = {method, p, from};
+  compute(true);
+}
+
+function compute(firstTime){
+  const {method, p} = state;
+  const m = ENGINE[method];
+  el('method').innerHTML = '<b style="color:var(--amber)">'+m.label+'</b><br><span class="sub mono">'+method+'</span>';
+  el('formula').textContent = m.formula.join('\n');
+
+  // เกณฑ์ข้อมูลขั้นต่ำ — ไม่ผ่าน = ไม่ให้ตัวเลข
+  const gates = m.gates(p);
+  el('gates').innerHTML = gates.map(g =>
+    '<div class="gate"><span class="m '+(g.ok?'pass':'fail')+'">'+(g.ok?'✓':'✗')+'</span><span>'+g.text+'</span></div>').join('');
+  renderParams();
+
+  const missing = gates.filter(g => !g.ok);
+  if (missing.length){
+    el('conf').innerHTML = '<b>ไม่ให้ตัวเลข</b> — ข้อมูลไม่ครบตามเกณฑ์';
+    push('<b>ยังตอบเป็นตัวเลขให้ไม่ได้</b>\nขาด: ' + missing.map(g=>g.text).join(' · ') +
+         '\n\nกรอกค่าที่ขาดในแผงด้านขวาแล้วกด "คำนวณใหม่" ได้เลย' +
+         '\n<span class="sub">ระบบจะไม่เดาตัวเลขให้ เพราะคำตอบที่ดูน่าเชื่อถือแต่ไม่มีข้อมูลรองรับ อันตรายกว่าการไม่ตอบ</span>', 'bot warn');
+    return;
+  }
+
+  const out = m.run(p);
+  push('<b>' + m.label + '</b>\n' +
+       out.rows.map(([k,v]) => '<div class="kv"><span>'+k+'</span><span>'+v+'</span></div>').join('') +
+       '\n' + out.verdict +
+       (firstTime ? '\n<span class="sub">ทุกค่าแก้ได้ในแผงขวา แก้แล้วกด "คำนวณใหม่"</span>' : ''));
+  el('conf').innerHTML =
+    'ตัวเลขคำนวณด้วยสูตรตายตัว <b>ไม่มีความไม่แน่นอนจากโมเดล</b><br>' +
+    '<span class="sub">ความไม่แน่นอนที่เหลืออยู่ที่ <b>สมมติฐาน</b> ที่ใส่เข้าไป ไม่ใช่ที่การคำนวณ<br>' +
+    'เมื่อเปิดโหมด AI ensemble ในอนาคต ค่าที่ AI ดึงมาจะมีความมั่นใจกำกับ — ' +
+    'และจะแสดงเป็น % ได้ก็ต่อเมื่อผ่านการ calibrate แล้วเท่านั้น</span>';
+}
+
+function renderParams(){
+  const {method, p, from} = state;
+  el('params').innerHTML = FIELDS[method].map(k =>
+    '<div class="param"><label>'+LABELS[k]+
+      '<span class="tag '+(from[k]?'user':'def')+'">'+
+        (from[k]==='user' ? 'จากคำถาม' : from[k]==='edited' ? 'ผู้ใช้แก้' : 'ค่าตั้งต้น')+'</span></label>'+
+      '<input type="number" step="any" id="f_'+k+'" value="'+p[k]+'"></div>').join('');
+}
+
+function rerun(){
+  if (!state.method) return;
+  FIELDS[state.method].forEach(k => {
+    const v = parseFloat(el('f_'+k).value);
+    if (Number.isFinite(v) && v !== state.p[k]){ state.p[k] = v; state.from[k] = 'edited'; }
+  });
+  compute(false);
+}
+
+push('<b>สวัสดีครับ</b>\nพิมพ์โจทย์ธุรกิจมาได้เลย ผมจะเลือกวิธีคำนวณให้ ดึงตัวเลขจากคำถาม ' +
+     'ตรวจว่าข้อมูลพอไหม แล้วคำนวณด้วยสูตรจริง\n\n' +
+     '<span class="sub">ตัวเลขทุกตัวมาจากโค้ดในหน้านี้ ไม่มี AI คำนวณให้ — กดตัวอย่างด้านล่างเพื่อลองได้</span>');
+</script>
+</body>
+</html>
