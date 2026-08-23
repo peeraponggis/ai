@@ -18,6 +18,11 @@ jobs:
       - name: ตรวจทุกเจ้า
         working-directory: research/03-experiments
         run: python3 -u probe_providers.py
+
+      - name: ทดสอบทุกโมเดลในลิสต์ว่าตัวไหนฟรีจริง
+        if: contains(github.ref_name, 'all')
+        working-directory: research/03-experiments
+        run: python3 -u probe_all_models.py
       - name: ลบ branch ที่ใช้สั่งงาน
         if: always()
         env:
