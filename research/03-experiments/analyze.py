@@ -125,14 +125,17 @@ def main():
     for r in raw:
         if r.get('error') and not r.get('content'):
             # ย่อข้อความ error ให้เหลือชนิด เพื่อให้เห็นว่าล้มเพราะอะไรจริง ๆ
-            m = re.search(r'HTTP\s*(\d{3})', str(r['error']))
+            m = re.search(r'HTTP(?:\s*Error)?\s*(\d{3})', str(r['error']))
             kind = f'HTTP {m.group(1)}' if m else str(r['error']).split(':')[0][:40]
             err_kinds[r['provider']][kind] += 1
-    TOTAL = len(items)
-    MIN_ANSWERED = max(30, TOTAL // 3)   # ตอบน้อยกว่านี้ ประมาณค่า p ไม่ได้
+    # นับจากข้อที่ยิงจริง ไม่ใช่ขนาดชุดทดสอบเต็ม เพราะ --limit ยิงไม่ครบชุด
+    # ไม่งั้นรอบที่ยิง 60 จาก 100 จะรายงานว่าตอบ 53% ทั้งที่ตอบ 53 จาก 60 = 88%
+    attempted = {r['item_id'] for r in raw if r.get('item_id') in items}
+    TOTAL = len(attempted) or len(items)
+    MIN_ANSWERED = max(20, TOTAL // 3)   # ตอบน้อยกว่านี้ ประมาณค่า p ไม่ได้
     L = []
     L.append('# ผลการวัดจริง — โมเดลฟรีบนชุดทดสอบภาษาไทย\n')
-    L.append(f'ชุดทดสอบ {TOTAL} ข้อ · ผู้ให้บริการ {len(provs)} ราย\n')
+    L.append(f'ยิงจริง {TOTAL} ข้อ (จากชุด {len(items)} ข้อ) · ผู้ให้บริการ {len(provs)} ราย\n')
     L.append('> p วัดจาก**ข้อที่โมเดลตอบจริง**เท่านั้น ข้อที่เรียกไม่สำเร็จถูกตัดออกจากตัวหาร\n'
              '> เพราะ "ไม่ได้ตอบ" กับ "ตอบผิด" เป็นคนละเรื่อง — อัตราการตอบรายงานแยกอีกคอลัมน์\n')
 
@@ -171,7 +174,7 @@ def main():
         L.append('')
 
     L.append('\n### แยกตามหมวด\n')
-    sets = sorted({it['set'] for it in items.values()})
+    sets = sorted({items[i]['set'] for i in attempted})
     L.append('| โมเดล | ' + ' | '.join(s + ' (n)' for s in sets) + ' |')
     L.append('|---' * (len(sets) + 1) + '|')
     for p_ in provs:
