@@ -706,7 +706,7 @@ async function ask(text){
   }
   if (con.lopsided && con.shared && con.shared.length){
     html += '<div class="foot">โมเดลให้รายละเอียดไม่เท่ากัน — บางตัวเลี่ยงไม่ตอบบางส่วน ' +
-      'คะแนนจึงต่ำจากการที่ตัวเลขมีไม่เท่ากัน ไม่ใช่จากการขัดแย้งกัน</div>';
+      'ยอด "ต่างกัน" จึงสูงจากการที่ตัวเลขมีไม่เท่ากัน ไม่ใช่จากการขัดแย้งกัน</div>';
   }
   if (con.shared && con.shared.length){
     const row = (list, head, color) => list.length
