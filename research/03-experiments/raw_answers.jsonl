@@ -76,3 +76,63 @@
 {"provider": "codestral", "model": "codestral-latest", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
 {"provider": "codestral", "model": "codestral-latest", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
 {"provider": "codestral", "model": "codestral-latest", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A000", "set": "numeric", "content": "", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A001", "set": "numeric", "content": "ANSWER: 19788000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A002", "set": "numeric", "content": "ANSWER: 613200", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A003", "set": "numeric", "content": "ANSWER: 1.40", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A004", "set": "numeric", "content": "ANSWER: 699307.06", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A005", "set": "numeric", "content": "ANSWER: 1252.4", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A006", "set": "numeric", "content": "ANSWER: -47.03", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A007", "set": "numeric", "content": "ANSWER: 782", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A008", "set": "numeric", "content": "ANSWER: 52444", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A009", "set": "numeric", "content": "ANSWER: 25389000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A010", "set": "numeric", "content": "ANSWER: 102200", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A011", "set": "numeric", "content": "ANSWER: 3.52", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A012", "set": "numeric", "content": "ANSWER: 353798.71", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A013", "set": "numeric", "content": "ANSWER: 59.9", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A014", "set": "numeric", "content": "ANSWER: -65.83", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A015", "set": "numeric", "content": "ANSWER: 1000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A016", "set": "numeric", "content": "ANSWER: 145926", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A017", "set": "numeric", "content": "ANSWER: 14600000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A018", "set": "numeric", "content": "ANSWER: 919800", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A019", "set": "numeric", "content": "ANSWER: 29.00", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A020", "set": "numeric", "content": "ANSWER: 127809.36", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A021", "set": "numeric", "content": "ANSWER: 1208.0", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A022", "set": "numeric", "content": "ANSWER: 111.36", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A023", "set": "numeric", "content": "ANSWER: 364", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B000", "set": "extract", "content": "ANSWER: QT-2025-6945", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B001", "set": "extract", "content": "ANSWER: 2441546", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B002", "set": "extract", "content": "ANSWER: 850", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B003", "set": "extract", "content": "ANSWER: ห้างหุ้นส่วนจำกัด ไทยรุ่งเรือง", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B004", "set": "extract", "content": "ANSWER: QT-2021-4920", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B005", "set": "extract", "content": "ANSWER: 3495784", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B006", "set": "extract", "content": "ANSWER: 300", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B007", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B008", "set": "extract", "content": "ANSWER: QT-2020-9248", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B009", "set": "extract", "content": "ANSWER: 8633487", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B010", "set": "extract", "content": "ANSWER: 830", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B011", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B012", "set": "extract", "content": "ANSWER: QT-2024-6573", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B013", "set": "extract", "content": "ANSWER: 2479586", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B014", "set": "extract", "content": "ANSWER: 340", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B015", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B016", "set": "extract", "content": "ANSWER: QT-2020-9388", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B017", "set": "extract", "content": "ANSWER: 7033055", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C000", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C001", "set": "classify", "content": "ANSWER: โรงแรม", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C002", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C003", "set": "classify", "content": "ANSWER: คลังสินค้า", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C004", "set": "classify", "content": "ANSWER: อาคารสำนักงาน", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C005", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C006", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C007", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C008", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C009", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C010", "set": "classify", "content": "", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C011", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C012", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C013", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C014", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C015", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C016", "set": "classify", "content": "", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C017", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
