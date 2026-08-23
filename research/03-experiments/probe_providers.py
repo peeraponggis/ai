@@ -18,7 +18,8 @@ def list_models(url, headers):
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             d = json.loads(r.read().decode('utf-8'))
-        ids = [m.get('id') for m in (d.get('data') or d)] if isinstance(d, (list, dict)) else []
+        raw = d.get('data', d) if isinstance(d, dict) else d
+        ids = [(m.get('id') or m.get('name')) if isinstance(m, dict) else m for m in raw]
         print(f"   โมเดลที่มี ({len(ids)}): {', '.join(str(i) for i in ids[:25])}", flush=True)
     except Exception as e:
         print(f"   ลิสต์โมเดลไม่ได้: {type(e).__name__}: {str(e)[:100]}", flush=True)
@@ -28,6 +29,16 @@ print('== รายชื่อโมเดลของแต่ละเจ้�
 from run_providers import UA
 list_models('https://api.llm7.io/v1/models', {'Authorization': 'Bearer unused'})
 list_models('https://text.pollinations.ai/models', {'User-Agent': UA})
+CANDIDATES = ['claude-sonnet-5', 'claude-haiku-4-5', 'gpt-5.4', 'gemini-3-flash',
+              'glm-5.3', 'DeepSeek-V4-Flash-0731', 'gemma4:31b', 'XiaomiMiMo/MiMo-V2.5',
+              'codestral-latest', 'Inkling']
+
+print('\n== ทดสอบชื่อโมเดลจริงจากลิสต์ (LLM7 anonymous) ==', flush=True)
+for name in CANDIDATES:
+    trial = {'key': name[:22], 'url': 'https://api.llm7.io/v1/chat/completions',
+             'model': name, 'headers': {'Authorization': 'Bearer unused'}}
+    PROVIDERS.append(trial)
+
 print('\n== ทดสอบยิงจริงเจ้าละ 1 ครั้ง ==', flush=True)
 
 for p in PROVIDERS:
@@ -43,7 +54,7 @@ for p in PROVIDERS:
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             data = json.loads(r.read().decode('utf-8'))
-        txt = data['choices'][0]['message']['content'].replace('\n', ' ')[:120]
+        txt = data['choices'][0]['message']['content'].replace('\n', ' ')[:400]
         print(f"✅ {p['key']:16} {time.time()-t0:6.1f}s  HTTP {r.status}  → {txt}", flush=True)
     except urllib.error.HTTPError as e:
         detail = e.read().decode('utf-8', 'replace')[:200].replace('\n', ' ')
