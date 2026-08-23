@@ -16,8 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: ตรวจทุกเจ้า
+        if: "!contains(github.ref_name, 'cache')"
         working-directory: research/03-experiments
         run: python3 -u probe_providers.py
+
+      - name: ตรวจว่า gateway แคชคำตอบร่วมกันระหว่างโมเดลหรือไม่
+        if: contains(github.ref_name, 'cache')
+        working-directory: research/03-experiments
+        run: python3 -u probe_cache.py
 
       - name: ทดสอบทุกโมเดลในลิสต์ว่าตัวไหนฟรีจริง
         if: contains(github.ref_name, 'all')
