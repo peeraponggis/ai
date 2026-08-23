@@ -450,12 +450,17 @@ function numbersIn(s){
   return (clean.match(/-?\d+\.?\d*/g) || [])
     .map(Number).filter(n => isFinite(n) && Math.abs(n) >= 1);
 }
+// ตัวเลขที่ถือว่าเป็นสาระ ไม่ใช่เลขจิปาถะ — ใช้ทั้งตอนวัดและตอนแสดงผล
+const SIGNIFICANT = v => Math.abs(v) >= 100 || !Number.isInteger(v);
+
 function consensus(answers){
   const n = answers.length;
   if (n === 0) return null;
   if (n === 1) return {pick: 0, agree: null, words: null, nums: null, shared: []};
   const bags = answers.map(a => bag(a.text));
-  const nums = answers.map(a => new Set(numbersIn(a.text)));
+  // ตัวเลขสำคัญเท่านั้น — จำนวนเต็มเล็ก ๆ มักเป็นหน่วยเวลา เลขลำดับ หรือค่าคงที่
+  // ที่โมเดลอีกตัวไม่มีเหตุต้องพูดถึง ถ้านับรวมจะดึงคะแนนลงโดยไม่มีความหมาย
+  const nums = answers.map(a => new Set(numbersIn(a.text).filter(SIGNIFICANT)));
   const hasNums = nums.every(s => s.size > 0);
   const sum = new Array(n).fill(0);
   let tw = 0, tn = 0, pairs = 0;
@@ -478,13 +483,14 @@ function consensus(answers){
   const counts = new Map();
   answers.forEach(a => new Set(numbersIn(a.text))
     .forEach(v => counts.set(v, (counts.get(v) || 0) + 1)));
-  // แสดงเฉพาะตัวเลขที่มีความหมาย — จำนวนเต็มเล็ก ๆ มักเป็นลำดับหรือหน่วยเวลา
-  const meaningful = v => Math.abs(v) >= 100 || !Number.isInteger(v);
   const shared = Array.from(counts.entries())
-    .filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1 && meaningful(e[0]))
+    .filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1 && SIGNIFICANT(e[0]))
     .sort((a, b) => b[1] - a[1] || Math.abs(b[0]) - Math.abs(a[0])).slice(0, 5);
 
-  return {pick: pick, agree: agree, words: agreeWords, nums: agreeNums, shared: shared};
+  const sizes = nums.map(x => x.size);
+  const lopsided = hasNums && Math.max.apply(null, sizes) >= 2 * Math.min.apply(null, sizes);
+  return {pick: pick, agree: agree, words: agreeWords, nums: agreeNums,
+          shared: shared, lopsided: lopsided};
 }
 function agreeLabel(a, isNum){
   if (a === null || a === undefined) return {t: 'วัดไม่ได้ (โมเดลเดียว)', c: 'var(--faint)'};
@@ -671,6 +677,10 @@ async function ask(text){
       '<b style="color:var(--red)">⚠ โมเดลตอบไม่ตรงกัน</b> (วัดจาก' +
       (con.nums !== null ? 'ตัวเลขในคำตอบ' : 'ถ้อยคำ') + ') — มักแปลว่าคำถามกำกวม ' +
       'หรือเป็นเรื่องที่โมเดลไม่รู้จริง ควรกางคำตอบดิบทั้งหมดแล้วตัดสินเอง (ชั้น L3)</div>';
+  }
+  if (con.lopsided && con.shared && con.shared.length){
+    html += '<div class="foot">โมเดลให้รายละเอียดไม่เท่ากัน — บางตัวเลี่ยงไม่ตอบบางส่วน ' +
+      'คะแนนจึงต่ำจากการที่ตัวเลขมีไม่เท่ากัน ไม่ใช่จากการขัดแย้งกัน</div>';
   }
   if (con.shared && con.shared.length){
     html += '<div class="foot">ตัวเลขที่โมเดลส่วนใหญ่พูดตรงกัน: ' +
