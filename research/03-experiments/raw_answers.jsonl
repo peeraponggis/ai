@@ -154,3 +154,63 @@
 {"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
 {"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
 {"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A000", "set": "numeric", "content": "ANSWER: <คำตอบ> ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A001", "set": "numeric", "content": "คำตอบ: 19,876,000 บาท\n\nคำอธิบาย: ราคา EPC ของระบบโซลาร์ 1020 kWp คือ 19.4 บาทต่อวัตต์ จึงคำนวณเงินลงทุนรวมได้ดังนี้:\n\n1020 kWp x 19.4 บาท/kWp = 19,876,000 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A002", "set": "numeric", "content": "คำตอบ: 630,000 kWh", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A003", "set": "numeric", "content": "ANSWER: <คืนทุน 1.42 ปี>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A004", "set": "numeric", "content": "ANSWER: 697,999.54 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A005", "set": "numeric", "content": "ANSWER: 1,252.9 ตัน\n\nคำอธิบาย: 2,703,234 kWh * 0.4633 kgCO2/kWh = 1,252,900.018 kgCO2 = 1,252.9 ตัน", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A006", "set": "numeric", "content": "ค่าใช้จ่ายเดิม 4,392 บาท ปัจจุบัน 2,327 บาท เปลี่ยนแปลง -47.05%", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A007", "set": "numeric", "content": "ANSWER: <คำตอบ> 800 แผง", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A008", "set": "numeric", "content": "ANSWER: <คำตอบ> ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A009", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A010", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A011", "set": "numeric", "content": "ANSWER: <คืนทุน 3.52 ปี>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A012", "set": "numeric", "content": "ANSWER: 354,239.44 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A013", "set": "numeric", "content": "ANSWER: 59.9 ตัน", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A014", "set": "numeric", "content": "ค่าใช้จ่ายเดิม 4,755 บาท ปัจจุบัน 1,625 บาท เปลี่ยนแปลง -66.00%", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A015", "set": "numeric", "content": "ANSWER: <คำตอบ> 1", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A016", "set": "numeric", "content": "ANSWER: <คำตอบ> ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A017", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A018", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A019", "set": "numeric", "content": "ANSWER: 29.00", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A020", "set": "numeric", "content": "ANSWER: 127,356.48 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A021", "set": "numeric", "content": "ANSWER: 1,192.5 ตัน\n\nคำอธิบาย: ค่าปล่อย CO2 ต่อหน่วยไฟฟ้า (kWh) เป็น 0.4633 kgCO2/kWh ดังนั้นจึงคำนวณได้ว่า 2,607,370 kWh x 0.4633 kgCO2/kWh = 1,192.5 ตัน CO2", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A022", "set": "numeric", "content": "ค่าใช้จ่ายเดิม 2,007 บาท ปัจจุบัน 4,242 บาท เปลี่ยนแปลงกี่เปอร์เซ็นต์ (ติดลบถ้าลดลง ทศนิยม 2 ตำแหน่ง)\n\nANSWER: 111.58%", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A023", "set": "numeric", "content": "ANSWER: <คำตอบ> 364 แผง", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B000", "set": "extract", "content": "ANSWER: QT-2025-6945", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B001", "set": "extract", "content": "ANSWER: 2441546", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B002", "set": "extract", "content": "ANSWER: 850", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B003", "set": "extract", "content": "ANSWER: ไทยรุ่งเรือง", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B004", "set": "extract", "content": "ANSWER: QT-2021-4920", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B005", "set": "extract", "content": "ANSWER: 3495784", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B006", "set": "extract", "content": "ANSWER: 300", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B007", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B008", "set": "extract", "content": "ANSWER: QT-2020-9248", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B009", "set": "extract", "content": "ANSWER: 8633487", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B010", "set": "extract", "content": "ANSWER: 830", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B011", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B012", "set": "extract", "content": "ANSWER: QT-2024-6573", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B013", "set": "extract", "content": "ANSWER: 2,479,586", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B014", "set": "extract", "content": "ANSWER: 340", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B015", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B016", "set": "extract", "content": "ANSWER: QT-2020-9388", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B017", "set": "extract", "content": "ANSWER: 7033055", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C000", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C001", "set": "classify", "content": "ANSWER: โรงแรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C002", "set": "classify", "content": "ANSWER: โรงพยาบาล\n\nคำอธิบาย: เครื่อง MRI (Magnetic Resonance Imaging) เป็นเครื่องมือทางการแพทย์ที่ใช้ในการตรวจร่างกายโดยไม่ต้องใช้รังสี X-ray. มันพบได้ในโรงพยาบาลและศูนย์การแพทย์ต่าง ๆ.", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C003", "set": "classify", "content": "ANSWER: <คลังสินค้า>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C004", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C005", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C006", "set": "classify", "content": "ANSWER: <โรงงานอุตสาหกรรม>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C007", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C008", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C009", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C010", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C011", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C012", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C013", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C014", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C015", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C016", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C017", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
