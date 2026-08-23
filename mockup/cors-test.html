@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทดสอบ CORS — เรียก LLM ฟรีจากหน้าเว็บได้ไหม</title>
+<style>
+  body{margin:0;background:#0f172a;color:#e2e8f0;font-family:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+       font-size:14px;line-height:1.65;padding:22px;max-width:1000px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 4px}
+  .sub{color:#94a3b8;font-size:12px;margin-bottom:18px}
+  .card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:14px}
+  button{background:#f59e0b;color:#0b1220;border:0;border-radius:8px;padding:11px 22px;
+         font:inherit;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #334155;vertical-align:top}
+  th{color:#22d3ee;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  .ok{color:#10b981;font-weight:700}
+  .bad{color:#f43f5e;font-weight:700}
+  .wait{color:#94a3b8}
+  code,.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .note{background:#0b1220;border:1px solid #334155;border-radius:8px;padding:12px;font-size:12px;color:#94a3b8}
+  .verdict{font-size:15px;font-weight:700;padding:12px;border-radius:8px;margin-top:12px}
+  .v-ok{background:#064e3b55;border:1px solid #10b981;color:#6ee7b7}
+  .v-bad{background:#4c051955;border:1px solid #f43f5e;color:#fda4af}
+  .v-mixed{background:#78350f55;border:1px solid #f59e0b;color:#fcd34d}
+</style>
+</head>
+<body>
+
+<h1>ทดสอบ CORS — หน้าเว็บเรียก LLM ฟรีได้โดยตรงไหม</h1>
+<div class="sub">
+  คำถามที่ต้องตอบ: ถ้าทำ AI chat เป็น <b>เว็บล้วน</b> เบราว์เซอร์จะยอมให้เรียก API เหล่านี้หรือไม่ —
+  ถ้าไม่ยอม ต้องห่อเป็น APK แล้วเรียกจากฝั่ง Java เหมือนที่เคยทำ
+</div>
+
+<div class="card">
+  <div id="origin" class="note"></div>
+  <div style="margin-top:12px"><button id="go" onclick="runAll()">▶ เริ่มทดสอบ (ใช้เวลา ~15 วินาที)</button></div>
+  <table id="tbl">
+    <thead><tr><th style="width:26%">ปลายทาง</th><th style="width:10%">วิธี</th><th style="width:14%">ผล</th>
+    <th style="width:10%">เวลา</th><th>รายละเอียด</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div id="verdict"></div>
+</div>
+
+<div class="card note">
+  <b style="color:#e2e8f0">อ่านผลอย่างไร</b><br>
+  • <b class="ok">ผ่าน</b> = เบราว์เซอร์ยอมให้เรียก → ทำเป็นเว็บล้วนได้<br>
+  • <b class="bad">CORS บล็อก</b> = เซิร์ฟเวอร์ไม่ส่ง header <code>Access-Control-Allow-Origin</code>
+    → เบราว์เซอร์ปฏิเสธเอง โค้ดจะเห็นเป็น <code>TypeError: Failed to fetch</code> โดยไม่มีสถานะ HTTP<br>
+  • <b style="color:#fcd34d">HTTP ผิดพลาด</b> = เรียกถึงเซิร์ฟเวอร์แล้ว (CORS ผ่าน) แต่ตัว API ตอบ error เช่น 401/429<br>
+  <br>
+  <b style="color:#e2e8f0">ข้อควรรู้</b>: เปิดไฟล์นี้แบบ <code>file://</code> เบราว์เซอร์จะส่ง <code>Origin: null</code>
+  ซึ่งหลายเซิร์ฟเวอร์ปฏิเสธ — ถ้าผลออกมาว่าถูกบล็อก ควรลองอีกครั้งจากเว็บที่โฮสต์จริง (https)
+  ก่อนสรุปว่าใช้ไม่ได้
+</div>
+
+<script>
+const TESTS = [
+  {name:'LLM7 · รายชื่อโมเดล', url:'https://api.llm7.io/v1/models', method:'GET'},
+  {name:'LLM7 · แชท (ตัวชี้ขาด)', url:'https://api.llm7.io/v1/chat/completions', method:'POST',
+   headers:{'Content-Type':'application/json','Authorization':'Bearer unused'},
+   body:{model:'codestral-latest', max_tokens:30, temperature:0,
+         messages:[{role:'user',content:'ตอบสั้นที่สุด: 100000 หาร 5 เท่ากับเท่าไร'}]}},
+  {name:'LLM7 · แชท (โมเดลที่ 2)', url:'https://api.llm7.io/v1/chat/completions', method:'POST',
+   headers:{'Content-Type':'application/json','Authorization':'Bearer unused'},
+   body:{model:'gpt-oss:20b', max_tokens:30, temperature:0,
+         messages:[{role:'user',content:'ตอบสั้นที่สุด: 100000 หาร 5 เท่ากับเท่าไร'}]}},
+  {name:'Pollinations · แชท', url:'https://text.pollinations.ai/openai', method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:{model:'openai', max_tokens:30, messages:[{role:'user',content:'2+2=?'}]}},
+];
+
+const tb = () => document.querySelector('#tbl tbody');
+// เบราว์เซอร์บางตัวรายงาน location.origin เป็น 'null' บางตัวเป็น 'file://'
+// จึงต้องเช็ค protocol ด้วย ไม่งั้นจะสรุปผิดว่ากำลังรันแบบโฮสต์จริง
+const isFile = location.protocol === 'file:' || location.origin === 'null' || location.origin === 'file://';
+document.getElementById('origin').innerHTML =
+  'หน้านี้กำลังรันจาก <code>' + (isFile ? 'file:// (Origin: null)' : location.origin) + '</code>' +
+  (isFile
+    ? ' — เป็นกรณีที่เข้มงวดที่สุด ถ้าผ่านที่นี่ได้ แปลว่าผ่านแน่นอนเมื่อโฮสต์จริง'
+    : ' — เป็นกรณีเดียวกับตอนใช้งานจริง');
+
+async function one(t, row){
+  const t0 = performance.now();
+  try{
+    const res = await fetch(t.url, {
+      method: t.method,
+      headers: t.headers || {},
+      body: t.body ? JSON.stringify(t.body) : undefined,
+    });
+    const dt = ((performance.now()-t0)/1000).toFixed(1)+' วิ';
+    let txt = '';
+    try { txt = (await res.text()).slice(0,180).replace(/\s+/g,' '); } catch(e){ txt = '(อ่าน body ไม่ได้)'; }
+    if (res.ok){
+      row.innerHTML += `<td class="ok">✅ ผ่าน</td><td>${dt}</td><td class="mono">HTTP ${res.status} · ${escapeHtml(txt)}</td>`;
+      return 'ok';
+    }
+    row.innerHTML += `<td style="color:#fcd34d">⚠️ HTTP ${res.status}</td><td>${dt}</td>` +
+                     `<td class="mono">CORS ผ่านแล้ว แต่ API ตอบ error · ${escapeHtml(txt)}</td>`;
+    return 'http';
+  }catch(err){
+    const dt = ((performance.now()-t0)/1000).toFixed(1)+' วิ';
+    row.innerHTML += `<td class="bad">❌ ถูกบล็อก</td><td>${dt}</td>` +
+      `<td class="mono">${escapeHtml(err.name + ': ' + err.message)}<br>` +
+      `<span style="color:#64748b">ไม่มีสถานะ HTTP = เบราว์เซอร์ปฏิเสธก่อนถึงเซิร์ฟเวอร์ (CORS)</span></td>`;
+    return 'cors';
+  }
+}
+const escapeHtml = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+async function runAll(){
+  const btn = document.getElementById('go');
+  btn.disabled = true; tb().innerHTML = ''; document.getElementById('verdict').innerHTML = '';
+  const results = [];
+  for (const t of TESTS){
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${t.name}</td><td class="mono">${t.method}</td>` +
+                    `<td class="wait" colspan="3">กำลังทดสอบ…</td>`;
+    tb().appendChild(row);
+    row.innerHTML = `<td>${t.name}</td><td class="mono">${t.method}</td>`;
+    results.push(await one(t, row));
+    await new Promise(r => setTimeout(r, 1600));   // เคารพ rate limit ~1 req/วินาที
+  }
+  const chatOK = results[1] === 'ok' || results[2] === 'ok';
+  const chatReached = ['ok','http'].includes(results[1]) || ['ok','http'].includes(results[2]);
+  const v = document.getElementById('verdict');
+  if (chatOK){
+    v.className = 'verdict v-ok';
+    v.innerHTML = '✅ ทำเป็นเว็บล้วนได้ — เบราว์เซอร์เรียก API ได้โดยตรง ไม่ต้องห่อ APK และไม่ต้องมี proxy';
+  } else if (chatReached){
+    v.className = 'verdict v-mixed';
+    v.innerHTML = '⚠️ CORS ผ่าน แต่ API ตอบ error (เช่น 401/429) — ปัญหาอยู่ที่สิทธิ์/โควตา ไม่ใช่ที่เบราว์เซอร์ ' +
+                  'แปลว่าโครงสร้างเว็บล้วนยังใช้ได้ แค่ต้องแก้เรื่องโมเดล/อัตราเรียก';
+  } else {
+    v.className = 'verdict v-bad';
+    v.innerHTML = '❌ ถูก CORS บล็อก — ทำเป็นเว็บล้วนไม่ได้ ต้องเลือก: ห่อเป็น APK แล้วเรียกจากฝั่ง Java ' +
+                  '(วิธีที่เคยใช้ได้ผลมาแล้ว) หรือตั้ง proxy ของตัวเอง';
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
