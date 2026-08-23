@@ -1,0 +1,51 @@
+name: Build APK
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: SolarAI/tools/css/package-lock.json
+
+      # สร้าง vendor/tailwind.css ใหม่จาก index.html ปัจจุบัน
+      # เพื่อให้ class ที่เพิ่งเพิ่มเข้าไปมีผลใน APK เสมอ
+      - name: Rebuild Tailwind CSS
+        working-directory: SolarAI/tools/css
+        run: |
+          npm ci
+          npm run build
+          cd ../..
+          git diff --quiet app/src/main/assets/vendor/tailwind.css \
+            || echo "::notice::vendor/tailwind.css ในรีโปไม่ตรงกับ index.html — รัน 'npm run build' ใน tools/css แล้ว commit ด้วย"
+
+      - name: Build debug APK
+        working-directory: SolarAI
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: solar-ai-debug-apk
+          path: SolarAI/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
