@@ -38,7 +38,11 @@ SolarAI-AndroidProject.zip                ไฟล์ zip ต้นฉบับ
 ดู [SolarAI/BUILD_INSTRUCTIONS.md](SolarAI/BUILD_INSTRUCTIONS.md) — build ได้ทั้งจาก
 GitHub Actions (ไม่ต้องติดตั้งอะไร), Android Studio หรือ `./gradlew assembleDebug`
 
-ใช้งานต้องมี Anthropic API Key ของตัวเอง (https://console.anthropic.com)
+**ใช้งานได้ฟรี ไม่ต้องมี API Key** — เครื่องคำนวณอยู่ในแอป ติดตั้งแล้วกดใช้ได้เลย
+ไม่มีค่าใช้จ่ายและไม่ต้องต่ออินเทอร์เน็ต
+
+ถ้าต้องการให้ Claude เขียนวิเคราะห์เชิงลึกแทนข้อความที่ระบบสร้างเอง ค่อยใส่
+Anthropic API Key (https://console.anthropic.com) — เป็นตัวเลือกเสริมเท่านั้น
 
 CSS และฟอนต์ทั้งหมดฝังอยู่ในแอป ไม่พึ่ง CDN — หน้าจอจึงขึ้นครบแม้เน็ตช้า
 ต่ออินเทอร์เน็ตเฉพาะตอนเรียก Claude API เท่านั้น

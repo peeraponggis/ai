@@ -47,17 +47,18 @@ pre { white-space:pre-wrap; word-break:break-word; }
 
 <div class="p-4 space-y-4 max-w-2xl mx-auto">
 
-    <!-- API Key -->
+    <!-- API Key (ไม่บังคับ) -->
     <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
         <h2 class="text-sm font-semibold mb-2 text-purple-400 flex items-center">
             <i class="fa-solid fa-key mr-2"></i> Anthropic API Key
+            <span class="ml-2 text-[10px] font-normal text-slate-500">(ไม่บังคับ)</span>
         </h2>
-        <input type="password" id="apiKey" placeholder="sk-ant-api03-..."
+        <input type="password" id="apiKey" placeholder="เว้นว่างไว้ = ใช้ฟรี ไม่ต้องมีคีย์"
             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-purple-500 fm"
             oninput="saveKey(this.value)">
         <p class="text-[10px] text-slate-500 mt-1.5">
-            🔒 เก็บในเครื่องเท่านั้น ·
-            <span class="text-purple-400">console.anthropic.com</span>
+            <span class="text-emerald-400">✓ เว้นว่างได้เลย</span> — คำนวณในเครื่อง ฟรี ไม่มีค่าใช้จ่าย ไม่ต้องต่อเน็ต ·
+            ใส่คีย์เมื่อต้องการให้ AI เขียนวิเคราะห์เชิงลึกเพิ่ม
         </p>
     </div>
 
@@ -320,6 +321,201 @@ function agentSet(n, state) {
 function fmt(n) { return Number(n).toLocaleString('th-TH'); }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+
+/* ============================================================
+   LOCAL ENGINE — คำนวณและสรุปผลในเครื่อง ไม่เรียก API ไม่เสียเงิน
+   สมมติฐาน: PSH 5.0 ชม./วัน, PR 80%, degradation 0.5%/ปี,
+   O&M 1% ของ EPC/ปี, อายุโครงการ 25 ปี, discount rate 8%
+   ============================================================ */
+const PSH = 5.0, PR = 0.80, DEGRADE = 0.005, OM_RATE = 0.01,
+      YEARS = 25, DISCOUNT = 0.08, CO2_PER_KWH = 0.4633, PANEL_W = 500;
+
+function npv(rate, flows) {
+    return flows.reduce((sum, cf, t) => sum + cf / Math.pow(1 + rate, t), 0);
+}
+
+// หา IRR ด้วยวิธี bisection — เสถียรกว่า Newton และไม่ลู่ออก
+function irr(flows) {
+    let lo = -0.9, hi = 2.0;
+    if (npv(lo, flows) * npv(hi, flows) > 0) return null;   // ไม่มีคำตอบในช่วงนี้
+    for (let i = 0; i < 200; i++) {
+        const mid = (lo + hi) / 2;
+        (npv(lo, flows) * npv(mid, flows) <= 0) ? hi = mid : lo = mid;
+    }
+    return (lo + hi) / 2;
+}
+
+function computeSolar(bill, tariff, epcRate, biz) {
+    const unitsPerMonth = bill / tariff;              // kWh/เดือนที่ใช้จริง
+    const unitsPerYear  = unitsPerMonth * 12;
+
+    // ขนาดระบบ: ผลิตกลางวันไม่ให้เกินที่ใช้เอง (ประมาณ 70% ของโหลดรวม)
+    const yieldPerKwp = PSH * 365 * PR;               // ~1,460 kWh/kWp/ปี
+    const kwpRaw = (unitsPerYear * 0.70) / yieldPerKwp;
+    const kwp = Math.max(30, Math.round(kwpRaw / 5) * 5);
+
+    const panels   = Math.ceil(kwp * 1000 / PANEL_W);
+    const area     = Math.round(kwp * 6);             // ~6 ตร.ม./kWp
+    const gen1     = Math.round(kwp * yieldPerKwp);   // ผลิตปีแรก
+    const selfUse  = Math.min(gen1, unitsPerYear);    // ส่วนที่ใช้เองได้
+    const offset   = selfUse / unitsPerYear * 100;
+
+    const epc      = kwp * epcRate * 1000;
+    const om       = epc * OM_RATE;
+    const save1    = selfUse * tariff;                // ประหยัดปีแรก
+    const net1     = save1 - om;
+    const payback  = net1 > 0 ? epc / net1 : null;
+
+    const flows = [-epc];
+    let total = 0;
+    for (let y = 1; y <= YEARS; y++) {
+        const net = save1 * Math.pow(1 - DEGRADE, y - 1) - om;
+        flows.push(net);
+        total += net;
+    }
+    const projIrr = irr(flows);
+    const projNpv = npv(DISCOUNT, flows);
+    const roi     = total / epc * 100;
+    const co2     = gen1 * CO2_PER_KWH / 1000;        // ตัน/ปี
+
+    return { bill, tariff, epcRate, biz, kwp, panels, area, gen1, selfUse, offset,
+             epc, om, save1, net1, payback, irr: projIrr, npv: projNpv, roi, co2,
+             unitsPerMonth, unitsPerYear, total };
+}
+
+const n0 = n => Number(Math.round(n)).toLocaleString('th-TH');
+const n1 = n => Number(n).toLocaleString('th-TH', {minimumFractionDigits:1, maximumFractionDigits:1});
+const mb = n => (n / 1e6).toFixed(2) + ' ล้านบาท';
+
+// รายงาน 6 ส่วน สร้างจากตัวเลขที่คำนวณได้จริง
+function localReport(d) {
+    const transformer = Math.ceil(d.kwp * 1.25 / 50) * 50;
+    const breaker     = Math.ceil(d.kwp * 1000 / 400 / 1.732 * 1.25 / 50) * 50;
+
+    const r1 = [
+        `ขนาดระบบที่แนะนำ: ${n0(d.kwp)} kWp`,
+        `เหตุผล: ใช้ไฟ ${n0(d.unitsPerYear)} kWh/ปี ออกแบบให้ผลิตประมาณ 70% ของโหลดรวม`,
+        `เพื่อให้ใช้ไฟที่ผลิตได้เองหมดในเวลากลางวัน ไม่ต้องขายคืนกริด`,
+        ``,
+        `แผง ${PANEL_W}W: ${n0(d.panels)} แผง`,
+        `พื้นที่ติดตั้ง: ~${n0(d.area)} ตร.ม. (${n1(d.area / 1600 * 100 / 100 * 0.625)} ไร่โดยประมาณ)`,
+        `ผลิตไฟปีแรก: ${n0(d.gen1)} kWh/ปี (PSH ${PSH} ชม./วัน, PR ${PR * 100}%)`,
+        `ใช้ทดแทนค่าไฟได้: ${n1(d.offset)}% ของหน่วยที่ใช้ทั้งหมด`,
+        ``,
+        `ข้อกำหนดวิศวกรรมเบื้องต้น:`,
+        `• หม้อแปลงรองรับ: ≥ ${n0(transformer)} kVA`,
+        `• เมนเบรกเกอร์ฝั่ง AC: ~${n0(breaker)} A (400V 3 เฟส)`,
+        `• ต้องตรวจโครงสร้างหลังคารับน้ำหนักเพิ่ม ~15 กก./ตร.ม.`,
+        `• ขออนุญาตเชื่อมต่อ PEA/MEA แบบ Self-consumption (ไม่ขายคืน)`,
+    ].join('\n');
+
+    const r2 = [
+        `เงินลงทุน EPC: ${mb(d.epc)} (${d.epcRate} บาท/วัตต์)`,
+        `ประหยัดค่าไฟปีแรก: ${n0(d.save1)} บาท/ปี`,
+        `ค่า O&M: ${n0(d.om)} บาท/ปี (1% ของ EPC)`,
+        `กระแสเงินสดสุทธิปีแรก: ${n0(d.net1)} บาท/ปี`,
+        ``,
+        `Simple Payback: ${d.payback ? n1(d.payback) + ' ปี' : 'ไม่คุ้มค่า'}`,
+        `IRR (25 ปี): ${d.irr !== null ? n1(d.irr * 100) + '%' : 'คำนวณไม่ได้'}`,
+        `NPV @ 8%: ${mb(d.npv)}`,
+        `ROI 25 ปี: ${n1(d.roi)}% (กำไรสุทธิสะสม ${mb(d.total - d.epc)})`,
+        ``,
+        d.irr !== null && d.irr > 0.12
+            ? `สรุป: คุ้มค่าลงทุน — IRR สูงกว่าต้นทุนเงินทุนทั่วไป (8-10%) ชัดเจน`
+            : `สรุป: ผลตอบแทนต่ำกว่าเกณฑ์ทั่วไป ควรต่อรองราคา EPC หรือพิจารณาโมเดล PPA`,
+        ``,
+        `หมายเหตุ: คิดที่ค่าไฟคงที่ ${d.tariff} บ./หน่วย ไม่รวมการปรับขึ้นของค่า Ft`,
+        `ถ้าค่าไฟขึ้นปีละ 2-3% ผลตอบแทนจริงจะสูงกว่านี้`,
+    ].join('\n');
+
+    const bigRoof = d.kwp >= 500;
+    const r3 = [
+        `🔴 ความเสี่ยงสูง`,
+        `• โครงสร้างหลังคา — ต้องให้วิศวกรโยธาตรวจรับน้ำหนัก ${n0(d.area * 15)} กก. ที่เพิ่มขึ้น`,
+        `  รับมือ: จ้างตรวจสอบก่อนเซ็นสัญญา ใส่เงื่อนไขเสริมโครงสร้างในราคา EPC`,
+        bigRoof
+            ? `• ระบบ ${n0(d.kwp)} kWp เข้าข่ายต้องขอใบอนุญาต รง.4 / อ.1 ใช้เวลา 3-6 เดือน`
+            : `• การขออนุญาตเชื่อมต่อกับ PEA/MEA ใช้เวลา 1-3 เดือน อาจกระทบแผนติดตั้ง`,
+        `  รับมือ: เริ่มยื่นเอกสารคู่ขนานกับงานออกแบบ`,
+        ``,
+        `🟡 ความเสี่ยงปานกลาง`,
+        `• ประสิทธิภาพลดลงปีละ ~0.5% และอินเวอร์เตอร์ต้องเปลี่ยนที่ปีที่ 10-12`,
+        `  รับมือ: กันงบเปลี่ยนอินเวอร์เตอร์ ~${mb(d.epc * 0.10)} ไว้ล่วงหน้า`,
+        `• ${d.biz} มีการใช้ไฟไม่สม่ำเสมอ อาจผลิตเกินความต้องการช่วงวันหยุด`,
+        `  รับมือ: ตรวจ Load Profile ย้อนหลัง 12 เดือนก่อนสรุปขนาดระบบ`,
+        ``,
+        `🟢 ความเสี่ยงต่ำ`,
+        `• แผงมีประกันประสิทธิภาพ 25 ปี ความเสี่ยงด้านอุปกรณ์หลักต่ำ`,
+        ``,
+        `💡 โอกาส`,
+        `• ค่าไฟไทยมีแนวโน้มขาขึ้น ทุก 1% ที่ขึ้น = ประหยัดเพิ่ม ${n0(d.save1 * 0.01)} บาท/ปี`,
+        `• ใช้สิทธิ BOI ยกเว้นภาษีนิติบุคคล หรือหักค่าเสื่อมเร่งได้`,
+        `• ลด CO₂ ${n1(d.co2)} ตัน/ปี ใช้เป็นข้อมูล ESG ต่อคู่ค้าได้`,
+    ].join('\n');
+
+    const optB = d.epc * 1.55, optA = d.epc * 0.90;
+    const ppaRate = d.tariff * 0.75;
+    const r4 = [
+        `A) Cost Optimized — ลดสเปกให้คุ้มที่สุด`,
+        `   ${n0(d.kwp)} kWp | ทุน ${mb(optA)} | ประหยัด ${n0(d.save1)} บ./ปี | คืนทุน ~${n1(optA / d.net1)} ปี`,
+        `   + ถูกกว่า 10%  − ใช้แบรนด์รอง ประกันสั้นกว่า`,
+        ``,
+        `B) Hybrid + ESS แบตเตอรี่`,
+        `   ${n0(d.kwp)} kWp + ${n0(d.kwp * 0.5)} kWh | ทุน ${mb(optB)} | คืนทุน ~${n1(optB / (d.net1 * 1.15))} ปี`,
+        `   + ใช้ไฟกลางคืน ลด Peak Demand  − ทุนสูงขึ้น 55% คืนทุนช้ากว่า`,
+        ``,
+        `C) PPA / Zero CAPEX — ไม่ต้องลงทุนเอง`,
+        `   ทุน 0 บาท | ซื้อไฟจากผู้ลงทุนที่ ~${n1(ppaRate)} บ./หน่วย (ลด 25%)`,
+        `   ประหยัด ~${n0(d.selfUse * (d.tariff - ppaRate))} บ./ปี ทันทีตั้งแต่ปีแรก`,
+        `   + ไม่ใช้เงินลงทุน ไม่ต้องดูแลระบบ  − สัญญายาว 15-20 ปี ผลตอบแทนรวมน้อยกว่าลงทุนเอง`,
+        ``,
+        `D) Phased — แบ่ง 2 เฟส`,
+        `   เฟส 1: ${n0(Math.round(d.kwp * 0.5))} kWp (${mb(d.epc * 0.5)}) → เฟส 2 ปีถัดไป`,
+        `   + กระจายภาระเงินสด วัดผลจริงก่อนขยาย  − ราคาต่อวัตต์สูงกว่าทำทีเดียว ~5%`,
+    ].join('\n');
+
+    const r5 = [
+        `ค่าไฟ ${n0(d.bill)} บาท/เดือน = ${mb(d.bill * 12)}/ปี ที่จ่ายทิ้งไปโดยไม่ได้อะไรกลับมา`,
+        ``,
+        `ระบบโซลาร์ ${n0(d.kwp)} kWp เปลี่ยนรายจ่ายก้อนนี้เป็นสินทรัพย์:`,
+        `• ประหยัดทันที ${n0(d.save1)} บาทในปีแรก`,
+        `• คืนทุนใน ${d.payback ? n1(d.payback) : '-'} ปี แล้วได้ไฟฟรีอีก ${d.payback ? n0(YEARS - d.payback) : '-'} ปี`,
+        `• ตลอดอายุโครงการประหยัดรวม ${mb(d.total)}`,
+        `• ลด CO₂ ${n1(d.co2)} ตัน/ปี เท่ากับปลูกต้นไม้ ${n0(d.co2 * 1000 / 21)} ต้น`,
+        ``,
+        `ทำไมต้องทำตอนนี้: ค่าไฟไทยขึ้นต่อเนื่อง ทุกเดือนที่รอ = เสียโอกาสประหยัด`,
+        `${n0(d.save1 / 12)} บาท และคู่ค้าต่างประเทศเริ่มบังคับรายงาน Carbon Footprint แล้ว`,
+        ``,
+        `ขั้นต่อไป: ขอ Load Profile ย้อนหลัง 12 เดือนจากการไฟฟ้า แล้วนัดสำรวจหน้างาน`,
+    ].join('\n');
+
+    const verdict = d.irr === null ? 'ไม่แนะนำ'
+        : d.irr > 0.15 ? 'ลงทุนเอง (แนะนำอย่างยิ่ง)'
+        : d.irr > 0.10 ? 'ลงทุนเอง'
+        : 'แนะนำโมเดล PPA แทนการลงทุนเอง';
+    const r6 = [
+        `✅ จุดแข็ง`,
+        `• IRR ${d.irr !== null ? n1(d.irr * 100) + '%' : '-'} คืนทุน ${d.payback ? n1(d.payback) : '-'} ปี จากอายุโครงการ 25 ปี`,
+        `• ออกแบบให้ใช้ไฟเองทั้งหมด ไม่ต้องพึ่งนโยบายรับซื้อไฟของรัฐ`,
+        `• ตัวเลขวิศวกรรมและการเงินสอดคล้องกัน: ${n0(d.kwp)} kWp ผลิต ${n0(d.gen1)} kWh/ปี`,
+        `  คิดเป็นเงิน ${n0(d.save1)} บาท ตรงกับที่ใช้คำนวณผลตอบแทน`,
+        ``,
+        `⚠️ สิ่งที่ต้องระวัง`,
+        `• ตัวเลขทั้งหมดตั้งบนสมมติฐาน PSH ${PSH} ชม. และค่าไฟคงที่ ${d.tariff} บ./หน่วย`,
+        `  ต้องยืนยันด้วย Load Profile จริงและใบเสนอราคา EPC จริงก่อนตัดสินใจ`,
+        `• ยังไม่ได้ตรวจสอบความแข็งแรงของโครงสร้างหลังคาหน้างาน`,
+        ``,
+        `📋 ขั้นตอนถัดไป`,
+        `1. ขอ Load Profile 12 เดือนจาก PEA/MEA เพื่อยืนยันขนาดระบบ`,
+        `2. จ้างวิศวกรโยธาตรวจโครงสร้างหลังคา`,
+        `3. ขอใบเสนอราคาจาก EPC อย่างน้อย 3 ราย เทียบสเปกแผง/อินเวอร์เตอร์/ประกัน`,
+        ``,
+        `🏆 คำตัดสิน: ${verdict}`,
+    ].join('\n');
+
+    return [r1, r2, r3, r4, r5, r6];
+}
+
 /* ============================================================
    PIPELINE
    ============================================================ */
@@ -331,7 +527,9 @@ async function runPipeline() {
     const biz     = document.getElementById('bizType').value;
 
     if (!bill || bill <= 0) { alert('กรุณากรอกค่าไฟ'); return; }
-    if (!document.getElementById('apiKey').value.trim()) { alert('กรุณากรอก API Key'); return; }
+
+    // ไม่มีคีย์ = โหมดคำนวณในเครื่อง (ฟรี) / มีคีย์ = ให้ Claude เขียนวิเคราะห์เพิ่ม
+    const useAI = !!document.getElementById('apiKey').value.trim();
 
     running = true;
     document.getElementById('runBtn').disabled = true;
@@ -342,12 +540,27 @@ async function runPipeline() {
     setStatus('RUNNING');
     for (let i=1;i<=6;i++) agentSet(i,'idle');
 
-    const kwp = Math.max(30, Math.round((bill / tariff) / 130));
-    const epc = kwp * epcRate * 1000;
-    const annualSaving = kwp * 1450 * tariff;
+    const d = computeSolar(bill, tariff, epcRate, biz);
+    const local = localReport(d);
+    const kwp = d.kwp, epc = d.epc;
     const ctx = `ค่าไฟ ${fmt(bill)} บาท/เดือน | ${biz} | ~${kwp} kWp | EPC ${fmt(epc)} บาท | ${tariff} บ./หน่วย`;
 
+    // มีคีย์ → ถาม Claude / ไม่มีคีย์ → ใช้ผลที่คำนวณในเครื่อง (ฟรี)
+    let stage = 0;
+    const ask = async (system, userMsg) => {
+        const fallback = local[stage++];
+        if (!useAI) { await delay(180); return fallback; }
+        try {
+            return await callClaudeNative(system, userMsg);
+        } catch (e) {
+            log(`⚠️ AI ใช้ไม่ได้ (${e.message}) — ใช้ผลคำนวณในเครื่องแทน`, 'warn');
+            return fallback;
+        }
+    };
+
     log(`เริ่ม — ${ctx}`);
+    log(useAI ? 'โหมด: Claude API' : 'โหมด: คำนวณในเครื่อง (ฟรี ไม่ต้องใช้คีย์ ไม่ต้องต่อเน็ต)',
+        useAI ? 'info' : 'success');
     await delay(100);
 
     let r1='', r2='', r3='', r4='', r5='', r6='';
@@ -355,7 +568,7 @@ async function runPipeline() {
     try {
         agentSet(1,'active'); setStatus('Stage 1');
         log('[Stage 1] Technical Sizing...');
-        r1 = await callClaudeNative(
+        r1 = await ask(
             'คุณคือวิศวกรระบบโซลาร์ C&I ผู้เชี่ยวชาญในไทย ตอบเป็นภาษาไทย มีตัวเลขจริง ไม่เกิน 200 คำ',
             `วิเคราะห์: ${ctx}
 1. ขนาดระบบ kWp ที่แนะนำ+เหตุผล
@@ -369,7 +582,7 @@ async function runPipeline() {
 
         agentSet(2,'active'); setStatus('Stage 2');
         log('[Stage 2] Financial Modeling...');
-        r2 = await callClaudeNative(
+        r2 = await ask(
             'คุณคือนักการเงินด้านพลังงาน คำนวณแม่นยำ ตอบเป็นภาษาไทย ไม่เกิน 200 คำ',
             `คำนวณการเงิน: ${ctx} | ผลิต ~${kwp*1450} kWh/ปี
 1. EPC รวม (บาท)
@@ -386,12 +599,14 @@ async function runPipeline() {
         const pbM  = r2.match(/(?:payback|คืนทุน)[^\d]*(\d+\.?\d*)\s*ปี/i);
         document.getElementById('r_kwp').textContent = kwp + ' kWp';
         document.getElementById('r_epc').textContent = (epc/1e6).toFixed(2) + ' ล้าน';
-        document.getElementById('r_irr').textContent = irrM ? irrM[1]+'%' : 'ดูผล↓';
-        document.getElementById('r_payback').textContent = pbM ? pbM[1]+' ปี' : 'ดูผล↓';
+        document.getElementById('r_irr').textContent =
+            irrM ? irrM[1]+'%' : (d.irr !== null ? n1(d.irr*100)+'%' : 'ดูผล↓');
+        document.getElementById('r_payback').textContent =
+            pbM ? pbM[1]+' ปี' : (d.payback ? n1(d.payback)+' ปี' : 'ดูผล↓');
 
         agentSet(3,'active'); setStatus('Stage 3');
         log('[Stage 3] Risk Audit...');
-        r3 = await callClaudeNative(
+        r3 = await ask(
             'คุณคือผู้ตรวจสอบความเสี่ยงโครงการพลังงาน ตอบเป็นภาษาไทย ไม่เกิน 200 คำ',
             `ตรวจความเสี่ยง: ${ctx}
 🔴 HIGH RISK + วิธีรับมือ
@@ -405,7 +620,7 @@ async function runPipeline() {
 
         agentSet(4,'active'); setStatus('Stage 4');
         log('[Stage 4] Generating Alternatives...');
-        r4 = await callClaudeNative(
+        r4 = await ask(
             'คุณคือที่ปรึกษาพลังงานอัจฉริยะ ตอบเป็นภาษาไทย ไม่เกิน 250 คำ',
             `สร้าง 4 ทางเลือก: ${ctx}
 A: Cost Optimized (EPC ราคาประหยัด)
@@ -419,7 +634,7 @@ D: Phased Installation
 
         agentSet(5,'active'); setStatus('Stage 5');
         log('[Stage 5] Sales Proposal...');
-        r5 = await callClaudeNative(
+        r5 = await ask(
             'คุณคือผู้เชี่ยวชาญขายโซลาร์ C&I เขียน pitch โน้มน้าวใจ ตอบภาษาไทย ไม่เกิน 150 คำ',
             `เขียนข้อเสนอสำหรับ ${biz} ค่าไฟ ${fmt(bill)} บาท/เดือน ระบบ ${kwp} kWp
 - เปิดด้วยตัวเลขน่าสนใจ
@@ -432,7 +647,7 @@ D: Phased Installation
 
         agentSet(6,'active'); setStatus('Stage 6');
         log('[Stage 6] Consensus Validation...');
-        r6 = await callClaudeNative(
+        r6 = await ask(
             'คุณคือผู้ตัดสินขั้นสุดท้าย ตรวจความสอดคล้อง ตอบภาษาไทย ไม่เกิน 150 คำ',
             `ตรวจสอบโครงการ ${kwp} kWp สำหรับ ${biz}:
 วิศวกรรม: ${r1.substring(0,120)}...
@@ -454,7 +669,8 @@ D: Phased Installation
         document.getElementById('results').classList.remove('hidden');
 
         setStatus('COMPLETED ✓');
-        log('✅ วิเคราะห์ครบ 6 Stage — Real Claude API', 'success');
+        log(useAI ? '✅ วิเคราะห์ครบ 6 Stage — Claude API'
+                  : '✅ วิเคราะห์ครบ 6 Stage — คำนวณในเครื่อง ไม่มีค่าใช้จ่าย', 'success');
         document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 
     } catch(err) {
