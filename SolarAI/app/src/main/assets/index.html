@@ -88,6 +88,51 @@
                         class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
                 </div>
             </div>
+            <details class="bg-slate-900 rounded-lg border border-slate-700 p-3">
+                <summary class="text-xs font-medium text-slate-300 cursor-pointer select-none">
+                    ⚙️ พารามิเตอร์การเงินและวิศวกรรม (แก้ไขได้)
+                </summary>
+                <p class="text-[10px] text-slate-500 mt-2 mb-2">
+                    ค่าเหล่านี้เปลี่ยนตามภาวะตลาดและนโยบายบริษัท ปรับได้ตามจริง —
+                    ระบบจะคำนวณใหม่ทั้งหมดทันทีที่กดวิเคราะห์
+                </p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Discount rate (%/ปี)</label>
+                        <input type="number" id="discountRate" value="6.5" step="0.1" min="0" max="20"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">อายุโครงการ (ปี)</label>
+                        <input type="number" id="projectYears" value="25" step="1" min="5" max="40"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Degradation (%/ปี)</label>
+                        <input type="number" id="degradation" value="0.5" step="0.1" min="0" max="3"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">O&amp;M (% ของ EPC/ปี)</label>
+                        <input type="number" id="omRate" value="1.0" step="0.1" min="0" max="5"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">PSH (ชม./วัน)</label>
+                        <input type="number" id="psh" value="5.0" step="0.1" min="3" max="7"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Performance Ratio (%)</label>
+                        <input type="number" id="prRatio" value="80" step="1" min="60" max="95"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <button onclick="resetParams()" class="mt-2 text-[10px] text-slate-400 hover:text-amber-400 underline">
+                    คืนค่าเริ่มต้น
+                </button>
+            </details>
+
             <div class="grid grid-cols-2 gap-3 pt-1">
                 <button id="runBtn" onclick="runPipeline()"
                     class="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-semibold py-3 rounded-lg transition flex items-center justify-center shadow-md">
@@ -157,10 +202,10 @@
             <div class="text-slate-600">// สูตรคำนวณหลัก (เปิดเผย)</div>
             <div>kWp  = (bill / tariff) / 130</div>
             <div>EPC  = kWp × epcRate × 1000</div>
-            <div>SAV  = kWp × 1450 × tariff</div>
+            <div>SAV  = kWp × (PSH×PR×365) × tariff</div>
             <div>PBK  = EPC / SAV</div>
             <div>IRR  = f(cashflow, 25yr)</div>
-            <div>NPV  = Σ CF/(1+r)^t  [r=8%]</div>
+            <div>NPV  = Σ CF/(1+r)^t  [r ตามที่ตั้งไว้]</div>
         </div>
     </div>
 </div>
@@ -270,6 +315,35 @@
 
 let running = false;
 
+/* ค่าเริ่มต้นของพารามิเตอร์ที่ผู้ใช้แก้ได้ — discount rate 6.5% อิงดอกเบี้ยธนาคาร */
+const PARAM_DEFAULTS = { discountRate: 6.5, projectYears: 25, degradation: 0.5,
+                         omRate: 1.0, psh: 5.0, prRatio: 80 };
+
+function num(id, fallback) {
+    const el = document.getElementById(id);
+    const v = el ? parseFloat(el.value) : NaN;
+    return Number.isFinite(v) ? v : fallback;
+}
+
+// อ่านพารามิเตอร์ทั้งหมดครั้งเดียว แล้วส่งต่อให้ทุก stage ใช้ชุดเดียวกัน
+function readParams() {
+    return {
+        discount: num('discountRate', PARAM_DEFAULTS.discountRate) / 100,
+        years:    Math.round(num('projectYears', PARAM_DEFAULTS.projectYears)),
+        degrade:  num('degradation', PARAM_DEFAULTS.degradation) / 100,
+        om:       num('omRate', PARAM_DEFAULTS.omRate) / 100,
+        psh:      num('psh', PARAM_DEFAULTS.psh),
+        pr:       num('prRatio', PARAM_DEFAULTS.prRatio) / 100,
+    };
+}
+
+function resetParams() {
+    for (const [id, v] of Object.entries(PARAM_DEFAULTS)) {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+    }
+}
+
 // ── helpers ──────────────────────────────────────────────────
 function fmt(n)  { return Math.round(n).toLocaleString('th-TH'); }
 function fmtM(n) { return (n/1000000).toFixed(2) + ' ล้านบาท'; }
@@ -292,17 +366,17 @@ function calcIRR(cashflows, guess=0.1) {
 }
 
 // คำนวณ NPV
-function calcNPV(cashflows, r=0.08) {
+function calcNPV(cashflows, r) {
     return cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1+r, t), 0);
 }
 
 // สร้าง cashflow 25 ปี
-function buildCashflows(epc, annualSaving, degradation=0.005, opex_ratio=0.01) {
+function buildCashflows(epc, annualSaving, P) {
     let cf = [-epc];
     let saving = annualSaving;
-    let opex = epc * opex_ratio;
-    for (let y = 1; y <= 25; y++) {
-        saving *= (1 - degradation);    // panel degradation 0.5%/yr
+    let opex = epc * P.om;
+    for (let y = 1; y <= P.years; y++) {
+        saving *= (1 - P.degrade);      // ประสิทธิภาพแผงลดลงตามค่าที่ผู้ใช้ตั้ง
         cf.push(saving - opex);
     }
     return cf;
@@ -312,10 +386,8 @@ function buildCashflows(epc, annualSaving, degradation=0.005, opex_ratio=0.01) {
    ANALYSIS FUNCTIONS — แต่ละ Stage มีสูตรของตัวเอง
    ============================================================ */
 
-function stage1_technical(bill, tariff, kwp, biz) {
-    const hoursPerDay = 5.0;  // ชั่วโมงแสงแดดสุทธิ ไทย
-    const PR = 0.80;          // Performance Ratio
-    const genPerKwpPerDay = hoursPerDay * PR;
+function stage1_technical(bill, tariff, kwp, biz, P) {
+    const genPerKwpPerDay = P.psh * P.pr;
     const genPerYear = kwp * genPerKwpPerDay * 365;
     const genPerMonth = genPerYear / 12;
     const covPct = Math.min(100, (genPerMonth / (bill / tariff)) * 100);
@@ -334,28 +406,28 @@ function stage1_technical(bill, tariff, kwp, biz) {
     };
 }
 
-function stage2_financial(epc, annualSaving, kwp, tariff) {
-    const cf = buildCashflows(epc, annualSaving);
+function stage2_financial(epc, annualSaving, kwp, tariff, P) {
+    const cf = buildCashflows(epc, annualSaving, P);
     const irr = calcIRR(cf);
-    const npv = calcNPV(cf);
+    const npv = calcNPV(cf, P.discount);
     const payback = epc / annualSaving;
 
     // Simple payback refinement (accounting for degradation)
     let cumSaving = 0, pbRefined = payback;
     let s = annualSaving;
-    for (let y = 1; y <= 25; y++) {
-        s *= 0.995;
+    for (let y = 1; y <= P.years; y++) {
+        s *= (1 - P.degrade);
         cumSaving += s;
         if (cumSaving >= epc) { pbRefined = y; break; }
     }
 
-    // ROI 25 ปี
+    // ROI ตลอดอายุโครงการ
     const totalSaving25 = cf.slice(1).reduce((a,b) => a+b, 0);
     const roi25 = ((totalSaving25 / epc) * 100).toFixed(0);
 
     return { irr, npv, payback, pbRefined, totalSaving25, roi25,
-        summary: `IRR ${irr.toFixed(1)}% | NPV ${fmtM(npv)} (discount 8%) | ` +
-                 `คืนทุน ${pbRefined} ปี | ROI 25 ปี ${roi25}%`
+        summary: `IRR ${irr.toFixed(1)}% | NPV ${fmtM(npv)} (discount ${(P.discount*100).toFixed(1)}%) | ` +
+                 `คืนทุน ${pbRefined} ปี | ROI ${P.years} ปี ${roi25}%`
     };
 }
 
@@ -388,27 +460,28 @@ function stage3_risk(kwp, epc, biz, payback) {
     return risks;
 }
 
-function stage4_alternatives(bill, kwp, epc, annualSaving, payback, tariff, epcRate) {
+function stage4_alternatives(bill, kwp, epc, annualSaving, payback, tariff, epcRate, P) {
+    const yieldPerKwp = P.psh * P.pr * 365;
     // Option 1: Cost optimized (EPC ลด)
     const epc1 = kwp * (epcRate - 1.5) * 1000;
     const pb1 = (epc1 / annualSaving);
-    const irr1 = calcIRR(buildCashflows(epc1, annualSaving));
+    const irr1 = calcIRR(buildCashflows(epc1, annualSaving, P));
 
     // Option 2: Hybrid ESS
     const essCost = kwp * 0.3 * 8000; // 30% of kWp ใน kWh battery, 8000บ/kWh
     const epc2 = epc + essCost;
     const peakSaving = annualSaving * 0.25; // demand charge saving
     const pb2 = epc2 / (annualSaving + peakSaving);
-    const irr2 = calcIRR(buildCashflows(epc2, annualSaving + peakSaving));
+    const irr2 = calcIRR(buildCashflows(epc2, annualSaving + peakSaving, P));
 
     // Option 3: PPA
     const ppaDiff = tariff - (tariff * 0.85); // ลูกค้าจ่าย 85% ของค่าไฟ
-    const ppaSaving = kwp * 1450 * ppaDiff;
+    const ppaSaving = kwp * yieldPerKwp * ppaDiff;
 
     // Option 4: Phase installation (ทยอยติด)
     const kwpP1 = Math.round(kwp * 0.5);
     const epcP1 = kwpP1 * epcRate * 1000;
-    const savP1 = kwpP1 * 1450 * tariff;
+    const savP1 = kwpP1 * yieldPerKwp * tariff;
     const pbP1 = epcP1 / savP1;
 
     return [
@@ -434,14 +507,14 @@ function stage4_alternatives(bill, kwp, epc, annualSaving, payback, tariff, epcR
             badge:'amber', title:`Option D: Phased (${kwpP1} kWp ก่อน)`,
             kwp: kwpP1, epc: epcP1,
             desc:`ติดตั้งครึ่งแรก ${kwpP1} kWp ก่อน ใช้เงินลงทุนน้อยลง ${fmtM(epcP1)} คืนทุน ${pbP1.toFixed(1)} ปี แล้วขยายเฟสสอง`,
-            payback:`${pbP1.toFixed(1)} ปี (เฟส 1)`, irr: `${calcIRR(buildCashflows(epcP1, savP1)).toFixed(1)}%`, saving: fmtM(savP1)
+            payback:`${pbP1.toFixed(1)} ปี (เฟส 1)`, irr: `${calcIRR(buildCashflows(epcP1, savP1, P)).toFixed(1)}%`, saving: fmtM(savP1)
         }
     ];
 }
 
-function stage5_proposal(kwp, epc, annualSaving, payback, biz, tariff) {
+function stage5_proposal(kwp, epc, annualSaving, payback, biz, tariff, P) {
     const monthSave = Math.round(annualSaving / 12);
-    const co2 = (kwp * 1450 * 0.4633 / 1000).toFixed(0); // tCO2/yr
+    const co2 = (kwp * P.psh * P.pr * 365 * 0.4633 / 1000).toFixed(0); // tCO2/ปี
     return `${biz}ขนาดนี้เหมาะมากสำหรับโซลาร์รูฟท็อป ${kwp} kWp ประหยัดค่าไฟได้ทันที ` +
            `${fmt(monthSave)} บาท/เดือน (${fmtM(annualSaving)}/ปี) คืนทุนภายใน ${payback.toFixed(1)} ปี ` +
            `และลด CO₂ ได้ ${co2} ตัน/ปี ซึ่งนำไปใช้ในรายงาน ESG ได้`;
@@ -498,6 +571,7 @@ async function runPipeline() {
     const tariff  = parseFloat(document.getElementById('tariff').value)  || 4.7;
     const epcRate = parseFloat(document.getElementById('epcRate').value) || 22;
     const biz     = document.getElementById('bizType').value;
+    const P       = readParams();
 
     if (!bill || bill <= 0) { alert('กรุณากรอกค่าไฟให้ถูกต้อง'); return; }
 
@@ -515,17 +589,22 @@ async function runPipeline() {
     const units       = bill / tariff;
     const kwp         = Math.max(30, Math.round(units / 130));
     const epc         = kwp * epcRate * 1000;
-    const annualSaving = kwp * 1450 * tariff;
+    // ผลผลิตต่อ kWp คิดจาก PSH และ PR ที่ผู้ใช้ตั้ง — ต้องเป็นค่าเดียวกับที่ Stage 1 ใช้
+    const yieldPerKwp = P.psh * P.pr * 365;
+    const annualSaving = kwp * yieldPerKwp * tariff;
 
     log(`เริ่ม Pipeline: ค่าไฟ <b>${fmt(bill)} บาท/เดือน</b> | ${biz}`);
     log(`Base: ~${kwp} kWp | EPC ${fmtM(epc)} | Tariff ${tariff} บ./หน่วย`);
+    log(`พารามิเตอร์: discount ${(P.discount*100).toFixed(1)}% | ${P.years} ปี | ` +
+        `degradation ${(P.degrade*100).toFixed(1)}%/ปี | O&M ${(P.om*100).toFixed(1)}%/ปี | ` +
+        `PSH ${P.psh} ชม. | PR ${(P.pr*100).toFixed(0)}%`);
     await delay(300);
 
     // ── Stage 1 ──────────────────────────────────────────
     agentSet(1,'active'); setStatus('Stage 1: Technical Sizing');
     log('[Stage 1] qwen2.5:32b — Technical Parser & Sizing...');
     await delay(900);
-    const t1 = stage1_technical(bill, tariff, kwp, biz);
+    const t1 = stage1_technical(bill, tariff, kwp, biz, P);
     agentSet(1,'done');
     log(`[Stage 1 ✓] ${kwp} kWp | ผลิต ${fmt(t1.genPerYear)} kWh/ปี | Cover ${t1.covPct.toFixed(0)}%`, 'success');
 
@@ -533,7 +612,7 @@ async function runPipeline() {
     agentSet(2,'active'); setStatus('Stage 2: Financial Modeling');
     log('[Stage 2] deepseek-r1:32b — NPV/IRR Newton-Raphson solver...');
     await delay(1100);
-    const t2 = stage2_financial(epc, annualSaving, kwp, tariff);
+    const t2 = stage2_financial(epc, annualSaving, kwp, tariff, P);
     agentSet(2,'done');
     log(`[Stage 2 ✓] IRR ${t2.irr.toFixed(1)}% | NPV ${fmtM(t2.npv)} | Payback ${t2.pbRefined} ปี`, 'success');
 
@@ -549,7 +628,7 @@ async function runPipeline() {
     agentSet(4,'active'); setStatus('Stage 4: Auto-Correction');
     log('[Stage 4] claude-3-5-sonnet — Generating alternatives...');
     await delay(900);
-    const t4 = stage4_alternatives(bill, kwp, epc, annualSaving, t2.payback, tariff, epcRate);
+    const t4 = stage4_alternatives(bill, kwp, epc, annualSaving, t2.payback, tariff, epcRate, P);
     agentSet(4,'done');
     log(`[Stage 4 ✓] สร้าง ${t4.length} ทางเลือก`, 'success');
 
@@ -557,7 +636,7 @@ async function runPipeline() {
     agentSet(5,'active'); setStatus('Stage 5: Proposal Synthesis');
     log('[Stage 5] gpt-4o — Sales proposal + CO₂ impact...');
     await delay(700);
-    const t5 = stage5_proposal(kwp, epc, annualSaving, t2.payback, biz, tariff);
+    const t5 = stage5_proposal(kwp, epc, annualSaving, t2.payback, biz, tariff, P);
     agentSet(5,'done');
     log('[Stage 5 ✓] Proposal compiled.', 'success');
 
