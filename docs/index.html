@@ -456,10 +456,11 @@ function numbersIn(s){
 // เลขลำดับหัวข้อถูกตัดไปแล้วตั้งแต่ numbersIn จึงไม่กลับมาปนอีก
 const SIGNIFICANT = v => Math.abs(v) >= 10 || !Number.isInteger(v);
 
-function consensus(answers){
+function consensus(answers, askedNums){
   const n = answers.length;
   if (n === 0) return null;
-  if (n === 1) return {pick: 0, agree: null, words: null, nums: null, shared: []};
+  if (n === 1) return {pick: 0, agree: null, words: null, nums: null,
+                       shared: [], unanimous: [], lone: 0, lopsided: false};
   const bags = answers.map(a => bag(a.text));
   // ตัวเลขสำคัญเท่านั้น — จำนวนเต็มเล็ก ๆ มักเป็นหน่วยเวลา เลขลำดับ หรือค่าคงที่
   // ที่โมเดลอีกตัวไม่มีเหตุต้องพูดถึง ถ้านับรวมจะดึงคะแนนลงโดยไม่มีความหมาย
@@ -486,7 +487,10 @@ function consensus(answers){
   const counts = new Map();
   answers.forEach(a => new Set(numbersIn(a.text))
     .forEach(v => counts.set(v, (counts.get(v) || 0) + 1)));
-  const sig = Array.from(counts.entries()).filter(e => SIGNIFICANT(e[0]));
+  // ตัดตัวเลขที่ลอกมาจากคำถามทิ้ง — พูดซ้ำโจทย์ไม่ใช่การเห็นตรงกัน
+  const asked = askedNums instanceof Set ? askedNums : new Set();
+  const sig = Array.from(counts.entries())
+    .filter(e => SIGNIFICANT(e[0]) && !asked.has(e[0]));
   const byCount = c => sig.filter(e => e[1] === c)
     .sort((a, b) => Math.abs(b[0]) - Math.abs(a[0]));
   const unanimous = byCount(n);                      // ทุกโมเดลพูดตรงกัน
@@ -654,12 +658,12 @@ async function ask(text){
                         esc(f.err) + '</td></tr>').join('') +
       '</table></div><div class="note" style="margin-top:6px">มักเกิดจากเรียกถี่เกิน (429) ' +
       'หรือผู้ให้บริการล่มชั่วคราว — ลองใหม่อีกครั้งใน 10 วินาที</div>';
-    updatePanel(0, null, secs, 'ทุกโมเดลล้มเหลว', false, null);
+    updatePanel(0, null, secs, 'ทุกโมเดลล้มเหลว', false, null, null);
     return done();
   }
 
   // ── สังเคราะห์ (โหมดละเอียด) ─────────────────────────────────
-  const con = consensus(answers);
+  const con = consensus(answers, new Set(numbersIn(text)));
   let finalText = answers[con.pick].text;
   let synth = false;
 
@@ -734,7 +738,7 @@ async function ask(text){
   chosen.forEach(c => dot(c.i, ''));
   updatePanel(answers.length, con.agree, secs,
               failures.length ? failures.length + ' โมเดลไม่ตอบ' : 'สำเร็จ',
-              con.nums !== null, con.words);
+              con.nums !== null, con.words, al);
   done();
 }
 
@@ -746,11 +750,12 @@ function done(){
   $('#q').focus();
 }
 
-function updatePanel(ok, agree, secs, note, isNum, words){
+function updatePanel(ok, agree, secs, note, isNum, words, verdictLabel){
+  // ใช้คำตัดสินชุดเดียวกับกล่องคำตอบ ไม่งั้นสองที่จะบอกคนละอย่าง
   // ปัดเศษก่อนแล้วค่อยตัดสินสี ไม่งั้นแผงจะโชว์ 30% ขณะที่ป้ายใช้เกณฑ์ <30%
   const rounded = (agree === null || agree === undefined)
     ? agree : Math.round(agree * 100) / 100;
-  const al = agreeLabel(rounded, isNum);
+  const al = verdictLabel || agreeLabel(rounded, isNum);
   $('#s-ok').textContent = String(ok || 0);
   $('#s-agree').textContent = (agree === null || agree === undefined)
     ? '—' : (agree * 100).toFixed(0) + '%';
@@ -855,7 +860,7 @@ $('#clear').addEventListener('click', function(){
   S.history = [];
   chat.innerHTML = '';
   try { localStorage.removeItem('aiChatHist'); } catch(e){}
-  updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม', false, null);
+  updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม', false, null, null);
   welcome();
 });
 ['#mode', '#sys', '#opt-calc', '#opt-mem', '#opt-raw']
