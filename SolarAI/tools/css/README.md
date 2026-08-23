@@ -1,7 +1,7 @@
 # tools/css — ตัวสร้าง Tailwind CSS ที่ฝังในแอป
 
 แอปไม่โหลด Tailwind จาก CDN แล้ว แต่ใช้ไฟล์ CSS ที่ generate ไว้ล่วงหน้าที่
-`app/src/main/assets/vendor/tailwind.css` (~11 KB — เล็กกว่า CDN มาก เพราะมีเฉพาะ
+`shared-assets/vendor/tailwind.css` (~11 KB — เล็กกว่า CDN มาก เพราะมีเฉพาะ
 class ที่ `index.html` ใช้จริง)
 
 ## เมื่อไหร่ต้อง generate ใหม่
@@ -18,13 +18,13 @@ class ที่ `index.html` ใช้จริง)
 ```bash
 cd SolarAI/tools/css
 npm ci        # ครั้งแรกครั้งเดียว
-npm run build # generate ../../app/src/main/assets/vendor/tailwind.css
+npm run build # generate ../../shared-assets/vendor/tailwind.css
 ```
 
 ระหว่างแก้ไฟล์ต่อเนื่องใช้ watch mode ได้:
 
 ```bash
-npx tailwindcss -i input.css -o ../../app/src/main/assets/vendor/tailwind.css --watch
+npx tailwindcss -i input.css -o ../../shared-assets/vendor/tailwind.css --watch
 ```
 
 ## ไฟล์อื่นใน vendor/ (ไม่ต้อง generate)

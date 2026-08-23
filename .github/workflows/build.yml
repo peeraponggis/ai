@@ -28,7 +28,7 @@ jobs:
           cache: npm
           cache-dependency-path: SolarAI/tools/css/package-lock.json
 
-      # สร้าง vendor/tailwind.css ใหม่จาก index.html ปัจจุบัน
+      # สร้าง shared-assets/vendor/tailwind.css ใหม่จาก index.html ของทุกโมดูล
       # เพื่อให้ class ที่เพิ่งเพิ่มเข้าไปมีผลใน APK เสมอ
       - name: Rebuild Tailwind CSS
         working-directory: SolarAI/tools/css
@@ -36,16 +36,28 @@ jobs:
           npm ci
           npm run build
           cd ../..
-          git diff --quiet app/src/main/assets/vendor/tailwind.css \
-            || echo "::notice::vendor/tailwind.css ในรีโปไม่ตรงกับ index.html — รัน 'npm run build' ใน tools/css แล้ว commit ด้วย"
+          git diff --quiet shared-assets/vendor/tailwind.css \
+            || echo "::notice::shared-assets/vendor/tailwind.css ในรีโปไม่ตรงกับ index.html — รัน 'npm run build' ใน tools/css แล้ว commit ด้วย"
 
-      - name: Build debug APK
+      - name: Unit tests
+        working-directory: SolarAI
+        run: ./gradlew :voicetranslate:testDebugUnitTest --stacktrace
+
+      # assembleDebug ที่ root สร้าง APK ให้ทุกโมดูล (:app และ :voicetranslate)
+      - name: Build debug APKs
         working-directory: SolarAI
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Upload Solar AI APK
         uses: actions/upload-artifact@v4
         with:
           name: solar-ai-debug-apk
           path: SolarAI/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload Voice Translate APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-translate-debug-apk
+          path: SolarAI/voicetranslate/build/outputs/apk/debug/voicetranslate-debug.apk
           if-no-files-found: error

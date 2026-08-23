@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SolarAI"
 include ':app'
+include ':voicetranslate'

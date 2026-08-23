@@ -1,5 +1,16 @@
 # Solar AI
 
+รีโปนี้มีแอป Android สองตัวที่ใช้ Claude API และแชร์โครงสร้าง build เดียวกัน
+
+| แอป | ทำอะไร |
+|---|---|
+| **Solar AI** (`:app`) | วิเคราะห์ความคุ้มค่าโครงการโซลาร์ C&I ผ่าน 6-stage pipeline |
+| **แปลเสียง** (`:voicetranslate`) | ฟังเสียงจากไมค์ → แปลเป็นไทย → พูดออกลำโพง เลือกเพศเสียงตามผู้พูด |
+
+---
+
+## Solar AI
+
 **C&I Solar AI Engine** — แอป Android สำหรับวิเคราะห์ความคุ้มค่าของโครงการโซลาร์
 เชิงพาณิชย์และอุตสาหกรรม (C&I) ในไทย โดยเรียก Claude API ผ่าน 6-stage pipeline
 
@@ -16,16 +27,21 @@
 
 ```
 SolarAI/                                  โปรเจกต์ Android (เปิดโฟลเดอร์นี้ใน Android Studio)
-├── app/src/main/
+├── app/src/main/                         โมดูล :app — แอป Solar AI
 │   ├── assets/index.html                 UI + pipeline logic ทั้งหมด
-│   ├── assets/vendor/                    Tailwind CSS, Font Awesome, ฟอนต์ (ฝังในแอป)
 │   ├── java/com/solarai/app/MainActivity.java   WebView + AndroidBridge → Anthropic API
 │   ├── res/                              ไอคอนและ strings
 │   └── AndroidManifest.xml
-├── tools/css/                            ตัว generate vendor/tailwind.css
+├── voicetranslate/src/main/              โมดูล :voicetranslate — แอปแปลเสียง
+│   ├── assets/index.html                 UI + logic การแปล/เลือกเพศเสียง
+│   ├── java/com/solarai/voicetranslate/  ไมค์, ถอดเสียง, วัด pitch, TTS, bridge
+│   └── AndroidManifest.xml
+├── shared-assets/vendor/                 Tailwind CSS, Font Awesome, ฟอนต์ (ใช้ร่วมสองแอป)
+├── tools/css/                            ตัว generate shared-assets/vendor/tailwind.css
 ├── gradlew, gradle/                      Gradle wrapper 8.9
-└── BUILD_INSTRUCTIONS.md                 วิธี build APK
-.github/workflows/build.yml               CI: build APK อัตโนมัติทุก push
+├── BUILD_INSTRUCTIONS.md                 วิธี build APK
+└── VOICE_TRANSLATE.md                    วิธีใช้และข้อจำกัดของแอปแปลเสียง
+.github/workflows/build.yml               CI: build APK ทั้งสองตัวอัตโนมัติทุก push
 SolarAI-AndroidProject.zip                ไฟล์ zip ต้นฉบับ (เก็บไว้อ้างอิง)
 ```
 
@@ -42,3 +58,19 @@ GitHub Actions (ไม่ต้องติดตั้งอะไร), Android
 
 CSS และฟอนต์ทั้งหมดฝังอยู่ในแอป ไม่พึ่ง CDN — หน้าจอจึงขึ้นครบแม้เน็ตช้า
 ต่ออินเทอร์เน็ตเฉพาะตอนเรียก Claude API เท่านั้น
+
+---
+
+## แปลเสียง
+
+ฟังเสียงจากไมค์โทรศัพท์ → ถอดเป็นข้อความด้วย `SpeechRecognizer` ของ Android →
+ให้ Claude แปลเป็นไทย → อ่านออกเสียงด้วย TextToSpeech ในเครื่อง
+
+**เพศของเสียงพูดไทยเลือกอัตโนมัติ** โดยไล่จากสัญญาณที่น่าเชื่อถือที่สุด: ผู้ใช้ตั้งเอง →
+ระดับเสียง (F0) ของผู้พูดจริง (Android 13+ ที่อ่านคลื่นเสียงได้) → ร่องรอยทางภาษาในประโยค
+ที่ Claude เดาให้ (ครับ/ค่ะ, ผม/ดิฉัน, การผันคำตามเพศ) → ค่าล่าสุดในเซสชัน
+หน้าจอบอกเสมอว่าใช้สัญญาณไหน และแตะป้ายเพศเพื่อสลับแล้วพูดซ้ำได้ทันที
+
+ถอดเสียงและอ่านออกเสียงใช้ของที่มีในเครื่อง ไม่ต้องมี API key เพิ่มจาก Anthropic
+
+รายละเอียด ความแม่นยำที่คาดหวังได้ และข้อจำกัด: [SolarAI/VOICE_TRANSLATE.md](SolarAI/VOICE_TRANSLATE.md)

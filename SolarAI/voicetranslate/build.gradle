@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.solarai.app'
+    namespace 'com.solarai.voicetranslate'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.solarai.app"
+        applicationId "com.solarai.voicetranslate"
         minSdk 24
         targetSdk 34
         versionCode 1
@@ -29,8 +29,8 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // vendor/ (Tailwind, Font Awesome, ฟอนต์) ใช้ร่วมกับโมดูล :voicetranslate
-    // path ใน HTML ยังเป็น vendor/... เหมือนเดิม
+    // vendor/ (Tailwind, Font Awesome, ฟอนต์) ใช้ร่วมกับโมดูล :app
+    // path ใน HTML ยังเป็น vendor/... เหมือนกันทั้งสองแอป
     sourceSets {
         main {
             assets.srcDirs += ['../shared-assets']
@@ -41,4 +41,5 @@ android {
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.webkit:webkit:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
 }
