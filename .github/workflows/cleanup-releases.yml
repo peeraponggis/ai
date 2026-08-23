@@ -1,0 +1,43 @@
+name: Cleanup Releases
+
+# ลบ release เก่าที่ไม่ใช้แล้ว พร้อม tag ของมัน
+# วิธีใช้: push branch ชื่อ cleanup/releases-<tag>_<tag>_...
+#   เช่น  git push origin HEAD:cleanup/releases-v1.0.0_v1.0.1
+# CI จะลบให้ทีละตัว แล้วลบ branch ตัวเองทิ้ง
+on:
+  push:
+    branches: ['cleanup/releases-*']
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Delete releases and tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LIST="${GITHUB_REF_NAME#cleanup/releases-}"
+          echo "จะลบ: $(echo "$LIST" | tr '_' ' ')"
+          FAILED=0
+          for TAG in $(echo "$LIST" | tr '_' ' '); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              # --cleanup-tag ลบ tag ที่ผูกกับ release ไปด้วย
+              gh release delete "$TAG" --yes --cleanup-tag && echo "ลบแล้ว: $TAG" || { echo "::error::ลบไม่สำเร็จ: $TAG"; FAILED=1; }
+            else
+              echo "ข้าม (ไม่มีอยู่แล้ว): $TAG"
+            fi
+          done
+          echo "--- release ที่เหลืออยู่ ---"
+          gh release list
+          exit $FAILED
+
+      - name: Clean up trigger branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || true
