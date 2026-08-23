@@ -80,12 +80,26 @@ jobs:
             exit 1
           fi
 
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          KS="$RUNNER_TEMP/release.keystore"
+          if ! echo "$KEYSTORE_BASE64" | base64 -d > "$KS" 2>/dev/null; then
+            echo "::error::KEYSTORE_BASE64 ไม่ใช่ base64 ที่ถูกต้อง — ก๊อปไฟล์ keystore.base64 มาไม่ครบหรือมีอักขระแปลกปน"
+            exit 1
+          fi
 
-          # ตรวจว่ารหัสผ่านและ alias ตรงกับ keystore จริง ก่อนเสียเวลา build
-          if ! keytool -list -keystore "$RUNNER_TEMP/release.keystore" \
-                 -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
-            echo "::error::เปิด keystore ไม่ได้ — KEYSTORE_PASSWORD ผิด หรือไม่มี alias '$KEY_ALIAS' ใน keystore"
+          # พิมพ์ลายนิ้วมือของไฟล์ (ไม่ใช่ความลับ) เพื่อดูว่า base64 ที่วางไว้ครบถ้วนไหม
+          echo "keystore ที่ถอดออกมาได้: $(stat -c%s "$KS") bytes"
+          echo "sha256: $(sha256sum "$KS" | cut -d' ' -f1)"
+          echo "ค่าที่ควรจะเป็น:          4300 bytes"
+          echo "sha256: 435bafac2b97c10b8c3eef3ed332583664e3518cd824e055308c79d0805631bf"
+
+          # แยกให้ชัดว่าปัญหาอยู่ที่รหัสผ่าน หรือที่ alias
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" > /dev/null 2>&1; then
+            echo "::error::เปิด keystore ไม่ได้ด้วย KEYSTORE_PASSWORD ที่ตั้งไว้ — ถ้า sha256 ด้านบนตรง แปลว่ารหัสผ่านผิด (ระวังช่องว่าง/บรรทัดใหม่ตอนก๊อป) ถ้า sha256 ไม่ตรง แปลว่า KEYSTORE_BASE64 ไม่ครบ"
+            exit 1
+          fi
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::รหัสผ่านถูกต้อง แต่ไม่พบ alias ที่ตั้งใน KEY_ALIAS — alias ที่มีอยู่จริงใน keystore แสดงด้านล่าง"
+            keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" | grep -i "alias name" || true
             exit 1
           fi
           echo "signed=true" >> "$GITHUB_OUTPUT"
