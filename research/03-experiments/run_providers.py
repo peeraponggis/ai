@@ -17,23 +17,21 @@ UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
 
 PROVIDERS = [
-    {'key': 'llm7-fast',      'url': 'https://api.llm7.io/v1/chat/completions',
-     'model': 'fast',    'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
-    {'key': 'llm7-default',   'url': 'https://api.llm7.io/v1/chat/completions',
-     'model': 'default', 'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
-    {'key': 'llm7-pro',       'url': 'https://api.llm7.io/v1/chat/completions',
-     'model': 'pro',     'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
-    {'key': 'llm7-gpt4o-mini', 'url': 'https://api.llm7.io/v1/chat/completions',
-     'model': 'gpt-4o-mini-2024-07-18', 'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
-    {'key': 'llm7-mistral',   'url': 'https://api.llm7.io/v1/chat/completions',
-     'model': 'mistral-small-3.1-24b-instruct-2503',
-     'headers': {'Authorization': 'Bearer unused'}, 'min_gap': 2.0},
-    # Pollinations: ต้องมี User-Agent แบบเบราว์เซอร์ ไม่งั้นโดน Cloudflare ตอบ 403 (error 1010)
-    {'key': 'poll-openai',    'url': 'https://text.pollinations.ai/openai',
-     'model': 'openai',      'headers': {'User-Agent': UA}, 'min_gap': 16.0},
-    {'key': 'poll-mistral',   'url': 'https://text.pollinations.ai/openai',
-     'model': 'mistral',     'headers': {'User-Agent': UA}, 'min_gap': 16.0},
+    # 7 โมเดลที่ยืนยันด้วย probe แล้วว่าเรียกได้โดยไม่ต้องมี API key (2026-08-23)
+    # คัดจาก 45 ตัวในลิสต์ — ที่เหลือคืน 401 invalid_api_key หรือเป็นโมเดลรูป/วิดีโอ
+    # จงใจเลือกให้ครอบคลุมหลายค่าย เพื่อกด phi ให้ต่ำที่สุดเท่าที่ทำได้
+    {'key': 'deepseek-v4-flash', 'model': 'DeepSeek-V4-Flash-0731'},
+    {'key': 'codestral',         'model': 'codestral-latest'},
+    {'key': 'gemini-flash-lite', 'model': 'gemini-3.1-flash-lite'},
+    {'key': 'gpt-oss-20b',       'model': 'gpt-oss:20b'},
+    {'key': 'llama-3.1-8b',      'model': 'meta-Llama-3.1-8B-Instruct-Turbo'},
+    {'key': 'minimax-m2.7',      'model': 'minimax-m2.7'},
+    {'key': 'mistral-nemo',      'model': 'mistral-Nemo-Instruct-2407'},
 ]
+for _p in PROVIDERS:
+    _p.setdefault('url', 'https://api.llm7.io/v1/chat/completions')
+    _p.setdefault('headers', {'Authorization': 'Bearer unused', 'User-Agent': UA})
+    _p.setdefault('min_gap', 1.5)   # 429 บอก retry_after 1 วิ — เผื่อไว้เป็น 1.5
 
 SYSTEM = ('คุณเป็นผู้ช่วยวิเคราะห์ข้อมูล ตอบเป็นภาษาไทย '
           'อธิบายสั้นที่สุดเท่าที่จำเป็น แล้วปิดท้ายด้วยบรรทัดสุดท้ายในรูปแบบ '
