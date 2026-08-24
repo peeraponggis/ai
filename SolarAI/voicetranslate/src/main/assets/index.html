@@ -48,15 +48,15 @@ pre { white-space:pre-wrap; word-break:break-word; }
     <!-- แจ้งเตือนสถานะเครื่อง -->
     <div id="notice" class="hidden bg-amber-900/40 border border-amber-700 text-amber-200 rounded-xl p-3 text-xs"></div>
 
-    <!-- API Key -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4" id="keyCard">
+    <!-- API Key — แสดงเฉพาะตัวแปลที่ต้องใช้ key -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 hidden" id="keyCard">
         <h2 class="text-sm font-semibold mb-2 text-purple-400 flex items-center">
-            <i class="fa-solid fa-key mr-2"></i> Anthropic API Key
+            <i class="fa-solid fa-key mr-2"></i> <span id="keyTitle"></span>
         </h2>
-        <input type="password" id="apiKey" placeholder="sk-ant-api03-..."
+        <input type="password" id="apiKey"
             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-purple-500 fm"
             oninput="saveKey(this.value)">
-        <p class="text-[10px] text-slate-500 mt-1.5">🔒 เก็บในเครื่องเท่านั้น · console.anthropic.com</p>
+        <p class="text-[10px] text-slate-500 mt-1.5" id="keyHint"></p>
     </div>
 
     <!-- ภาษาต้นทาง -->
@@ -120,6 +120,19 @@ pre { white-space:pre-wrap; word-break:break-word; }
         <h2 class="text-sm font-semibold text-indigo-400"><i class="fa-solid fa-gear mr-2"></i> ตั้งค่า</h2>
 
         <div>
+            <label class="block text-xs text-slate-400 mb-1.5">ตัวแปล</label>
+            <div class="grid grid-cols-3 gap-2" id="enginePicker"></div>
+            <p class="text-[10px] text-slate-500 mt-1.5" id="engineHint"></p>
+        </div>
+
+        <div id="modelBox">
+            <label class="block text-xs text-slate-400 mb-1.5">โมเดลที่ใช้แปล</label>
+            <select id="model" onchange="onModelChange(this.value)"
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </select>
+        </div>
+
+        <div>
             <label class="block text-xs text-slate-400 mb-1.5">เพศของเสียงพูดไทย</label>
             <div class="grid grid-cols-3 gap-2" id="genderMode"></div>
             <p class="text-[10px] text-slate-500 mt-1.5" id="genderHint"></p>
@@ -140,16 +153,6 @@ pre { white-space:pre-wrap; word-break:break-word; }
             </label>
             <input type="range" id="rate" min="0.6" max="1.6" step="0.05"
                 class="w-full accent-indigo-500" oninput="onRateChange(this.value)">
-        </div>
-
-        <div>
-            <label class="block text-xs text-slate-400 mb-1.5">โมเดลที่ใช้แปล</label>
-            <select id="model" onchange="setPref('model', this.value)"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                <option value="claude-opus-5">Claude Opus 5 — แปลดีที่สุด</option>
-                <option value="claude-sonnet-5">Claude Sonnet 5 — สมดุล</option>
-                <option value="claude-haiku-4-5">Claude Haiku 4.5 — เร็วที่สุด</option>
-            </select>
         </div>
 
         <label class="flex items-center gap-2 text-xs text-slate-300">
@@ -225,61 +228,153 @@ const state = {
 };
 
 /* ============================================================
-   เรียก Claude ผ่าน bridge (เลี่ยง CORS) หรือ fetch เมื่อทดสอบบน PC
+   ตัวแปล 3 แบบ — สลับได้ในหน้าตั้งค่า
    ============================================================ */
-const pending = {};
-window._claudeCallback = function (id, raw) {
-    const cb = pending[id];
-    if (!cb) return;
-    delete pending[id];
-    try {
-        const data = JSON.parse(raw);
-        if (data.error) cb.reject(new Error(data.error.message || 'API error'));
-        else cb.resolve((data.content || []).map(b => b.text || '').join(''));
-    } catch (e) {
-        cb.reject(new Error('อ่านคำตอบจาก API ไม่ได้'));
+const ENGINES = {
+    mlkit: {
+        label: 'ในเครื่อง',
+        note: 'ฟรีตลอด ไม่ต้องมี API key ครั้งแรกของแต่ละภาษาต้องต่อเน็ตเพื่อโหลดโมเดล '
+            + '(~30 MB) จากนั้นใช้ออฟไลน์ได้ · แลกกับคุณภาพที่หยาบกว่า และ'
+            + 'เดาเพศจากภาษาไม่ได้',
+        needsKey: false,
+        linguisticGender: false
+    },
+    gemini: {
+        label: 'Gemini',
+        note: 'ฟรีเทียร์ของ Google ไม่ต้องผูกบัตร (~1,500 ครั้ง/วัน) คุณภาพดีและเดาเพศจากภาษาได้ · '
+            + 'ข้อความที่ส่งในเทียร์ฟรีอาจถูก Google นำไปปรับปรุงผลิตภัณฑ์',
+        needsKey: true,
+        linguisticGender: true,
+        keyPref: 'gemini_key',
+        keyTitle: 'Gemini API Key (ฟรี)',
+        keyHint: '🔒 เก็บในเครื่องเท่านั้น · ขอฟรีที่ aistudio.google.com/apikey ไม่ต้องใส่บัตร',
+        modelPref: 'model_gemini',
+        defaultModel: 'gemini-2.5-flash',
+        models: [
+            ['gemini-2.5-flash', 'Gemini 2.5 Flash — แปลดี'],
+            ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash-Lite — เร็วกว่า โควตาเยอะกว่า']
+        ]
+    },
+    claude: {
+        label: 'Claude',
+        note: 'คุณภาพการแปลดีที่สุด แต่เสียเงินตามการใช้งานจริง ต้องเติมเครดิตที่ console.anthropic.com ก่อน',
+        needsKey: true,
+        linguisticGender: true,
+        keyPref: 'api_key',
+        keyTitle: 'Anthropic API Key (เสียเงิน)',
+        keyHint: '🔒 เก็บในเครื่องเท่านั้น · console.anthropic.com (ต้องเติมเครดิตก่อนใช้)',
+        modelPref: 'model',
+        defaultModel: 'claude-opus-5',
+        models: [
+            ['claude-opus-5', 'Claude Opus 5 — แปลดีที่สุด'],
+            ['claude-sonnet-5', 'Claude Sonnet 5 — สมดุล'],
+            ['claude-haiku-4-5', 'Claude Haiku 4.5 — ถูกและเร็วที่สุด']
+        ]
     }
 };
 
-function callClaude(body) {
-    const key = document.getElementById('apiKey').value.trim();
-    if (!key) return Promise.reject(new Error('ยังไม่ได้ใส่ Anthropic API Key'));
-    const json = JSON.stringify(body);
+function engine() { return ENGINES[state.engine] || ENGINES.mlkit; }
 
-    if (NATIVE) {
-        return new Promise((resolve, reject) => {
-            const id = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-            pending[id] = { resolve, reject };
-            AndroidBridge.callClaude(json, key, id);
-        });
+function getKey(name) {
+    const e = ENGINES[name];
+    if (!e || !e.needsKey) return '';
+    if (e.keyPref === 'api_key') {
+        return (NATIVE ? AndroidBridge.getApiKey() : localStorage.getItem('anthropic_key')) || '';
     }
-    return fetch('https://api.anthropic.com/v1/messages', {
+    return prefs.get(e.keyPref, '') || '';
+}
+
+function saveKey(v) {
+    const e = engine();
+    if (!e.needsKey) return;
+    if (e.keyPref === 'api_key') {
+        if (NATIVE) AndroidBridge.saveApiKey(v); else localStorage.setItem('anthropic_key', v);
+    } else {
+        prefs.set(e.keyPref, v);
+    }
+}
+
+function currentModel() {
+    const e = engine();
+    if (!e.models) return null;
+    return state[e.modelPref] || e.defaultModel;
+}
+
+/* ── ท่อรับผลจากฝั่ง Android — ใช้ร่วมกันทั้งสามตัวแปล ────────────────── */
+const pending = {};
+
+window._bridgeCallback = function (id, raw) {
+    const cb = pending[id];
+    if (!cb) return;
+    delete pending[id];
+    let data;
+    try {
+        data = JSON.parse(raw);
+    } catch (e) {
+        cb.reject(new Error('อ่านคำตอบจากตัวแปลไม่ได้'));
+        return;
+    }
+    if (data && data.error) {
+        cb.reject(new Error(data.error.message || 'เกิดข้อผิดพลาดที่ตัวแปล'));
+        return;
+    }
+    cb.resolve(data);
+};
+
+function bridgeCall(invoke) {
+    return new Promise((resolve, reject) => {
+        const id = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        pending[id] = { resolve, reject };
+        try {
+            invoke(id);
+        } catch (e) {
+            delete pending[id];
+            reject(e);
+        }
+    });
+}
+
+/** ใช้ตอนเปิดทดสอบบนเบราว์เซอร์ PC ที่ไม่มี AndroidBridge */
+function httpJson(url, headers, body) {
+    return fetch(url, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': key,
-            'anthropic-version': '2023-06-01'
-        },
-        body: json
+        headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+        body: JSON.stringify(body)
     }).then(r => r.json()).then(d => {
         if (d.error) throw new Error(d.error.message);
-        return (d.content || []).map(b => b.text || '').join('');
+        return d;
     });
 }
 
 /* ============================================================
-   แปล + เดาเพศจากร่องรอยทางภาษา (คำขอเดียว)
+   แปล + เดาเพศจากร่องรอยทางภาษา
    ============================================================ */
-const TRANSLATE_SCHEMA = {
+const GENDER_VALUES = ['male', 'female', 'unknown'];
+
+/* schema ของ Anthropic (JSON Schema มาตรฐาน) */
+const CLAUDE_SCHEMA = {
     type: 'object',
     properties: {
         source_language: { type: 'string', description: 'ชื่อภาษาต้นทางเป็นภาษาไทย' },
         translation:     { type: 'string', description: 'คำแปลในภาษาปลายทาง' },
-        speaker_gender:  { type: 'string', enum: ['male', 'female', 'unknown'] },
+        speaker_gender:  { type: 'string', enum: GENDER_VALUES },
         gender_evidence: { type: 'string', description: 'คำหรือวลีที่ใช้ตัดสินเพศ ภาษาไทยสั้น ๆ' }
     },
     required: ['source_language', 'translation', 'speaker_gender', 'gender_evidence'],
     additionalProperties: false
+};
+
+/* schema ของ Gemini ใช้ชนิดตัวพิมพ์ใหญ่และไม่มี additionalProperties */
+const GEMINI_SCHEMA = {
+    type: 'OBJECT',
+    properties: {
+        source_language: { type: 'STRING' },
+        translation:     { type: 'STRING' },
+        speaker_gender:  { type: 'STRING', enum: GENDER_VALUES },
+        gender_evidence: { type: 'STRING' }
+    },
+    required: ['source_language', 'translation', 'speaker_gender', 'gender_evidence'],
+    propertyOrdering: ['source_language', 'translation', 'speaker_gender', 'gender_evidence']
 };
 
 function systemPrompt(targetLabel) {
@@ -310,25 +405,100 @@ function systemPrompt(targetLabel) {
 function translate(text, opts) {
     const to = (opts && opts.to) || 'th';
     const target = TARGETS[to] || TARGETS.th;
-    return callClaude({
-        model: state.model || 'claude-opus-5',
+    const from = (opts && opts.from) || state.src_lang || 'auto';
+
+    if (state.engine === 'gemini') return translateGemini(text, target);
+    if (state.engine === 'claude') return translateClaude(text, target);
+    return translateOnDevice(text, from, to);
+}
+
+/* ── ตัวแปลในเครื่อง (ML Kit) ─────────────────────────────────────────── */
+function translateOnDevice(text, from, to) {
+    if (!NATIVE) {
+        return Promise.reject(new Error('ตัวแปลในเครื่องใช้ได้เฉพาะบนแอป Android'));
+    }
+    if (!state.mlkitNoticeShown) {
+        state.mlkitNoticeShown = true;
+        setStatus('กำลังแปล… ครั้งแรกของแต่ละภาษาต้องโหลดโมเดลก่อน อาจใช้เวลาสักครู่');
+    }
+    return bridgeCall(id => AndroidBridge.translateOnDevice(text, from, to, id));
+}
+
+/* ── Gemini ───────────────────────────────────────────────────────────── */
+function geminiBody(target, text, withThinkingConfig) {
+    const body = {
+        systemInstruction: { parts: [{ text: systemPrompt(target.label) }] },
+        contents: [{ role: 'user', parts: [{ text: text }] }],
+        generationConfig: {
+            temperature: 0.3,
+            responseMimeType: 'application/json',
+            responseSchema: GEMINI_SCHEMA
+        }
+    };
+    // ปิดการคิดก่อนตอบเพื่อลดเวลารอ — งานแปลประโยคสั้นไม่ต้องใช้
+    if (withThinkingConfig) body.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    return body;
+}
+
+function translateGemini(text, target) {
+    const key = getKey('gemini');
+    if (!key) {
+        return Promise.reject(new Error(
+            'ยังไม่ได้ใส่ Gemini API Key — ขอฟรีที่ aistudio.google.com/apikey'));
+    }
+    const model = currentModel();
+    const send = withThinking => {
+        const body = geminiBody(target, text, withThinking);
+        if (NATIVE) {
+            return bridgeCall(id =>
+                AndroidBridge.callGemini(JSON.stringify(body), key, model, id));
+        }
+        return httpJson(
+            'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',
+            { 'x-goog-api-key': key }, body);
+    };
+
+    return send(true)
+        // บางรุ่นไม่รับ thinkingConfig — ลองใหม่แบบไม่ใส่ก่อนจะยอมแพ้
+        .catch(err => /thinking/i.test(err.message || '') ? send(false) : Promise.reject(err))
+        .then(data => {
+            const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
+            return parseTranslation(parts.map(b => b.text || '').join(''));
+        });
+}
+
+/* ── Claude ───────────────────────────────────────────────────────────── */
+function translateClaude(text, target) {
+    const key = getKey('claude');
+    if (!key) return Promise.reject(new Error('ยังไม่ได้ใส่ Anthropic API Key'));
+
+    const body = {
+        model: currentModel(),
         max_tokens: 1024,
         // งานแปลประโยคสั้น — effort ต่ำเพื่อลดเวลารอ แต่ยังเปิด thinking ไว้ตามค่าเริ่มต้น
         output_config: {
             effort: 'low',
-            format: { type: 'json_schema', schema: TRANSLATE_SCHEMA }
+            format: { type: 'json_schema', schema: CLAUDE_SCHEMA }
         },
         system: systemPrompt(target.label),
         messages: [{ role: 'user', content: text }]
-    }).then(raw => {
-        let data;
-        try {
-            data = JSON.parse(raw);
-        } catch (e) {
-            throw new Error('คำตอบจากโมเดลไม่ใช่ JSON ที่อ่านได้');
-        }
-        return data;
-    });
+    };
+
+    const call = NATIVE
+        ? bridgeCall(id => AndroidBridge.callClaude(JSON.stringify(body), key, id))
+        : httpJson('https://api.anthropic.com/v1/messages',
+            { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, body);
+
+    return call.then(data =>
+        parseTranslation((data.content || []).map(b => b.text || '').join('')));
+}
+
+function parseTranslation(raw) {
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        throw new Error('คำตอบจากโมเดลไม่ใช่ JSON ที่อ่านได้');
+    }
 }
 
 /* ============================================================
@@ -380,8 +550,9 @@ function toggleMic() {
 }
 
 function startMic() {
-    if (!document.getElementById('apiKey').value.trim()) {
-        setStatus('ใส่ Anthropic API Key ก่อนเริ่มใช้งาน', 'warn');
+    const e = engine();
+    if (e.needsKey && !getKey(state.engine)) {
+        setStatus('ใส่ ' + e.keyTitle + ' ก่อนเริ่มใช้งาน (หรือสลับไปใช้ตัวแปลในเครื่อง)', 'warn');
         return;
     }
     if (NATIVE) {
@@ -603,10 +774,75 @@ function renderGenderMode() {
         b.onclick = () => { setPref('gender_mode', v); renderGenderMode(); };
         box.appendChild(b);
     });
-    document.getElementById('genderHint').textContent = caps.acousticGender
-        ? 'อัตโนมัติ: ใช้ระดับเสียงของผู้พูดเป็นหลัก และใช้ร่องรอยทางภาษาเสริม'
-        : 'อัตโนมัติ: เครื่องนี้อ่านคลื่นเสียงไม่ได้ จึงเดาจากร่องรอยทางภาษาในประโยค '
-          + '(เช่น ครับ/ค่ะ) ถ้าประโยคไม่มีคำบ่งเพศจะใช้ค่าล่าสุด — แตะป้ายเพศเพื่อสลับได้เสมอ';
+    const pitch = caps.acousticGender;
+    const lang = engine().linguisticGender;
+    let hint;
+    if (pitch && lang)        hint = 'อัตโนมัติ: ใช้ระดับเสียงของผู้พูดเป็นหลัก และใช้ร่องรอยทางภาษาเสริม';
+    else if (pitch)           hint = 'อัตโนมัติ: ใช้ระดับเสียงของผู้พูดอย่างเดียว '
+                                   + '(ตัวแปลในเครื่องเดาจากภาษาไม่ได้)';
+    else if (lang)            hint = 'อัตโนมัติ: เครื่องนี้อ่านคลื่นเสียงไม่ได้ จึงเดาจากร่องรอยทางภาษา '
+                                   + 'ในประโยค (เช่น ครับ/ค่ะ) ถ้าไม่มีคำบ่งเพศจะใช้ค่าล่าสุด';
+    else                      hint = 'อัตโนมัติ: เครื่องนี้อ่านคลื่นเสียงไม่ได้ และตัวแปลในเครื่องก็เดา'
+                                   + 'จากภาษาไม่ได้ → จะใช้ค่าล่าสุดเสมอ ถ้าต้องการให้เดาเองจริง ๆ '
+                                   + 'ให้สลับไปใช้ Gemini';
+    document.getElementById('genderHint').textContent = hint + ' — แตะป้ายเพศเพื่อสลับได้เสมอ';
+}
+
+/* ── ตัวแปล ────────────────────────────────────────────────────────────── */
+function renderEngine() {
+    const box = document.getElementById('enginePicker');
+    box.innerHTML = '';
+    Object.keys(ENGINES).forEach(name => {
+        const b = document.createElement('button');
+        const on = state.engine === name;
+        b.className = 'py-2 rounded-lg text-xs border ' + (on
+            ? 'bg-indigo-500 border-indigo-400 text-white'
+            : 'bg-slate-900 border-slate-700 text-slate-300');
+        b.textContent = ENGINES[name].label;
+        b.onclick = () => {
+            setPref('engine', name);
+            renderEngine();
+            renderKeyCard();
+            renderModels();
+            renderGenderMode();
+        };
+        box.appendChild(b);
+    });
+    document.getElementById('engineHint').textContent = engine().note;
+}
+
+function renderKeyCard() {
+    const e = engine();
+    const card = document.getElementById('keyCard');
+    card.classList.toggle('hidden', !e.needsKey);
+    if (!e.needsKey) return;
+
+    const input = document.getElementById('apiKey');
+    document.getElementById('keyTitle').textContent = e.keyTitle;
+    document.getElementById('keyHint').textContent = e.keyHint;
+    input.placeholder = e.keyPref === 'api_key' ? 'sk-ant-api03-...' : 'AIza...';
+    input.value = getKey(state.engine);
+}
+
+function renderModels() {
+    const e = engine();
+    const box = document.getElementById('modelBox');
+    box.classList.toggle('hidden', !e.models);
+    if (!e.models) return;
+
+    const sel = document.getElementById('model');
+    sel.innerHTML = '';
+    const cur = currentModel();
+    e.models.forEach(([v, label]) => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = label;
+        if (v === cur) o.selected = true;
+        sel.appendChild(o);
+    });
+}
+
+function onModelChange(v) {
+    setPref(engine().modelPref, v);
 }
 
 /**
@@ -683,10 +919,6 @@ function onRateChange(v) {
     if (NATIVE) AndroidBridge.setSpeechRate(parseFloat(v));
 }
 
-function saveKey(v) {
-    if (NATIVE) AndroidBridge.saveApiKey(v); else localStorage.setItem('anthropic_key', v);
-}
-
 /* ============================================================
    เริ่มต้น
    ============================================================ */
@@ -695,17 +927,14 @@ window.addEventListener('DOMContentLoaded', () => {
         try { caps = JSON.parse(AndroidBridge.getCapabilities()); } catch (e) { /* ใช้ค่าเริ่มต้น */ }
     }
 
-    const key = (NATIVE ? AndroidBridge.getApiKey() : localStorage.getItem('anthropic_key')) || '';
-    document.getElementById('apiKey').value = key;
-    if (key) document.getElementById('keyCard').classList.add('hidden');
-
-    ['src_lang', 'gender_mode', 'model', 'rate', 'auto_speak', 'voice_male', 'voice_female']
+    ['engine', 'src_lang', 'gender_mode', 'model', 'model_gemini', 'gemini_key',
+     'rate', 'auto_speak', 'voice_male', 'voice_female']
         .forEach(k => { state[k] = prefs.get(k, null); });
-    state.src_lang   = state.src_lang   || 'en-US';
+    state.engine      = ENGINES[state.engine] ? state.engine : 'mlkit';
+    state.src_lang    = state.src_lang    || 'en-US';
     state.gender_mode = state.gender_mode || 'auto';
-    state.model      = state.model      || 'claude-opus-5';
-    state.rate       = state.rate       || '1';
-    state.auto_speak = state.auto_speak || '1';
+    state.rate        = state.rate        || '1';
+    state.auto_speak  = state.auto_speak  || '1';
 
     const sel = document.getElementById('srcLang');
     LANGS.forEach(([v, label]) => {
@@ -718,12 +947,14 @@ window.addEventListener('DOMContentLoaded', () => {
         ? 'เลือกภาษาให้ตรงจะแม่นกว่า "อัตโนมัติ"'
         : 'Android รุ่นนี้ยังไม่รองรับการเดาภาษาเอง — เลือกภาษาให้ตรงกับที่จะพูด';
 
-    document.getElementById('model').value = state.model;
     document.getElementById('rate').value = state.rate;
     document.getElementById('rateVal').textContent = parseFloat(state.rate).toFixed(2) + '×';
     document.getElementById('autoSpeak').checked = state.auto_speak !== '0';
     if (NATIVE) AndroidBridge.setSpeechRate(parseFloat(state.rate));
 
+    renderEngine();
+    renderKeyCard();
+    renderModels();
     renderGenderMode();
     loadVoices();
 

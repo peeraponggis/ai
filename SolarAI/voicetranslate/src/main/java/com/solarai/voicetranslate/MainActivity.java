@@ -32,6 +32,7 @@ public class MainActivity extends Activity
     private WebView webView;
     private SpeechInput speech;
     private ThaiSpeaker speaker;
+    private OnDeviceTranslator onDevice;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     /** ตั้งค่าเมื่อ JS ขอฟังก่อนได้รับสิทธิ์ไมค์ — จะเริ่มฟังให้ทันทีที่ผู้ใช้กดอนุญาต */
@@ -60,6 +61,7 @@ public class MainActivity extends Activity
 
         speech = new SpeechInput(this, this);
         speaker = new ThaiSpeaker(this, this);
+        onDevice = new OnDeviceTranslator();
 
         webView.addJavascriptInterface(new TranslateBridge(this), "AndroidBridge");
         webView.setWebViewClient(new WebViewClient());
@@ -69,6 +71,7 @@ public class MainActivity extends Activity
 
     SpeechInput speech() { return speech; }
     ThaiSpeaker speaker() { return speaker; }
+    OnDeviceTranslator onDevice() { return onDevice; }
 
     void runOnMain(Runnable r) { mainHandler.post(r); }
 
@@ -130,12 +133,12 @@ public class MainActivity extends Activity
         });
     }
 
-    /** คืนผล Anthropic API กลับ JavaScript (รูปแบบเดียวกับแอป Solar AI) */
+    /** คืนผลจากตัวแปล (ในเครื่อง/Gemini/Claude) กลับ JavaScript ด้วย callback เดียวกัน */
     void deliver(final String callbackId, final String result) {
         mainHandler.post(new Runnable() {
             @Override public void run() {
                 if (webView == null) return;
-                String js = "window._claudeCallback("
+                String js = "window._bridgeCallback("
                         + JSONObject.quote(callbackId) + "," + JSONObject.quote(result) + ")";
                 webView.evaluateJavascript(js, null);
             }
@@ -222,6 +225,7 @@ public class MainActivity extends Activity
     protected void onDestroy() {
         if (speech != null) speech.destroy();
         if (speaker != null) speaker.shutdown();
+        if (onDevice != null) onDevice.shutdown();
         if (webView != null) {
             webView.destroy();
             webView = null;

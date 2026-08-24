@@ -41,5 +41,10 @@ android {
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.webkit:webkit:1.9.0'
+
+    // ตัวแปลในเครื่อง (ค่าเริ่มต้น) — ฟรี ไม่ต้องมี API key ทำงาน offline หลังโหลดโมเดล
+    implementation 'com.google.mlkit:translate:17.0.3'
+    implementation 'com.google.mlkit:language-id:17.0.6'
+
     testImplementation 'junit:junit:4.13.2'
 }

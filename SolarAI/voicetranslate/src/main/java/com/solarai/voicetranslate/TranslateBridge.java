@@ -27,7 +27,9 @@ import java.nio.charset.StandardCharsets;
 public class TranslateBridge {
 
     private static final String TAG = "VoiceTranslate";
-    private static final String API_URL = "https://api.anthropic.com/v1/messages";
+    private static final String CLAUDE_URL = "https://api.anthropic.com/v1/messages";
+    private static final String GEMINI_URL =
+            "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent";
     private static final String PREFS = "voice_translate_prefs";
     private static final String KEY_API = "api_key";
 
@@ -173,21 +175,45 @@ public class TranslateBridge {
         });
     }
 
-    // ── เรียก Anthropic API จากฝั่ง Java (ไม่ติด CORS) ─────────────────────
+    // ── ตัวแปลในเครื่อง (ค่าเริ่มต้น — ฟรี ไม่ต้องมี key) ────────────────────
 
     @JavascriptInterface
-    public void callClaude(final String jsonBody, final String apiKey, final String callbackId) {
+    public void translateOnDevice(String text, String srcLangTag,
+                                  String destLangTag, final String callbackId) {
+        host.onDevice().translate(text, srcLangTag, destLangTag,
+                json -> host.deliver(callbackId, json));
+    }
+
+    // ── เรียก API บนคลาวด์จากฝั่ง Java (ไม่ติด CORS) ───────────────────────
+
+    @JavascriptInterface
+    public void callClaude(String jsonBody, String apiKey, String callbackId) {
+        post(CLAUDE_URL, new String[][]{
+                { "x-api-key", apiKey },
+                { "anthropic-version", "2023-06-01" }
+        }, jsonBody, callbackId);
+    }
+
+    @JavascriptInterface
+    public void callGemini(String jsonBody, String apiKey, String model, String callbackId) {
+        // ส่ง key ทาง header ไม่ใช่ query string จะได้ไม่ติดไปกับ log ของ proxy
+        post(String.format(GEMINI_URL, model), new String[][]{
+                { "x-goog-api-key", apiKey }
+        }, jsonBody, callbackId);
+    }
+
+    /** POST JSON แล้วส่งเนื้อหาที่ได้กลับ JavaScript ตามเดิม ไม่ว่าจะสำเร็จหรือ error */
+    private void post(final String url, final String[][] headers,
+                      final String jsonBody, final String callbackId) {
         new Thread(new Runnable() {
             @Override public void run() {
                 String result;
                 HttpURLConnection conn = null;
                 try {
-                    URL url = new URL(API_URL);
-                    conn = (HttpURLConnection) url.openConnection();
+                    conn = (HttpURLConnection) new URL(url).openConnection();
                     conn.setRequestMethod("POST");
                     conn.setRequestProperty("Content-Type", "application/json");
-                    conn.setRequestProperty("x-api-key", apiKey);
-                    conn.setRequestProperty("anthropic-version", "2023-06-01");
+                    for (String[] h : headers) conn.setRequestProperty(h[0], h[1]);
                     conn.setDoOutput(true);
                     conn.setConnectTimeout(15000);
                     conn.setReadTimeout(60000);
