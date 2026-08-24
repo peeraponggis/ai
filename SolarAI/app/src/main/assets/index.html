@@ -147,10 +147,10 @@
         </div>
     </div>
 
-    <!-- Agent Pipeline -->
+    <!-- ลำดับการคำนวณ -->
     <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg">
         <h2 class="text-base font-semibold mb-3 text-cyan-400 flex items-center">
-            <i class="fa-solid fa-id-badge mr-2"></i> 6-Stage AI Analysis Pipeline
+            <i class="fa-solid fa-id-badge mr-2"></i> ลำดับการคำนวณ 6 ขั้น
         </h2>
         <div class="space-y-2" id="agentList">
             <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent1">
@@ -179,21 +179,21 @@
                     <i id="a4i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
                     4. Auto-Correction Engine
                 </span>
-                <span class="text-slate-500 fmono">claude-3-5-sonnet</span>
+                <span class="text-slate-500 fmono">ตัวเลือกการลงทุน</span>
             </div>
             <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent5">
                 <span class="text-slate-300 flex items-center gap-2">
                     <i id="a5i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
                     5. Sales Proposal Synthesizer
                 </span>
-                <span class="text-slate-500 fmono">gpt-4o</span>
+                <span class="text-slate-500 fmono">สรุปข้อเสนอ</span>
             </div>
             <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent6">
                 <span class="text-slate-300 flex items-center gap-2">
                     <i id="a6i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
-                    6. Consensus Judge &amp; Validator
+                    6. ตรวจความสอดคล้องของตัวเลข
                 </span>
-                <span class="text-slate-500 fmono">mistral-large</span>
+                <span class="text-slate-500 fmono">ตรวจความสอดคล้อง</span>
             </div>
         </div>
 
@@ -290,7 +290,7 @@
         <div class="bg-slate-800 border border-emerald-500/30 rounded-xl p-5 shadow-lg fade-in relative">
             <div class="absolute top-0 right-0 bg-emerald-500/10 px-3 py-1 rounded-bl-xl text-[10px] font-semibold text-emerald-400 fmono">Stage 6</div>
             <h3 class="text-sm font-semibold text-emerald-400 mb-2 flex items-center">
-                <i class="fa-solid fa-gavel mr-2"></i> บทสรุป Consensus Judge
+                <i class="fa-solid fa-gavel mr-2"></i> บทสรุปและการตรวจทาน
             </h3>
             <p class="text-xs text-slate-300 leading-relaxed" id="r_consensus"></p>
             <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-3 gap-2 text-center text-[10px]" id="r_badges"></div>
@@ -524,7 +524,7 @@ function stage6_consensus(kwp, epc, payback, irr, npv, biz) {
     const verdict = irr > 15 ? 'ผ่านเกณฑ์ — แนะนำอย่างยิ่ง' :
                     irr > 10 ? 'ผ่านเกณฑ์ — คุ้มค่าลงทุน' :
                     irr > 7  ? 'ผ่านเกณฑ์ — พิจารณาได้' : 'ต่ำกว่าเกณฑ์ — แนะนำ PPA';
-    return `[Consensus Validated] ระบบ ${kwp} kWp สำหรับ${biz} ผ่านการตรวจสอบครบ 6 Stage ` +
+    return `ระบบ ${kwp} kWp สำหรับ${biz} ผ่านการตรวจทานตัวเลขครบทั้ง 6 ขั้น ` +
            `ตัวเลข EPC ${fmtM(epc)}, IRR ${irr.toFixed(1)}%, NPV ${fmtM(npv)}, Payback ${payback.toFixed(1)} ปี ` +
            `สอดคล้องกันทางคณิตศาสตร์ คำตัดสิน: ${verdict}`;
 }
@@ -615,46 +615,46 @@ async function runPipeline() {
         `PSH ${P.psh} ชม. | PR ${(P.pr*100).toFixed(0)}%`);
 
     // ── Stage 1 ──────────────────────────────────────────
-    agentSet(1,'active'); setStatus('Stage 1: Technical Sizing');
+    agentSet(1,'active'); setStatus('ขั้นที่ 1 จาก 6');
     log('[1/6] คำนวณขนาดระบบและผลผลิตไฟฟ้า');
     const t1 = stage1_technical(bill, tariff, kwp, biz, P);
     agentSet(1,'done');
-    log(`[Stage 1 ✓] ${kwp} kWp | ผลิต ${fmt(t1.genPerYear)} kWh/ปี | Cover ${t1.covPct.toFixed(0)}%`, 'success');
+    log(`[1/6 ✓] ${kwp} kWp | ผลิต ${fmt(t1.genPerYear)} kWh/ปี | Cover ${t1.covPct.toFixed(0)}%`, 'success');
 
     // ── Stage 2 ──────────────────────────────────────────
-    agentSet(2,'active'); setStatus('Stage 2: Financial Modeling');
+    agentSet(2,'active'); setStatus('ขั้นที่ 2 จาก 6');
     log('[2/6] คำนวณ NPV / IRR / Payback');
     const t2 = stage2_financial(epc, annualSaving, kwp, tariff, P);
     agentSet(2,'done');
-    log(`[Stage 2 ✓] IRR ${t2.irr.toFixed(1)}% | NPV ${fmtM(t2.npv)} | Payback ${t2.pbRefined} ปี`, 'success');
+    log(`[2/6 ✓] IRR ${t2.irr.toFixed(1)}% | NPV ${fmtM(t2.npv)} | Payback ${t2.pbRefined} ปี`, 'success');
 
     // ── Stage 3 ──────────────────────────────────────────
-    agentSet(3,'active'); setStatus('Stage 3: Risk Audit');
+    agentSet(3,'active'); setStatus('ขั้นที่ 3 จาก 6');
     log('[3/6] ตรวจความเสี่ยงและข้อกำหนดการขออนุญาต');
     const t3 = stage3_risk(kwp, epc, biz, t2.payback);
     agentSet(3,'done');
-    log(`[Stage 3 ✓] พบความเสี่ยง ${t3.filter(r=>r.level==='high').length} HIGH, ${t3.filter(r=>r.level==='med').length} MED`, 'success');
+    log(`[3/6 ✓] พบความเสี่ยง ${t3.filter(r=>r.level==='high').length} HIGH, ${t3.filter(r=>r.level==='med').length} MED`, 'success');
 
     // ── Stage 4 ──────────────────────────────────────────
-    agentSet(4,'active'); setStatus('Stage 4: Auto-Correction');
+    agentSet(4,'active'); setStatus('ขั้นที่ 4 จาก 6');
     log('[4/6] สร้างทางเลือกการลงทุน');
     const t4 = stage4_alternatives(bill, kwp, epc, annualSaving, t2.payback, tariff, epcRate, P);
     agentSet(4,'done');
-    log(`[Stage 4 ✓] สร้าง ${t4.length} ทางเลือก`, 'success');
+    log(`[4/6 ✓] สร้าง ${t4.length} ทางเลือก`, 'success');
 
     // ── Stage 5 ──────────────────────────────────────────
-    agentSet(5,'active'); setStatus('Stage 5: Proposal Synthesis');
+    agentSet(5,'active'); setStatus('ขั้นที่ 5 จาก 6');
     log('[5/6] สรุปข้อเสนอและผลกระทบ CO₂');
     const t5 = stage5_proposal(kwp, epc, annualSaving, t2.payback, biz, tariff, P);
     agentSet(5,'done');
     log('[Stage 5 ✓] Proposal compiled.', 'success');
 
     // ── Stage 6 ──────────────────────────────────────────
-    agentSet(6,'active'); setStatus('Stage 6: Consensus Validation');
+    agentSet(6,'active'); setStatus('ขั้นที่ 6: ตรวจความสอดคล้อง');
     log('[6/6] ตรวจความสอดคล้องของตัวเลขทั้งหมด');
     const t6 = stage6_consensus(kwp, epc, t2.payback, t2.irr, t2.npv, biz);
     agentSet(6,'done');
-    log('[Stage 6 ✓] Consensus locked. All formulas verified.', 'success');
+    log('[6/6 ✓] ตรวจตัวเลขทุกสูตรตรงกันแล้ว', 'success');
 
     // ── Render results ────────────────────────────────────
     renderResults({ kwp, epc, annualSaving, t1, t2, t3, t4, t5, t6, biz });
