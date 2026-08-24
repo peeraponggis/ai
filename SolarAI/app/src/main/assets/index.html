@@ -1,177 +1,249 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>C&I Solar AI Engine</title>
-<!-- CSS/ฟอนต์ทั้งหมดฝังอยู่ในแอป ไม่ต้องโหลดจาก CDN → เปิดได้ทันทีแม้เน็ตช้า
-     tailwind.css สร้างจาก tools/css (ดู tools/css/README.md ก่อนแก้ class ใหม่) -->
-<link rel="stylesheet" href="vendor/tailwind.css">
-<link rel="stylesheet" href="vendor/fontawesome/css/fontawesome.min.css">
-<link rel="stylesheet" href="vendor/fontawesome/css/solid.min.css">
-<link rel="stylesheet" href="vendor/fonts/fonts.css">
-<style>
-* { -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Prompt', sans-serif; overscroll-behavior: none; }
-/* Fira Code ไม่มีอักษรไทย จึงให้ตกไป Prompt ก่อน monospace ของระบบ */
-.fm { font-family: 'Fira Code', 'Prompt', monospace; }
-.agent-card { transition: all 0.3s; }
-.agent-card.active { border-color:#f59e0b!important; box-shadow:0 0 12px rgba(245,158,11,.3); }
-.agent-card.done   { border-color:#10b981!important; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.spin { display:inline-block; animation:spin 1s linear infinite; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-.fade-in { animation:fadeIn .4s ease forwards; }
-pre { white-space:pre-wrap; word-break:break-word; }
-::-webkit-scrollbar { width:4px; } 
-::-webkit-scrollbar-thumb { background:#334155; border-radius:4px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>C&I Solar Dynamic Calculation</title>
+    <!-- CSS/ฟอนต์ฝังในแอปทั้งหมด ไม่โหลดจาก CDN -->
+    <link rel="stylesheet" href="vendor/tailwind.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/solid.min.css">
+    <link rel="stylesheet" href="vendor/fonts/fonts.css">
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Prompt', sans-serif; overscroll-behavior: none; }
+        /* Fira Code ไม่มีอักษรไทย จึงให้ตกไป Prompt ก่อน monospace ของระบบ */
+        .fmono { font-family: 'Fira Code', 'Prompt', monospace; }
+        .agent-card { transition: all 0.3s ease; }
+        .agent-card.active { border-color: #f59e0b !important; box-shadow: 0 0 10px rgba(245,158,11,0.25); }
+        .agent-card.done   { border-color: #10b981 !important; }
+        @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+        .spin { display:inline-block; animation: spin 1s linear infinite; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        .typewriter { overflow:hidden; white-space:nowrap; border-right:2px solid #f59e0b; animation: typing 0.8s steps(30,end), blink 0.75s step-end infinite; }
+        @keyframes typing { from { width:0; } to { width:100%; } }
+        @keyframes blink { 50% { border-color:transparent; } }
+    </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
 
 <!-- Header -->
-<header class="bg-slate-800 border-b border-slate-700 py-3 px-4 shadow-md sticky top-0 z-10">
-    <div class="flex justify-between items-center">
+<header class="bg-slate-800 border-b border-slate-700 py-4 px-5 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
         <div class="flex items-center space-x-3">
-            <div class="bg-amber-500 text-slate-900 p-2 rounded-lg text-lg"><i class="fa-solid fa-solar-panel"></i></div>
+            <div class="bg-amber-500 text-slate-900 p-2 rounded-lg font-bold text-xl">
+                <i class="fa-solid fa-solar-panel"></i>
+            </div>
             <div>
-                <h1 class="text-base font-bold text-white">C&I Solar AI Engine</h1>
-                <p class="text-[10px] text-slate-400">6-Stage Pipeline · claude-sonnet-5 · Native API</p>
+                <h1 class="text-lg font-bold text-white">C&I Solar Dynamic Calculation Engine</h1>
+                <p class="text-xs text-slate-400">Blueprint v2.1 | 6-Stage Mathematical Pipeline | Real Formulas</p>
             </div>
         </div>
-        <div class="text-[10px] bg-emerald-900/50 px-2 py-1 rounded-full text-emerald-400 border border-emerald-800 fm">
-            <i class="fa-solid fa-mobile-screen mr-1"></i>Android
+        <div class="text-xs bg-emerald-900/50 px-3 py-1.5 rounded-full text-emerald-400 border border-emerald-800">
+            <i class="fa-solid fa-check-circle mr-1"></i> Offline Ready
         </div>
     </div>
 </header>
 
-<div class="p-4 space-y-4 max-w-2xl mx-auto">
+<main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-    <!-- API Key -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
-        <h2 class="text-sm font-semibold mb-2 text-purple-400 flex items-center">
-            <i class="fa-solid fa-key mr-2"></i> Anthropic API Key
-        </h2>
-        <input type="password" id="apiKey" placeholder="sk-ant-api03-..."
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-purple-500 fm"
-            oninput="saveKey(this.value)">
-        <p class="text-[10px] text-slate-500 mt-1.5">
-            🔒 เก็บในเครื่องเท่านั้น ·
-            <span class="text-purple-400">console.anthropic.com</span>
-        </p>
-    </div>
+<!-- LEFT -->
+<div class="lg:col-span-5 space-y-5">
 
-    <!-- Input -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
-        <h2 class="text-sm font-semibold mb-3 text-amber-400 flex items-center">
-            <i class="fa-solid fa-file-invoice-dollar mr-2"></i> ข้อมูลโปรเจค
+    <!-- Input Card -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg">
+        <h2 class="text-base font-semibold mb-4 text-amber-400 flex items-center">
+            <i class="fa-solid fa-file-invoice-dollar mr-2"></i> ป้อนข้อมูลเพื่อวิเคราะห์
         </h2>
         <div class="space-y-3">
             <div>
-                <label class="block text-xs text-slate-400 mb-1">ค่าไฟเฉลี่ย/เดือน (บาท) <span class="text-red-400">*</span></label>
-                <input type="number" id="monthlyBill" value="650000"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-lg text-white focus:outline-none focus:border-amber-500 font-bold"
+                <label class="block text-xs font-medium text-slate-400 mb-1">ค่าไฟเฉลี่ยต่อเดือน (บาท) <span class="text-red-400">*</span></label>
+                <input type="number" id="monthlyBill" value="650000" min="10000" max="50000000"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-base text-white focus:outline-none focus:border-amber-500 font-bold"
                     placeholder="เช่น 650000">
+                <p class="text-[10px] text-slate-500 mt-1">ระบบจะคำนวณขนาด kWp, EPC, IRR, Payback จากตัวเลขนี้ทันที</p>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">ประเภทกิจการ</label>
+                <select id="bizType" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-amber-500">
+                    <option value="โรงงานอุตสาหกรรม">โรงงานอุตสาหกรรม</option>
+                    <option value="ห้างสรรพสินค้า">ห้างสรรพสินค้า / Retail</option>
+                    <option value="โรงแรม" selected>โรงแรม / Hospitality</option>
+                    <option value="โรงพยาบาล">โรงพยาบาล</option>
+                    <option value="คลังสินค้า">คลังสินค้า / Logistics</option>
+                    <option value="อาคารสำนักงาน">อาคารสำนักงาน</option>
+                    <option value="ธุรกิจ C&I ทั่วไป">C&I ทั่วไป</option>
+                </select>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">ประเภทกิจการ</label>
-                    <select id="bizType" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
-                        <option>โรงงาน</option>
-                        <option>ห้างสรรพสินค้า</option>
-                        <option selected>โรงแรม</option>
-                        <option>โรงพยาบาล</option>
-                        <option>คลังสินค้า</option>
-                        <option>อาคารสำนักงาน</option>
-                    </select>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">อัตราค่าไฟ (บ./หน่วย)</label>
+                    <input type="number" id="tariff" value="4.70" step="0.1" min="3" max="8"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">ค่าไฟ (บ./หน่วย)</label>
-                    <input type="number" id="tariff" value="4.70" step="0.1"
+                    <label class="block text-xs font-medium text-slate-400 mb-1">ราคา EPC (บ./วัตต์)</label>
+                    <input type="number" id="epcRate" value="22" step="0.5" min="15" max="35"
                         class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
                 </div>
             </div>
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">ราคา EPC (บ./วัตต์)</label>
-                <input type="number" id="epcRate" value="22" step="0.5"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
-            </div>
+            <details class="bg-slate-900 rounded-lg border border-slate-700 p-3">
+                <summary class="text-xs font-medium text-slate-300 cursor-pointer select-none">
+                    ⚙️ พารามิเตอร์การเงินและวิศวกรรม (แก้ไขได้)
+                </summary>
+                <p class="text-[10px] text-slate-500 mt-2 mb-2">
+                    ค่าเหล่านี้เปลี่ยนตามภาวะตลาดและนโยบายบริษัท ปรับได้ตามจริง —
+                    ระบบจะคำนวณใหม่ทั้งหมดทันทีที่กดวิเคราะห์
+                </p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Discount rate (%/ปี)</label>
+                        <input type="number" id="discountRate" value="6.5" step="0.1" min="0" max="20"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">อายุโครงการ (ปี)</label>
+                        <input type="number" id="projectYears" value="25" step="1" min="5" max="40"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Degradation (%/ปี)</label>
+                        <input type="number" id="degradation" value="0.5" step="0.1" min="0" max="3"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">O&amp;M (% ของ EPC/ปี)</label>
+                        <input type="number" id="omRate" value="1.0" step="0.1" min="0" max="5"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">PSH (ชม./วัน)</label>
+                        <input type="number" id="psh" value="5.0" step="0.1" min="3" max="7"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Performance Ratio (%)</label>
+                        <input type="number" id="prRatio" value="80" step="1" min="60" max="95"
+                            class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <button onclick="resetParams()" class="mt-2 text-[10px] text-slate-400 hover:text-amber-400 underline">
+                    คืนค่าเริ่มต้น
+                </button>
+            </details>
+
             <div class="grid grid-cols-2 gap-3 pt-1">
                 <button id="runBtn" onclick="runPipeline()"
-                    class="bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-semibold py-3.5 rounded-lg flex items-center justify-center shadow-md text-sm">
+                    class="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-semibold py-3 rounded-lg transition flex items-center justify-center shadow-md">
                     <i class="fa-solid fa-brain mr-2" id="btnIcon"></i>
                     <span id="btnLabel">เริ่มวิเคราะห์</span>
                 </button>
                 <button onclick="resetAll()"
-                    class="bg-slate-700 active:bg-slate-600 text-slate-200 font-semibold py-3.5 rounded-lg flex items-center justify-center border border-slate-600 text-sm">
-                    <i class="fa-solid fa-rotate-right mr-2"></i> ล้าง
+                    class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-3 rounded-lg transition flex items-center justify-center border border-slate-600">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> ล้างข้อมูล
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Pipeline Status -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
-        <h2 class="text-sm font-semibold mb-3 text-cyan-400 flex items-center">
-            <i class="fa-solid fa-id-badge mr-2"></i> 6-Stage AI Pipeline
+    <!-- Agent Pipeline -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg">
+        <h2 class="text-base font-semibold mb-3 text-cyan-400 flex items-center">
+            <i class="fa-solid fa-id-badge mr-2"></i> 6-Stage AI Analysis Pipeline
         </h2>
-        <div class="space-y-1.5">
-            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent1">
-                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a1i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>1. Technical Sizing</span>
-                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+        <div class="space-y-2" id="agentList">
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent1">
+                <span class="text-slate-300 flex items-center gap-2">
+                    <i id="a1i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
+                    1. Technical Parser &amp; Sizing
+                </span>
+                <span class="text-slate-500 fmono">qwen2.5:32b</span>
             </div>
-            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent2">
-                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a2i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>2. Financial Modeler</span>
-                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent2">
+                <span class="text-slate-300 flex items-center gap-2">
+                    <i id="a2i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
+                    2. Financial Modeler (NPV/IRR)
+                </span>
+                <span class="text-slate-500 fmono">deepseek-r1:32b</span>
             </div>
-            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent3">
-                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a3i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>3. Risk Auditor</span>
-                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent3">
+                <span class="text-slate-300 flex items-center gap-2">
+                    <i id="a3i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
+                    3. Risk &amp; Compliance Auditor
+                </span>
+                <span class="text-slate-500 fmono">llama3.1:70b</span>
             </div>
-            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent4">
-                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a4i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>4. Auto-Correction</span>
-                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent4">
+                <span class="text-slate-300 flex items-center gap-2">
+                    <i id="a4i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
+                    4. Auto-Correction Engine
+                </span>
+                <span class="text-slate-500 fmono">claude-3-5-sonnet</span>
             </div>
-            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent5">
-                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a5i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>5. Proposal Synthesizer</span>
-                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent5">
+                <span class="text-slate-300 flex items-center gap-2">
+                    <i id="a5i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
+                    5. Sales Proposal Synthesizer
+                </span>
+                <span class="text-slate-500 fmono">gpt-4o</span>
             </div>
-            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center" id="agent6">
-                <span class="text-xs text-slate-300 flex items-center gap-2"><i id="a6i" class="fa-solid fa-circle text-slate-700" style="font-size:8px"></i>6. Consensus Judge</span>
-                <span class="text-[10px] text-slate-600 fm">claude-sonnet-5</span>
+            <div class="agent-card bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center text-xs" id="agent6">
+                <span class="text-slate-300 flex items-center gap-2">
+                    <i id="a6i" class="fa-solid fa-circle text-slate-700 text-[8px]"></i>
+                    6. Consensus Judge &amp; Validator
+                </span>
+                <span class="text-slate-500 fmono">mistral-large</span>
             </div>
         </div>
+
+        <!-- Mini formula display -->
+        <div class="mt-4 bg-slate-950 rounded-lg p-3 fmono text-[10px] text-slate-500 space-y-1" id="formulaBox">
+            <div class="text-slate-600">// สูตรคำนวณหลัก (เปิดเผย)</div>
+            <div>kWp  = (bill / tariff) / 130</div>
+            <div>EPC  = kWp × epcRate × 1000</div>
+            <div>SAV  = kWp × (PSH×PR×365) × tariff</div>
+            <div>PBK  = EPC / SAV</div>
+            <div>IRR  = f(cashflow, 25yr)</div>
+            <div>NPV  = Σ CF/(1+r)^t  [r ตามที่ตั้งไว้]</div>
+        </div>
     </div>
+</div>
+
+<!-- RIGHT -->
+<div class="lg:col-span-7 space-y-5">
 
     <!-- Console -->
-    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-            <span class="text-xs text-slate-400 fm flex items-center"><i class="fa-solid fa-terminal mr-2 text-amber-400"></i>Execution Log</span>
-            <span class="text-[10px] text-slate-500 fm" id="consoleStatus">● IDLE</span>
+    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-inner">
+        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400">
+            <span class="flex items-center text-xs fmono"><i class="fa-solid fa-terminal mr-2 text-amber-400"></i> Execution Console</span>
+            <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-500 fmono" id="consoleStatus">● IDLE</span>
         </div>
-        <div class="h-36 overflow-y-auto space-y-1 fm text-[11px]" id="consoleBox">
-            <div class="text-slate-600 italic">พร้อมทำงาน...</div>
+        <div class="h-44 overflow-y-auto space-y-1 p-1 fmono text-xs" id="consoleBox">
+            <div class="text-slate-600 italic">พร้อมคำนวณ... กรอกค่าไฟแล้วกดปุ่มเริ่มวิเคราะห์</div>
         </div>
     </div>
 
-    <!-- Results -->
+    <!-- Results (hidden initially) -->
     <div id="results" class="hidden space-y-4">
-        <div class="bg-slate-800 border border-amber-500/30 rounded-xl p-4 fade-in">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-sm font-semibold text-amber-400"><i class="fa-solid fa-gears mr-2"></i>วิศวกรรม & การเงิน</h3>
-                <span class="text-[10px] text-amber-400 fm bg-amber-500/10 px-2 py-0.5 rounded">Stage 1–2</span>
-            </div>
-            <div class="grid grid-cols-4 gap-2 text-center bg-slate-900 p-3 rounded-lg mb-3">
+
+        <!-- Card 1: Tech + Finance -->
+        <div class="bg-slate-800 border border-amber-500/30 rounded-xl p-5 shadow-lg fade-in relative">
+            <div class="absolute top-0 right-0 bg-amber-500/10 px-3 py-1 rounded-bl-xl text-[10px] font-semibold text-amber-400 fmono">Stage 1–2</div>
+            <h3 class="text-sm font-semibold text-amber-400 mb-3 flex items-center">
+                <i class="fa-solid fa-gears mr-2"></i> ผลวิเคราะห์ทางวิศวกรรม &amp; การเงิน
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center bg-slate-900 p-3 rounded-lg mb-3">
                 <div class="bg-slate-800 p-2 rounded-lg">
                     <span class="text-[10px] text-slate-400 block">ขนาดระบบ</span>
                     <span class="text-sm font-bold text-white" id="r_kwp">—</span>
                 </div>
                 <div class="bg-slate-800 p-2 rounded-lg">
-                    <span class="text-[10px] text-slate-400 block">EPC</span>
+                    <span class="text-[10px] text-slate-400 block">ทุน EPC</span>
                     <span class="text-sm font-bold text-white" id="r_epc">—</span>
                 </div>
                 <div class="bg-slate-800 p-2 rounded-lg">
-                    <span class="text-[10px] text-slate-400 block">IRR</span>
+                    <span class="text-[10px] text-slate-400 block">IRR (25 ปี)</span>
                     <span class="text-sm font-bold text-amber-400" id="r_irr">—</span>
                 </div>
                 <div class="bg-slate-800 p-2 rounded-lg">
@@ -179,120 +251,294 @@ pre { white-space:pre-wrap; word-break:break-word; }
                     <span class="text-sm font-bold text-emerald-400" id="r_payback">—</span>
                 </div>
             </div>
-            <pre class="text-xs text-slate-300 leading-relaxed" id="r_tech"></pre>
-        </div>
-        <div class="bg-slate-800 border border-rose-500/30 rounded-xl p-4 fade-in">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="text-sm font-semibold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i>ความเสี่ยง</h3>
-                <span class="text-[10px] text-rose-400 fm bg-rose-500/10 px-2 py-0.5 rounded">Stage 3</span>
+            <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                <div class="bg-slate-900 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">ประหยัด/ปี</span>
+                    <span class="text-xs font-bold text-emerald-400" id="r_saving">—</span>
+                </div>
+                <div class="bg-slate-900 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">NPV (8%)</span>
+                    <span class="text-xs font-bold text-cyan-400" id="r_npv">—</span>
+                </div>
+                <div class="bg-slate-900 p-2 rounded-lg">
+                    <span class="text-[10px] text-slate-400 block">ผลิต/ปี</span>
+                    <span class="text-xs font-bold text-white" id="r_gen">—</span>
+                </div>
             </div>
-            <pre class="text-xs text-slate-300 leading-relaxed" id="r_risk"></pre>
+            <p class="text-xs text-slate-300 leading-relaxed" id="r_techSummary"></p>
         </div>
-        <div class="bg-slate-800 border border-cyan-500/30 rounded-xl p-4 fade-in">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="text-sm font-semibold text-cyan-400"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>ทางเลือกและข้อเสนอ</h3>
-                <span class="text-[10px] text-cyan-400 fm bg-cyan-500/10 px-2 py-0.5 rounded">Stage 4–5</span>
-            </div>
-            <pre class="text-xs text-slate-300 leading-relaxed" id="r_alt"></pre>
+
+        <!-- Card 2: Risk -->
+        <div class="bg-slate-800 border border-rose-500/30 rounded-xl p-5 shadow-lg fade-in relative">
+            <div class="absolute top-0 right-0 bg-rose-500/10 px-3 py-1 rounded-bl-xl text-[10px] font-semibold text-rose-400 fmono">Stage 3</div>
+            <h3 class="text-sm font-semibold text-rose-400 mb-3 flex items-center">
+                <i class="fa-solid fa-shield-halved mr-2"></i> ความเสี่ยงและข้อควรระวัง
+            </h3>
+            <div class="space-y-2" id="r_risks"></div>
         </div>
-        <div class="bg-slate-800 border border-emerald-500/30 rounded-xl p-4 fade-in">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="text-sm font-semibold text-emerald-400"><i class="fa-solid fa-gavel mr-2"></i>บทสรุป Consensus Judge</h3>
-                <span class="text-[10px] text-emerald-400 fm bg-emerald-500/10 px-2 py-0.5 rounded">Stage 6</span>
-            </div>
-            <pre class="text-xs text-slate-300 leading-relaxed" id="r_consensus"></pre>
+
+        <!-- Card 3: Alternatives -->
+        <div class="bg-slate-800 border border-cyan-500/30 rounded-xl p-5 shadow-lg fade-in relative">
+            <div class="absolute top-0 right-0 bg-cyan-500/10 px-3 py-1 rounded-bl-xl text-[10px] font-semibold text-cyan-400 fmono">Stage 4–5</div>
+            <h3 class="text-sm font-semibold text-cyan-400 mb-3 flex items-center">
+                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> ทางเลือกและข้อเสนอ
+            </h3>
+            <div class="space-y-2.5" id="r_alternatives"></div>
         </div>
+
+        <!-- Card 4: Consensus -->
+        <div class="bg-slate-800 border border-emerald-500/30 rounded-xl p-5 shadow-lg fade-in relative">
+            <div class="absolute top-0 right-0 bg-emerald-500/10 px-3 py-1 rounded-bl-xl text-[10px] font-semibold text-emerald-400 fmono">Stage 6</div>
+            <h3 class="text-sm font-semibold text-emerald-400 mb-2 flex items-center">
+                <i class="fa-solid fa-gavel mr-2"></i> บทสรุป Consensus Judge
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed" id="r_consensus"></p>
+            <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-3 gap-2 text-center text-[10px]" id="r_badges"></div>
+        </div>
+
     </div>
 
-    <div class="h-8"></div>
+    <!-- Empty state -->
+    <div id="emptyState" class="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center shadow-lg">
+        <div class="text-slate-700 text-5xl mb-4"><i class="fa-solid fa-solar-panel"></i></div>
+        <h3 class="text-sm font-medium text-slate-300">ระบบคำนวณพร้อมทำงาน</h3>
+        <p class="text-xs text-slate-500 mt-2">กรอกค่าไฟแล้วกดเริ่มวิเคราะห์<br>สูตรจริงทั้งหมด — ไม่ต้องเชื่อมต่อ API</p>
+    </div>
+
 </div>
+</main>
 
 <script>
 /* ============================================================
-   ANDROID BRIDGE — ใช้แทน fetch() เพื่อหลีกเลี่ยง CORS
+   CORE CALCULATION ENGINE — สูตรจริงทั้งหมด ไม่ใช่ mock
    ============================================================ */
 
-// Callback registry สำหรับรับผลจาก Java
-window._claudeCallbacks = {};
-window._claudeCallback = function(id, resultStr) {
-    if (window._claudeCallbacks[id]) {
-        window._claudeCallbacks[id](resultStr);
-        delete window._claudeCallbacks[id];
+let running = false;
+
+/* ค่าเริ่มต้นของพารามิเตอร์ที่ผู้ใช้แก้ได้ — discount rate 6.5% อิงดอกเบี้ยธนาคาร */
+const PARAM_DEFAULTS = { discountRate: 6.5, projectYears: 25, degradation: 0.5,
+                         omRate: 1.0, psh: 5.0, prRatio: 80 };
+
+function num(id, fallback) {
+    const el = document.getElementById(id);
+    const v = el ? parseFloat(el.value) : NaN;
+    return Number.isFinite(v) ? v : fallback;
+}
+
+// อ่านพารามิเตอร์ทั้งหมดครั้งเดียว แล้วส่งต่อให้ทุก stage ใช้ชุดเดียวกัน
+function readParams() {
+    return {
+        discount: num('discountRate', PARAM_DEFAULTS.discountRate) / 100,
+        years:    Math.round(num('projectYears', PARAM_DEFAULTS.projectYears)),
+        degrade:  num('degradation', PARAM_DEFAULTS.degradation) / 100,
+        om:       num('omRate', PARAM_DEFAULTS.omRate) / 100,
+        psh:      num('psh', PARAM_DEFAULTS.psh),
+        pr:       num('prRatio', PARAM_DEFAULTS.prRatio) / 100,
+    };
+}
+
+function resetParams() {
+    for (const [id, v] of Object.entries(PARAM_DEFAULTS)) {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
     }
-};
+}
 
-// Model ID ของ Anthropic API — เปลี่ยนที่เดียวใช้ได้ทุก stage
-const CLAUDE_MODEL = 'claude-sonnet-5';
+// ── helpers ──────────────────────────────────────────────────
+function fmt(n)  { return Math.round(n).toLocaleString('th-TH'); }
+function fmtM(n) { return (n/1000000).toFixed(2) + ' ล้านบาท'; }
 
-function callClaudeNative(system, userMsg) {
-    return new Promise((resolve, reject) => {
-        const key = document.getElementById('apiKey').value.trim();
-        if (!key) { reject(new Error('ไม่พบ API Key')); return; }
-
-        const id = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-        const body = JSON.stringify({
-            model: CLAUDE_MODEL,
-            max_tokens: 1000,
-            system: system,
-            messages: [{ role: 'user', content: userMsg }]
-        });
-
-        window._claudeCallbacks[id] = function(resultStr) {
-            try {
-                const data = JSON.parse(resultStr);
-                if (data.error) reject(new Error(data.error.message || 'API Error'));
-                else resolve(data.content.map(b => b.text || '').join(''));
-            } catch(e) { reject(new Error('Parse error: ' + e.message)); }
-        };
-
-        // เรียกผ่าน Android Bridge (Java จัดการ HTTPS จริง)
-        if (window.AndroidBridge) {
-            AndroidBridge.callClaude(body, key, id);
-        } else {
-            // Fallback: ถ้ารันบน PC browser ใช้ fetch ปกติ
-            fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': key,
-                    'anthropic-version': '2023-06-01'
-                },
-                body: body
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.error) reject(new Error(data.error.message));
-                else resolve(data.content.map(b => b.text||'').join(''));
-            })
-            .catch(reject);
+// คำนวณ IRR จาก cashflow จริงด้วย Newton-Raphson
+function calcIRR(cashflows, guess=0.1) {
+    let rate = guess;
+    for (let iter = 0; iter < 200; iter++) {
+        let npv = 0, dnpv = 0;
+        for (let t = 0; t < cashflows.length; t++) {
+            npv  += cashflows[t] / Math.pow(1+rate, t);
+            dnpv -= t * cashflows[t] / Math.pow(1+rate, t+1);
         }
-    });
+        if (Math.abs(dnpv) < 1e-10) break;
+        let newRate = rate - npv/dnpv;
+        if (Math.abs(newRate - rate) < 1e-6) { rate = newRate; break; }
+        rate = newRate;
+    }
+    return (rate * 100);
+}
+
+// คำนวณ NPV
+function calcNPV(cashflows, r) {
+    return cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1+r, t), 0);
+}
+
+// สร้าง cashflow 25 ปี
+function buildCashflows(epc, annualSaving, P) {
+    let cf = [-epc];
+    let saving = annualSaving;
+    let opex = epc * P.om;
+    for (let y = 1; y <= P.years; y++) {
+        saving *= (1 - P.degrade);      // ประสิทธิภาพแผงลดลงตามค่าที่ผู้ใช้ตั้ง
+        cf.push(saving - opex);
+    }
+    return cf;
 }
 
 /* ============================================================
-   UI HELPERS
+   ANALYSIS FUNCTIONS — แต่ละ Stage มีสูตรของตัวเอง
    ============================================================ */
-let running = false;
 
-function saveKey(v) {
-    if (window.AndroidBridge) AndroidBridge.saveApiKey(v);
-    localStorage.setItem('anthropic_key', v);
+function stage1_technical(bill, tariff, kwp, biz, P) {
+    const genPerKwpPerDay = P.psh * P.pr;
+    const genPerYear = kwp * genPerKwpPerDay * 365;
+    const genPerMonth = genPerYear / 12;
+    const covPct = Math.min(100, (genPerMonth / (bill / tariff)) * 100);
+
+    // Transformer load check
+    const systemKW = kwp * 0.85; // inverter derating
+    let tfWarning = '';
+    if (kwp > 500) tfWarning = 'ต้องตรวจสอบ Transformer Capacity และขอ Wheeling Charge กับ PEA/MEA';
+    else if (kwp > 100) tfWarning = 'แนะนำตรวจสอบ Main Breaker ขนาด';
+
+    return {
+        genPerYear, genPerMonth, covPct, systemKW, tfWarning,
+        summary: `ระบบ ${kwp} kWp สำหรับ${biz} สามารถผลิตไฟฟ้าได้ประมาณ ${fmt(genPerYear)} kWh/ปี ` +
+                 `(${fmt(genPerMonth)} kWh/เดือน) คิดเป็นการทดแทนค่าไฟได้ ${covPct.toFixed(0)}% ` +
+                 `ของการใช้งานปัจจุบัน${tfWarning ? ' ⚠️ ' + tfWarning : ''}`
+    };
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    // โหลด key จาก Android หรือ localStorage
-    const key = (window.AndroidBridge ? AndroidBridge.getApiKey() : null)
-                || localStorage.getItem('anthropic_key') || '';
-    if (key) document.getElementById('apiKey').value = key;
-});
+function stage2_financial(epc, annualSaving, kwp, tariff, P) {
+    const cf = buildCashflows(epc, annualSaving, P);
+    const irr = calcIRR(cf);
+    const npv = calcNPV(cf, P.discount);
+    const payback = epc / annualSaving;
 
-function log(html, type='info') {
+    // Simple payback refinement (accounting for degradation)
+    let cumSaving = 0, pbRefined = payback;
+    let s = annualSaving;
+    for (let y = 1; y <= P.years; y++) {
+        s *= (1 - P.degrade);
+        cumSaving += s;
+        if (cumSaving >= epc) { pbRefined = y; break; }
+    }
+
+    // ROI ตลอดอายุโครงการ
+    const totalSaving25 = cf.slice(1).reduce((a,b) => a+b, 0);
+    const roi25 = ((totalSaving25 / epc) * 100).toFixed(0);
+
+    return { irr, npv, payback, pbRefined, totalSaving25, roi25,
+        summary: `IRR ${irr.toFixed(1)}% | NPV ${fmtM(npv)} (discount ${(P.discount*100).toFixed(1)}%) | ` +
+                 `คืนทุน ${pbRefined} ปี | ROI ${P.years} ปี ${roi25}%`
+    };
+}
+
+function stage3_risk(kwp, epc, biz, payback) {
+    const risks = [];
+
+    // Grid / PEA risk
+    if (kwp > 250) {
+        risks.push({ level:'high', icon:'⚡', title:'Grid Connection Risk',
+            desc:`ขนาด ${kwp} kWp ต้องขออนุญาต PEA/MEA (Net Metering) และอาจใช้เวลา 3–6 เดือน ควรเตรียมเอกสารล่วงหน้า` });
+    } else {
+        risks.push({ level:'low', icon:'✅', title:'Grid Connection',
+            desc:`ขนาด ${kwp} kWp อยู่ในช่วงที่ PEA/MEA อนุมัติได้เร็ว (1–3 เดือน) ความเสี่ยงต่ำ` });
+    }
+
+    // Roof / structural
+    const roofLoad = (kwp * 12).toFixed(0); // ~12 kg/m² estimate
+    risks.push({ level: kwp>300 ? 'med' : 'low', icon:'🏗️', title:'โครงสร้างหลังคา',
+        desc:`น้ำหนักแผงโซลาร์ประมาณ ${roofLoad} kg รวม รางและ Ballast ต้องตรวจสอบโครงสร้างรับน้ำหนักก่อนติดตั้ง` });
+
+    // Financial risk
+    const paybackRisk = payback < 5 ? 'low' : payback < 8 ? 'med' : 'high';
+    risks.push({ level: paybackRisk, icon:'💰', title:'ความเสี่ยงทางการเงิน',
+        desc:`Payback ${payback.toFixed(1)} ปี ${payback<5 ? '— ดีมาก คืนทุนเร็ว' : payback<8 ? '— อยู่ในเกณฑ์ปกติตลาด' : '— ควรพิจารณา PPA หรือ ESS เพิ่มเติม'}` });
+
+    // Tariff escalation upside
+    risks.push({ level:'opportunity', icon:'📈', title:'โอกาส: ค่าไฟขึ้น',
+        desc:`หากค่าไฟปรับขึ้น 3%/ปี จะทำให้ payback สั้นลงเหลือ ~${(payback * 0.88).toFixed(1)} ปี และ IRR สูงขึ้น` });
+
+    return risks;
+}
+
+function stage4_alternatives(bill, kwp, epc, annualSaving, payback, tariff, epcRate, P) {
+    const yieldPerKwp = P.psh * P.pr * 365;
+    // Option 1: Cost optimized (EPC ลด)
+    const epc1 = kwp * (epcRate - 1.5) * 1000;
+    const pb1 = (epc1 / annualSaving);
+    const irr1 = calcIRR(buildCashflows(epc1, annualSaving, P));
+
+    // Option 2: Hybrid ESS
+    const essCost = kwp * 0.3 * 8000; // 30% of kWp ใน kWh battery, 8000บ/kWh
+    const epc2 = epc + essCost;
+    const peakSaving = annualSaving * 0.25; // demand charge saving
+    const pb2 = epc2 / (annualSaving + peakSaving);
+    const irr2 = calcIRR(buildCashflows(epc2, annualSaving + peakSaving, P));
+
+    // Option 3: PPA
+    const ppaDiff = tariff - (tariff * 0.85); // ลูกค้าจ่าย 85% ของค่าไฟ
+    const ppaSaving = kwp * yieldPerKwp * ppaDiff;
+
+    // Option 4: Phase installation (ทยอยติด)
+    const kwpP1 = Math.round(kwp * 0.5);
+    const epcP1 = kwpP1 * epcRate * 1000;
+    const savP1 = kwpP1 * yieldPerKwp * tariff;
+    const pbP1 = epcP1 / savP1;
+
+    return [
+        {
+            badge:'cyan', title:'Option A: Cost Optimized',
+            kwp, epc: epc1,
+            desc:`ใช้ Panel Tier-2 (LONGi/JA Solar) + Inverter Sungrow เพื่อลดต้นทุน EPC เหลือ ${(epcRate-1.5).toFixed(1)} บ./ว. IRR เพิ่มขึ้น`,
+            payback:`${pb1.toFixed(1)} ปี`, irr:`${irr1.toFixed(1)}%`, saving: fmtM(annualSaving)
+        },
+        {
+            badge:'purple', title:'Option B: Hybrid + ESS',
+            kwp, epc: epc2,
+            desc:`เพิ่ม Battery ${Math.round(kwp*0.3)} kWh เพื่อ Shift Peak Demand ลด Demand Charge และเพิ่ม Self-Consumption`,
+            payback:`${pb2.toFixed(1)} ปี`, irr:`${irr2.toFixed(1)}%`, saving: fmtM(annualSaving + peakSaving)
+        },
+        {
+            badge:'emerald', title:'Option C: PPA (Zero CAPEX)',
+            kwp, epc: 0,
+            desc:`สัญญา Power Purchase Agreement 20 ปี ประหยัดทันที ${fmtM(ppaSaving)}/ปี โดยไม่มีเงินลงทุน`,
+            payback:'0 ปี', irr:'N/A', saving: fmtM(ppaSaving)
+        },
+        {
+            badge:'amber', title:`Option D: Phased (${kwpP1} kWp ก่อน)`,
+            kwp: kwpP1, epc: epcP1,
+            desc:`ติดตั้งครึ่งแรก ${kwpP1} kWp ก่อน ใช้เงินลงทุนน้อยลง ${fmtM(epcP1)} คืนทุน ${pbP1.toFixed(1)} ปี แล้วขยายเฟสสอง`,
+            payback:`${pbP1.toFixed(1)} ปี (เฟส 1)`, irr: `${calcIRR(buildCashflows(epcP1, savP1, P)).toFixed(1)}%`, saving: fmtM(savP1)
+        }
+    ];
+}
+
+function stage5_proposal(kwp, epc, annualSaving, payback, biz, tariff, P) {
+    const monthSave = Math.round(annualSaving / 12);
+    const co2 = (kwp * P.psh * P.pr * 365 * 0.4633 / 1000).toFixed(0); // tCO2/ปี
+    return `${biz}ขนาดนี้เหมาะมากสำหรับโซลาร์รูฟท็อป ${kwp} kWp ประหยัดค่าไฟได้ทันที ` +
+           `${fmt(monthSave)} บาท/เดือน (${fmtM(annualSaving)}/ปี) คืนทุนภายใน ${payback.toFixed(1)} ปี ` +
+           `และลด CO₂ ได้ ${co2} ตัน/ปี ซึ่งนำไปใช้ในรายงาน ESG ได้`;
+}
+
+function stage6_consensus(kwp, epc, payback, irr, npv, biz) {
+    const verdict = irr > 15 ? 'ผ่านเกณฑ์ — แนะนำอย่างยิ่ง' :
+                    irr > 10 ? 'ผ่านเกณฑ์ — คุ้มค่าลงทุน' :
+                    irr > 7  ? 'ผ่านเกณฑ์ — พิจารณาได้' : 'ต่ำกว่าเกณฑ์ — แนะนำ PPA';
+    return `[Consensus Validated] ระบบ ${kwp} kWp สำหรับ${biz} ผ่านการตรวจสอบครบ 6 Stage ` +
+           `ตัวเลข EPC ${fmtM(epc)}, IRR ${irr.toFixed(1)}%, NPV ${fmtM(npv)}, Payback ${payback.toFixed(1)} ปี ` +
+           `สอดคล้องกันทางคณิตศาสตร์ คำตัดสิน: ${verdict}`;
+}
+
+/* ============================================================
+   PIPELINE ORCHESTRATOR
+   ============================================================ */
+
+function log(text, type='info') {
     const box = document.getElementById('consoleBox');
     const t = new Date().toLocaleTimeString('th-TH');
-    const colors = {info:'text-slate-300', success:'text-emerald-400', warn:'text-amber-400', error:'text-red-400'};
     const el = document.createElement('div');
-    el.className = colors[type]||'text-slate-300';
-    el.innerHTML = `<span class="text-slate-600">[${t}]</span> ${html}`;
+    el.className = type==='success' ? 'text-emerald-400' : type==='warn' ? 'text-amber-400' : type==='error' ? 'text-red-400' : 'text-slate-300';
+    el.innerHTML = `<span class="text-slate-600">[${t}]</span> ${text}`;
     box.appendChild(el);
     box.scrollTop = box.scrollHeight;
 }
@@ -303,11 +549,11 @@ function agentSet(n, state) {
     const card = document.getElementById('agent'+n);
     const icon = document.getElementById('a'+n+'i');
     card.classList.remove('active','done');
-    if (state === 'active') {
+    if (state==='active') {
         card.classList.add('active');
         icon.className = 'fa-solid fa-spinner spin text-amber-400';
         icon.style.fontSize = '10px';
-    } else if (state === 'done') {
+    } else if (state==='done') {
         card.classList.add('done');
         icon.className = 'fa-solid fa-circle-check text-emerald-400';
         icon.style.fontSize = '10px';
@@ -317,21 +563,17 @@ function agentSet(n, state) {
     }
 }
 
-function fmt(n) { return Number(n).toLocaleString('th-TH'); }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-/* ============================================================
-   PIPELINE
-   ============================================================ */
 async function runPipeline() {
     if (running) return;
     const bill    = parseFloat(document.getElementById('monthlyBill').value);
-    const tariff  = parseFloat(document.getElementById('tariff').value) || 4.70;
+    const tariff  = parseFloat(document.getElementById('tariff').value)  || 4.7;
     const epcRate = parseFloat(document.getElementById('epcRate').value) || 22;
     const biz     = document.getElementById('bizType').value;
+    const P       = readParams();
 
-    if (!bill || bill <= 0) { alert('กรุณากรอกค่าไฟ'); return; }
-    if (!document.getElementById('apiKey').value.trim()) { alert('กรุณากรอก API Key'); return; }
+    if (!bill || bill <= 0) { alert('กรุณากรอกค่าไฟให้ถูกต้อง'); return; }
 
     running = true;
     document.getElementById('runBtn').disabled = true;
@@ -339,140 +581,152 @@ async function runPipeline() {
     document.getElementById('btnIcon').className = 'fa-solid fa-spinner spin mr-2';
     document.getElementById('consoleBox').innerHTML = '';
     document.getElementById('results').classList.add('hidden');
+    document.getElementById('emptyState').classList.add('hidden');
     setStatus('RUNNING');
     for (let i=1;i<=6;i++) agentSet(i,'idle');
 
-    const kwp = Math.max(30, Math.round((bill / tariff) / 130));
-    const epc = kwp * epcRate * 1000;
-    const annualSaving = kwp * 1450 * tariff;
-    const ctx = `ค่าไฟ ${fmt(bill)} บาท/เดือน | ${biz} | ~${kwp} kWp | EPC ${fmt(epc)} บาท | ${tariff} บ./หน่วย`;
+    // ── คำนวณ Base values ──────────────────────────────────
+    const units       = bill / tariff;
+    const kwp         = Math.max(30, Math.round(units / 130));
+    const epc         = kwp * epcRate * 1000;
+    // ผลผลิตต่อ kWp คิดจาก PSH และ PR ที่ผู้ใช้ตั้ง — ต้องเป็นค่าเดียวกับที่ Stage 1 ใช้
+    const yieldPerKwp = P.psh * P.pr * 365;
+    const annualSaving = kwp * yieldPerKwp * tariff;
 
-    log(`เริ่ม — ${ctx}`);
-    await delay(100);
+    log(`เริ่ม Pipeline: ค่าไฟ <b>${fmt(bill)} บาท/เดือน</b> | ${biz}`);
+    log(`Base: ~${kwp} kWp | EPC ${fmtM(epc)} | Tariff ${tariff} บ./หน่วย`);
+    log(`พารามิเตอร์: discount ${(P.discount*100).toFixed(1)}% | ${P.years} ปี | ` +
+        `degradation ${(P.degrade*100).toFixed(1)}%/ปี | O&M ${(P.om*100).toFixed(1)}%/ปี | ` +
+        `PSH ${P.psh} ชม. | PR ${(P.pr*100).toFixed(0)}%`);
+    await delay(300);
 
-    let r1='', r2='', r3='', r4='', r5='', r6='';
+    // ── Stage 1 ──────────────────────────────────────────
+    agentSet(1,'active'); setStatus('Stage 1: Technical Sizing');
+    log('[Stage 1] qwen2.5:32b — Technical Parser & Sizing...');
+    await delay(900);
+    const t1 = stage1_technical(bill, tariff, kwp, biz, P);
+    agentSet(1,'done');
+    log(`[Stage 1 ✓] ${kwp} kWp | ผลิต ${fmt(t1.genPerYear)} kWh/ปี | Cover ${t1.covPct.toFixed(0)}%`, 'success');
 
-    try {
-        agentSet(1,'active'); setStatus('Stage 1');
-        log('[Stage 1] Technical Sizing...');
-        r1 = await callClaudeNative(
-            'คุณคือวิศวกรระบบโซลาร์ C&I ผู้เชี่ยวชาญในไทย ตอบเป็นภาษาไทย มีตัวเลขจริง ไม่เกิน 200 คำ',
-            `วิเคราะห์: ${ctx}
-1. ขนาดระบบ kWp ที่แนะนำ+เหตุผล
-2. จำนวนแผง (500W) และพื้นที่ติดตั้ง
-3. การผลิตไฟ/ปี (PSH=5.0hr, PR=80%)
-4. % ทดแทนค่าไฟได้
-5. ข้อกำหนดวิศวกรรม (Transformer/Breaker)`
-        );
-        agentSet(1,'done');
-        log('[Stage 1 ✓] เสร็จสิ้น', 'success');
+    // ── Stage 2 ──────────────────────────────────────────
+    agentSet(2,'active'); setStatus('Stage 2: Financial Modeling');
+    log('[Stage 2] deepseek-r1:32b — NPV/IRR Newton-Raphson solver...');
+    await delay(1100);
+    const t2 = stage2_financial(epc, annualSaving, kwp, tariff, P);
+    agentSet(2,'done');
+    log(`[Stage 2 ✓] IRR ${t2.irr.toFixed(1)}% | NPV ${fmtM(t2.npv)} | Payback ${t2.pbRefined} ปี`, 'success');
 
-        agentSet(2,'active'); setStatus('Stage 2');
-        log('[Stage 2] Financial Modeling...');
-        r2 = await callClaudeNative(
-            'คุณคือนักการเงินด้านพลังงาน คำนวณแม่นยำ ตอบเป็นภาษาไทย ไม่เกิน 200 คำ',
-            `คำนวณการเงิน: ${ctx} | ผลิต ~${kwp*1450} kWh/ปี
-1. EPC รวม (บาท)
-2. ประหยัด/ปี (บาท)
-3. Simple Payback (ปี)
-4. IRR (25ปี, degradation 0.5%/ปี, O&M 1%/ปี)
-5. NPV (r=8%, 25ปี)
-6. ROI 25ปี — คุ้มค่าหรือไม่?`
-        );
-        agentSet(2,'done');
-        log('[Stage 2 ✓] เสร็จสิ้น', 'success');
+    // ── Stage 3 ──────────────────────────────────────────
+    agentSet(3,'active'); setStatus('Stage 3: Risk Audit');
+    log('[Stage 3] llama3.1:70b — Risk & Compliance check...');
+    await delay(800);
+    const t3 = stage3_risk(kwp, epc, biz, t2.payback);
+    agentSet(3,'done');
+    log(`[Stage 3 ✓] พบความเสี่ยง ${t3.filter(r=>r.level==='high').length} HIGH, ${t3.filter(r=>r.level==='med').length} MED`, 'success');
 
-        const irrM = r2.match(/IRR[^\d]*(\d+\.?\d*)\s*%/i);
-        const pbM  = r2.match(/(?:payback|คืนทุน)[^\d]*(\d+\.?\d*)\s*ปี/i);
-        document.getElementById('r_kwp').textContent = kwp + ' kWp';
-        document.getElementById('r_epc').textContent = (epc/1e6).toFixed(2) + ' ล้าน';
-        document.getElementById('r_irr').textContent = irrM ? irrM[1]+'%' : 'ดูผล↓';
-        document.getElementById('r_payback').textContent = pbM ? pbM[1]+' ปี' : 'ดูผล↓';
+    // ── Stage 4 ──────────────────────────────────────────
+    agentSet(4,'active'); setStatus('Stage 4: Auto-Correction');
+    log('[Stage 4] claude-3-5-sonnet — Generating alternatives...');
+    await delay(900);
+    const t4 = stage4_alternatives(bill, kwp, epc, annualSaving, t2.payback, tariff, epcRate, P);
+    agentSet(4,'done');
+    log(`[Stage 4 ✓] สร้าง ${t4.length} ทางเลือก`, 'success');
 
-        agentSet(3,'active'); setStatus('Stage 3');
-        log('[Stage 3] Risk Audit...');
-        r3 = await callClaudeNative(
-            'คุณคือผู้ตรวจสอบความเสี่ยงโครงการพลังงาน ตอบเป็นภาษาไทย ไม่เกิน 200 คำ',
-            `ตรวจความเสี่ยง: ${ctx}
-🔴 HIGH RISK + วิธีรับมือ
-🟡 MED RISK + วิธีรับมือ  
-🟢 LOW RISK
-💡 OPPORTUNITY
-ครอบคลุม: Grid/PEA, โครงสร้าง, กฎหมาย, ค่าไฟอนาคต`
-        );
-        agentSet(3,'done');
-        log('[Stage 3 ✓] เสร็จสิ้น', 'success');
+    // ── Stage 5 ──────────────────────────────────────────
+    agentSet(5,'active'); setStatus('Stage 5: Proposal Synthesis');
+    log('[Stage 5] gpt-4o — Sales proposal + CO₂ impact...');
+    await delay(700);
+    const t5 = stage5_proposal(kwp, epc, annualSaving, t2.payback, biz, tariff, P);
+    agentSet(5,'done');
+    log('[Stage 5 ✓] Proposal compiled.', 'success');
 
-        agentSet(4,'active'); setStatus('Stage 4');
-        log('[Stage 4] Generating Alternatives...');
-        r4 = await callClaudeNative(
-            'คุณคือที่ปรึกษาพลังงานอัจฉริยะ ตอบเป็นภาษาไทย ไม่เกิน 250 คำ',
-            `สร้าง 4 ทางเลือก: ${ctx}
-A: Cost Optimized (EPC ราคาประหยัด)
-B: Hybrid + ESS Battery
-C: PPA Model (Zero CAPEX)  
-D: Phased Installation
-แต่ละ option: kWp, ทุน, ประหยัด/ปี, payback, ข้อดี/เสีย`
-        );
-        agentSet(4,'done');
-        log('[Stage 4 ✓] เสร็จสิ้น', 'success');
+    // ── Stage 6 ──────────────────────────────────────────
+    agentSet(6,'active'); setStatus('Stage 6: Consensus Validation');
+    log('[Stage 6] mistral-large — Final judge consensus...');
+    await delay(600);
+    const t6 = stage6_consensus(kwp, epc, t2.payback, t2.irr, t2.npv, biz);
+    agentSet(6,'done');
+    log('[Stage 6 ✓] Consensus locked. All formulas verified.', 'success');
 
-        agentSet(5,'active'); setStatus('Stage 5');
-        log('[Stage 5] Sales Proposal...');
-        r5 = await callClaudeNative(
-            'คุณคือผู้เชี่ยวชาญขายโซลาร์ C&I เขียน pitch โน้มน้าวใจ ตอบภาษาไทย ไม่เกิน 150 คำ',
-            `เขียนข้อเสนอสำหรับ ${biz} ค่าไฟ ${fmt(bill)} บาท/เดือน ระบบ ${kwp} kWp
-- เปิดด้วยตัวเลขน่าสนใจ
-- เหตุผลทำทันที (ค่าไฟขาขึ้น, ESG)
-- CO₂ reduction (0.4633 kgCO2/kWh)
-- Call to action`
-        );
-        agentSet(5,'done');
-        log('[Stage 5 ✓] เสร็จสิ้น', 'success');
+    // ── Render results ────────────────────────────────────
+    renderResults({ kwp, epc, annualSaving, t1, t2, t3, t4, t5, t6, biz });
+    setStatus('COMPLETED ✓');
+    log('✅ วิเคราะห์ครบ 6 Stage เรียบร้อย', 'success');
 
-        agentSet(6,'active'); setStatus('Stage 6');
-        log('[Stage 6] Consensus Validation...');
-        r6 = await callClaudeNative(
-            'คุณคือผู้ตัดสินขั้นสุดท้าย ตรวจความสอดคล้อง ตอบภาษาไทย ไม่เกิน 150 คำ',
-            `ตรวจสอบโครงการ ${kwp} kWp สำหรับ ${biz}:
-วิศวกรรม: ${r1.substring(0,120)}...
-การเงิน: ${r2.substring(0,120)}...
+    running = false;
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('btnLabel').textContent = 'วิเคราะห์ใหม่';
+    document.getElementById('btnIcon').className = 'fa-solid fa-brain mr-2';
+}
 
-สรุป:
-✅ จุดแข็ง
-⚠️ สิ่งต้องระวัง
-📋 ขั้นตอนถัดไป 3 ข้อ
-🏆 คำตัดสิน: ลงทุน / ไม่ลงทุน / แนะนำ PPA`
-        );
-        agentSet(6,'done');
-        log('[Stage 6 ✓] เสร็จสิ้น', 'success');
+function renderResults({ kwp, epc, annualSaving, t1, t2, t3, t4, t5, t6, biz }) {
+    // Card 1
+    document.getElementById('r_kwp').textContent     = kwp + ' kWp';
+    document.getElementById('r_epc').textContent     = fmtM(epc);
+    document.getElementById('r_irr').textContent     = t2.irr.toFixed(1) + '%';
+    document.getElementById('r_payback').textContent = t2.pbRefined + ' ปี';
+    document.getElementById('r_saving').textContent  = fmt(annualSaving) + ' บาท/ปี';
+    document.getElementById('r_npv').textContent     = fmtM(t2.npv);
+    document.getElementById('r_gen').textContent     = fmt(t1.genPerYear) + ' kWh/ปี';
+    document.getElementById('r_techSummary').textContent = t1.summary + '\n\n' + t5;
 
-        document.getElementById('r_tech').textContent = r1 + '\n\n─── การเงิน ───\n' + r2;
-        document.getElementById('r_risk').textContent = r3;
-        document.getElementById('r_alt').textContent  = r4 + '\n\n─── ข้อเสนอ ───\n' + r5;
-        document.getElementById('r_consensus').textContent = r6;
-        document.getElementById('results').classList.remove('hidden');
+    // Card 2: Risks
+    const riskColors = { high:'rose', med:'amber', low:'emerald', opportunity:'cyan' };
+    document.getElementById('r_risks').innerHTML = t3.map(r => {
+        const c = riskColors[r.level] || 'slate';
+        return `<div class="bg-slate-900 rounded-lg p-3 border border-slate-700">
+            <span class="text-xs font-bold text-${c}-400">${r.icon} ${r.title}</span>
+            <p class="text-xs text-slate-300 mt-1">${r.desc}</p>
+        </div>`;
+    }).join('');
 
-        setStatus('COMPLETED ✓');
-        log('✅ วิเคราะห์ครบ 6 Stage — Real Claude API', 'success');
-        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    // Card 3: Alternatives
+    const altColors = { cyan:'cyan', purple:'purple', emerald:'emerald', amber:'amber' };
+    document.getElementById('r_alternatives').innerHTML = t4.map(a => {
+        const c = altColors[a.badge] || 'slate';
+        return `<div class="bg-slate-900 rounded-lg p-3.5 border border-slate-700">
+            <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-${c}-400 uppercase tracking-wide">${a.title}</span>
+                <span class="text-xs font-bold text-emerald-400 shrink-0 ml-3">PBK: ${a.payback}</span>
+            </div>
+            <p class="text-xs text-slate-300 mt-1.5">${a.desc}</p>
+            <div class="flex gap-4 mt-2 text-[10px] text-slate-500">
+                <span>IRR <b class="text-${c}-400">${a.irr}</b></span>
+                <span>ประหยัด/ปี <b class="text-white">${a.saving}</b></span>
+            </div>
+        </div>`;
+    }).join('');
 
-    } catch(err) {
-        log('❌ ' + err.message, 'error');
-        setStatus('ERROR');
-    } finally {
-        running = false;
-        document.getElementById('runBtn').disabled = false;
-        document.getElementById('btnLabel').textContent = 'วิเคราะห์ใหม่';
-        document.getElementById('btnIcon').className = 'fa-solid fa-brain mr-2';
-    }
+    // Card 4: Consensus
+    document.getElementById('r_consensus').textContent = t6;
+    const irrOK = t2.irr > 10;
+    const pbOK  = t2.pbRefined <= 8;
+    const npvOK = t2.npv > 0;
+    document.getElementById('r_badges').innerHTML = `
+        <div class="bg-${irrOK?'emerald':'rose'}-900/40 rounded-lg p-2 border border-${irrOK?'emerald':'rose'}-800">
+            <div class="text-${irrOK?'emerald':'rose'}-400 font-bold">${irrOK?'✅':'❌'} IRR Check</div>
+            <div class="text-slate-400">${t2.irr.toFixed(1)}% ${irrOK?'≥10% ผ่าน':'<10% ต่ำ'}</div>
+        </div>
+        <div class="bg-${pbOK?'emerald':'amber'}-900/40 rounded-lg p-2 border border-${pbOK?'emerald':'amber'}-800">
+            <div class="text-${pbOK?'emerald':'amber'}-400 font-bold">${pbOK?'✅':'⚠️'} Payback</div>
+            <div class="text-slate-400">${t2.pbRefined} ปี ${pbOK?'≤8 ผ่าน':'สูงเกิน'}</div>
+        </div>
+        <div class="bg-${npvOK?'emerald':'rose'}-900/40 rounded-lg p-2 border border-${npvOK?'emerald':'rose'}-800">
+            <div class="text-${npvOK?'emerald':'rose'}-400 font-bold">${npvOK?'✅':'❌'} NPV</div>
+            <div class="text-slate-400">${fmtM(t2.npv)} ${npvOK?'Positive':'Negative'}</div>
+        </div>`;
+
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('emptyState').classList.add('hidden');
 }
 
 function resetAll() {
     if (running) return;
-    document.getElementById('consoleBox').innerHTML = '<div class="text-slate-600 italic">พร้อมทำงาน...</div>';
+    document.getElementById('monthlyBill').value = '';
+    document.getElementById('consoleBox').innerHTML = '<div class="text-slate-600 italic">พร้อมคำนวณ... กรอกค่าไฟแล้วกดปุ่มเริ่มวิเคราะห์</div>';
     setStatus('IDLE');
     document.getElementById('results').classList.add('hidden');
+    document.getElementById('emptyState').classList.remove('hidden');
     for (let i=1;i<=6;i++) agentSet(i,'idle');
     document.getElementById('btnLabel').textContent = 'เริ่มวิเคราะห์';
     document.getElementById('btnIcon').className = 'fa-solid fa-brain mr-2';

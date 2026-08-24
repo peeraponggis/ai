@@ -6,3 +6,8 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# ห้าม commit ข้อมูล signing key ขึ้น repo สาธารณะ
+keystore.properties
+*.keystore
+*.jks

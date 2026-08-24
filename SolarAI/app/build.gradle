@@ -2,6 +2,24 @@ plugins {
     id 'com.android.application'
 }
 
+// อ่านค่า signing จาก environment (ใช้ตอน build บน GitHub Actions)
+// หรือจากไฟล์ keystore.properties ที่วางไว้ข้าง ๆ settings.gradle (ตอน build ในเครื่อง)
+// ไฟล์ keystore.properties และไฟล์ .keystore ถูก gitignore ไว้ ห้าม commit ขึ้น repo
+def signingProps = new Properties()
+def signingPropsFile = rootProject.file('keystore.properties')
+if (signingPropsFile.exists()) {
+    signingPropsFile.withInputStream { signingProps.load(it) }
+}
+def signingValue = { String env, String prop ->
+    System.getenv(env) ?: signingProps.getProperty(prop)
+}
+def keystorePath = signingValue('KEYSTORE_FILE', 'storeFile')
+
+// CI ส่งเลขเวอร์ชันมาให้ตอนปล่อย release — versionCode ต้องเพิ่มขึ้นเรื่อย ๆ
+// ไม่งั้น Android จะไม่ยอมให้ติดตั้งทับของเดิม
+def appVersionCode = Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+def appVersionName = System.getenv('VERSION_NAME') ?: '1.0'
+
 android {
     namespace 'com.solarai.app'
     compileSdk 34
@@ -10,8 +28,22 @@ android {
         applicationId "com.solarai.app"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersionName
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword signingValue('KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias signingValue('KEY_ALIAS', 'keyAlias')
+                // keystore แบบ PKCS12 ใช้รหัสผ่านเดียวกันทั้ง store และ key
+                // ถ้าไม่ได้ตั้ง KEY_PASSWORD แยก ให้ใช้รหัสผ่านของ store
+                keyPassword signingValue('KEY_PASSWORD', 'keyPassword') ?:
+                        signingValue('KEYSTORE_PASSWORD', 'storePassword')
+            }
+        }
     }
 
     buildTypes {
@@ -21,6 +53,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // ไม่มี keystore → ได้ APK แบบไม่เซ็น (ติดตั้งไม่ได้) ให้ใช้ debug build แทน
+            if (keystorePath) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

@@ -1,44 +1,43 @@
 # Solar AI
 
-**C&I Solar AI Engine** — แอป Android สำหรับวิเคราะห์ความคุ้มค่าของโครงการโซลาร์
-เชิงพาณิชย์และอุตสาหกรรม (C&I) ในไทย โดยเรียก Claude API ผ่าน 6-stage pipeline
+**C&I Solar Dynamic Calculation Engine** — แอป Android วิเคราะห์ความคุ้มค่าโครงการ
+โซลาร์เชิงพาณิชย์และอุตสาหกรรม (C&I) ในไทย **คำนวณด้วยสูตรจริงในเครื่อง
+ไม่ต้องต่ออินเทอร์เน็ต ไม่ต้องใช้ API key ไม่มีค่าใช้จ่าย**
 
-| Stage | Agent | ผลลัพธ์ |
-|---|---|---|
-| 1 | Technical Sizing | ขนาดระบบ kWp, จำนวนแผง, พื้นที่, การผลิตไฟ/ปี |
-| 2 | Financial Modeler | EPC, ประหยัด/ปี, payback, IRR, NPV, ROI 25 ปี |
-| 3 | Risk Auditor | ความเสี่ยง HIGH/MED/LOW + วิธีรับมือ |
-| 4 | Auto-Correction | 4 ทางเลือก: Cost Optimized / Hybrid+ESS / PPA / Phased |
-| 5 | Proposal Synthesizer | ข้อเสนอขาย + CO₂ reduction |
-| 6 | Consensus Judge | ตรวจความสอดคล้อง + คำตัดสินลงทุน |
+กรอกค่าไฟ/เดือน + ประเภทกิจการ → กดวิเคราะห์ → ได้ผลครบใน 6 stage
+
+| Stage | ได้อะไร |
+|---|---|
+| 1. Technical Parser & Sizing | ขนาด kWp, ผลิตไฟ/ปี, % ทดแทนค่าไฟ, ข้อกำหนดหม้อแปลง |
+| 2. Financial Modeler | IRR (Newton-Raphson), NPV @8%, payback, ROI 25 ปี |
+| 3. Risk & Compliance Auditor | ความเสี่ยง grid / โครงสร้าง / การเงิน + โอกาส |
+| 4. Auto-Correction Engine | 4 ทางเลือก: Cost Optimized / Hybrid+ESS / PPA / Phased |
+| 5. Sales Proposal Synthesizer | ข้อเสนอขาย + CO₂ ต่อปี |
+| 6. Consensus Judge | ตรวจ IRR / Payback / NPV แล้วสรุปคำตัดสิน |
+
+สูตรทั้งหมดเปิดเผยอยู่ในหน้าแอป (กล่อง `// สูตรคำนวณหลัก`)
+
+## ดาวน์โหลด
+
+APK ล่าสุดอยู่ที่หน้า [Releases](https://github.com/peeraponggis/ai/releases) —
+โหลดไฟล์ `.apk` จาก tablet ได้เลย ไม่ต้อง login
 
 ## โครงสร้าง
 
 ```
 SolarAI/                                  โปรเจกต์ Android (เปิดโฟลเดอร์นี้ใน Android Studio)
 ├── app/src/main/
-│   ├── assets/index.html                 UI + pipeline logic ทั้งหมด
+│   ├── assets/index.html                 UI + เครื่องคำนวณทั้งหมด
 │   ├── assets/vendor/                    Tailwind CSS, Font Awesome, ฟอนต์ (ฝังในแอป)
-│   ├── java/com/solarai/app/MainActivity.java   WebView + AndroidBridge → Anthropic API
+│   ├── java/com/solarai/app/MainActivity.java   WebView ที่โหลด index.html
 │   ├── res/                              ไอคอนและ strings
-│   └── AndroidManifest.xml
+│   └── AndroidManifest.xml               ไม่ขอสิทธิ์ใด ๆ แม้แต่ INTERNET
 ├── tools/css/                            ตัว generate vendor/tailwind.css
 ├── gradlew, gradle/                      Gradle wrapper 8.9
 └── BUILD_INSTRUCTIONS.md                 วิธี build APK
-.github/workflows/build.yml               CI: build APK อัตโนมัติทุก push
-SolarAI-AndroidProject.zip                ไฟล์ zip ต้นฉบับ (เก็บไว้อ้างอิง)
+.github/workflows/build.yml               CI: build APK ทุก push
+.github/workflows/release.yml             CI: ปล่อย Release พร้อมไฟล์ APK
 ```
 
-สถาปัตยกรรม: หน้าจอทั้งหมดเป็น WebView ที่โหลด `assets/index.html`
-ส่วนการเรียก API ทำฝั่ง Java (`HttpURLConnection`) เพื่อเลี่ยง CORS ของ browser
-แล้วส่งผลกลับ JavaScript ผ่าน `window._claudeCallback`
-
-## เริ่มต้น
-
-ดู [SolarAI/BUILD_INSTRUCTIONS.md](SolarAI/BUILD_INSTRUCTIONS.md) — build ได้ทั้งจาก
-GitHub Actions (ไม่ต้องติดตั้งอะไร), Android Studio หรือ `./gradlew assembleDebug`
-
-ใช้งานต้องมี Anthropic API Key ของตัวเอง (https://console.anthropic.com)
-
-CSS และฟอนต์ทั้งหมดฝังอยู่ในแอป ไม่พึ่ง CDN — หน้าจอจึงขึ้นครบแม้เน็ตช้า
-ต่ออินเทอร์เน็ตเฉพาะตอนเรียก Claude API เท่านั้น
+แอปไม่ขอสิทธิ์ INTERNET เลย — ตรวจสอบได้จาก `AndroidManifest.xml` ว่าไม่มีการ
+เชื่อมต่อออกนอกเครื่องแม้แต่ทางเดียว

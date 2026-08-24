@@ -1,0 +1,81 @@
+name: Measure Free LLMs
+
+# ยิงชุดทดสอบภาษาไทยไปยังผู้ให้บริการ LLM ฟรี แล้ว commit ผลกลับเข้า repo
+# sandbox ของ dev เข้าเน็ตไม่ได้ จึงใช้ runner ของ GitHub เป็นตัวยิงแทน
+#
+# วิธีสั่ง: git push origin HEAD:measure/run-<จำนวนข้อ>
+#   เช่น   git push origin HEAD:measure/run-30
+on:
+  push:
+    branches: ['measure/run-*']
+
+permissions:
+  contents: write
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/list-github-files-25syp1   # เก็บผลไว้ที่ branch งานวิจัย
+
+      - name: อ่านจำนวนข้อจากชื่อ branch
+        id: cfg
+        run: echo "limit=${GITHUB_REF_NAME#measure/run-}" >> "$GITHUB_OUTPUT"
+
+      - name: สร้างชุดทดสอบ
+        working-directory: research/03-experiments
+        run: python3 make_testset.py > testset_v1.jsonl
+
+      # ยิงทีละโมเดลแล้ว commit ผลทันที — รอบก่อนหน้ารันยาวจน job ใกล้ timeout
+      # แล้วข้อมูลทั้งหมดยังอยู่แค่บนดิสก์ของ runner ถ้าโดนตัดคือเสียทั้งหมด
+      - name: ยิงไปยังผู้ให้บริการฟรี (commit ทีละโมเดล)
+        working-directory: research/03-experiments
+        env:
+          LIMIT: ${{ steps.cfg.outputs.limit }}
+          # ยิงห่าง 8 วินาที — 4 วิยังติด 429 หนักจนโมเดลแรกไม่จบใน 19 นาที
+          GAP: '8'
+          # ยิงเฉพาะโมเดลที่ตอบได้จริง — codestral, gemini-flash-lite, llama-3.1-8b,
+          # minimax-m2.7 ตอบ 429 ทุกครั้งทั้งรอบ 1.5 วิ และรอบ 8 วิ จึงไม่ใช่เรื่อง
+          # จังหวะการยิง แต่เป็นโควตาศูนย์ของโมเดลนั้นในระดับฟรี
+          # เว้นว่างไว้ = ยิงทุกตัวใน PROVIDERS
+          MODELS: ${{ vars.MEASURE_MODELS || 'mistral-nemo gemini-flash-lite llama-3.1-8b minimax-m2.7' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          KEYS="${MODELS:-$(python3 -c "from run_providers import PROVIDERS; print(' '.join(p['key'] for p in PROVIDERS))")}"
+          echo "จะยิงโมเดล: $KEYS"
+          for KEY in $KEYS; do
+            echo "=== $KEY ==="
+            timeout 1200 python3 -u run_providers.py \
+              --testset testset_v1.jsonl --out raw_answers.jsonl \
+              --limit "$LIMIT" --only "$KEY" --timeout 25 --gap "$GAP" 2>&1 | tail -5 || echo "หมดเวลาของ $KEY — ข้ามไปตัวถัดไป"
+            echo "สะสมแล้ว $(wc -l < raw_answers.jsonl) รายการ"
+            cd ../..
+            git add -f research/03-experiments/raw_answers.jsonl
+            git commit -m "measure: partial results after $KEY" || true
+            git pull --rebase origin claude/list-github-files-25syp1 || true
+            git push origin HEAD:claude/list-github-files-25syp1 || true
+            cd research/03-experiments
+          done
+
+      - name: วิเคราะห์ผล
+        working-directory: research/03-experiments
+        run: python3 analyze.py --raw raw_answers.jsonl --out RESULTS.md
+
+      - name: commit ผลกลับเข้า repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f research/03-experiments/raw_answers.jsonl research/03-experiments/RESULTS.md
+          git commit -m "Record free-LLM measurement run (${{ steps.cfg.outputs.limit }} items)" || exit 0
+          git pull --rebase origin claude/list-github-files-25syp1
+          git push origin HEAD:claude/list-github-files-25syp1
+
+      - name: ลบ branch ที่ใช้สั่งงาน
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || true

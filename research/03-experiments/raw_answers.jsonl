@@ -1,0 +1,252 @@
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A000", "set": "numeric", "content": "ค่าไฟเดือนละ 732,000 บาท  \nอัตรา 5.38 บาทต่อหน่วย  \n\nจำนวนหน่วยที่ใช้ = 732,000 ÷ 5.38  \n\n732,000 ÷ 5.38 = 136,059.479...  \n\nปัดเป็นจำนวนเต็ม = **136,059 หน่วย**  \n\nANSWER: 136,059", "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A001", "set": "numeric", "content": "ANSWER: 19,788,000 บาท\n\nคำนวณโดยนำกำลังการผลิตติดตั้ง 1020 kWp (ซึ่งเท่ากับ 1,020,000 วัตต์) คูณกับราคา EPC 19.4 บาทต่อวัตต์:\n\n1,020,000 วัตต์ × 19.4 บาท/วัตต์ = 19,788,000 บาท", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A002", "set": "numeric", "content": "ANSWER: 613,200", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A003", "set": "numeric", "content": "ANSWER: 1.40 ปี", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A004", "set": "numeric", "content": "ราคาสินค้า 653,558 บาท ยังไม่รวม VAT 7%  \nราคารวม VAT = 653,558 × 1.07 = 699,307.06 บาท  \n\nANSWER: 699,307.06", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A005", "set": "numeric", "content": "ANSWER: 1,252.6", "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A006", "set": "numeric", "content": "ANSWER: -47.02%", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A007", "set": "numeric", "content": "ANSWER: 782 แผง\n\n(คำนวณ: 430,000 วัตต์ ÷ 550 วัตต์ = 781.82 แผง ปัดขึ้นเป็น 782 แผง)", "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A008", "set": "numeric", "content": "ค่าไฟเดือนละ 236,000 บาท  \nอัตรา 4.5 บาทต่อหน่วย  \n\nจำนวนหน่วยที่ใช้ = 236,000 ÷ 4.5  \n= 52,444.44... หน่วย  \n\nปัดเป็นจำนวนเต็ม = **52,444 หน่วย**  \n\nANSWER: 52,444", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A009", "set": "numeric", "content": "ANSWER: 25,389,000 บาท\n\nคำนวณจาก 910 kWp = 910,000 วัตต์  \n910,000 × 27.9 = 25,389,000 บาท", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A010", "set": "numeric", "content": "ANSWER: 102,200 kWh", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A011", "set": "numeric", "content": "ANSWER: 3.52 ปี", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A012", "set": "numeric", "content": "ราคาสินค้า 330,653 บาท  \nVAT 7% = 330,653 × 0.07 = 23,145.71 บาท  \n\nราคารวม VAT = 330,653 + 23,145.71 = 353,798.71 บาท  \n\nANSWER: 353,798.71", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A013", "set": "numeric", "content": "ANSWER: 59.8", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A014", "set": "numeric", "content": "ANSWER: -65.83", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A015", "set": "numeric", "content": "ANSWER: 1,000 แผง  \n\n(คำนวณจาก 550,000 วัตต์ ÷ 550 วัตต์ต่อแผง = 1,000 แผงพอดี)", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A016", "set": "numeric", "content": "ค่าไฟ 591,000 บาท ที่อัตรา 4.05 บาทต่อหน่วย  \nจำนวนหน่วย = 591,000 ÷ 4.05  \n\nคำนวณ:  \n591,000 ÷ 4.05 = 145,925.925...  \n\nปัดเป็นจำนวนเต็ม = **145,926 หน่วย**  \n\nANSWER: 145,926", "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A017", "set": "numeric", "content": "ANSWER: 14,600,000 บาท\n\nคำนวณ: 730 kWp = 730,000 วัตต์\n730,000 วัตต์ × 20 บาท/วัตต์ = 14,600,000 บาท", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A018", "set": "numeric", "content": "ANSWER: 919,800 kWh  \n\n(คำนวณ: 630 kWp × 5.0 ชม./วัน × 0.80 × 365 วัน = 919,800 kWh)", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A019", "set": "numeric", "content": "ANSWER: 29.00 ปี", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A020", "set": "numeric", "content": "ราคารวม VAT = 119,448 × 1.07 = 127,809.36 บาท  \n\nANSWER: 127,809.36", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A021", "set": "numeric", "content": "ANSWER: 1,207.9", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A022", "set": "numeric", "content": "ANSWER: 111.36", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "A023", "set": "numeric", "content": "ANSWER: 364 แผง\n\nคำนวณ: 200 kWp = 200,000 วัตต์  \nจำนวนแผง = 200,000 ÷ 550 = 363.64 แผง  \nปัดขึ้นเป็นจำนวนเต็ม = 364 แผง", "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B000", "set": "extract", "content": "ANSWER: QT-2025-6945", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B001", "set": "extract", "content": "2,441,546", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B002", "set": "extract", "content": "850", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B003", "set": "extract", "content": "ANSWER: ห้างหุ้นส่วนจำกัด ไทยรุ่งเรือง", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B004", "set": "extract", "content": "ANSWER: QT-2021-4920", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B005", "set": "extract", "content": "3,495,784", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B006", "set": "extract", "content": "300", "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B007", "set": "extract", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B008", "set": "extract", "content": "ANSWER: QT-2020-9248", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B009", "set": "extract", "content": "8,633,487", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B010", "set": "extract", "content": "830", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B011", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B012", "set": "extract", "content": "ANSWER: QT-2024-6573", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B013", "set": "extract", "content": "2,479,586", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B014", "set": "extract", "content": "340", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B015", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B016", "set": "extract", "content": "ANSWER: QT-2020-9388", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "B017", "set": "extract", "content": "7,033,055", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C000", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C001", "set": "classify", "content": "ANSWER: โรงแรม", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C002", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C003", "set": "classify", "content": "ANSWER: คลังสินค้า", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C004", "set": "classify", "content": "ANSWER: อาคารสำนักงาน", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C005", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C006", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C007", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C008", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C009", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C010", "set": "classify", "content": "ANSWER: โรงแรม", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C011", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C012", "set": "classify", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C013", "set": "classify", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C014", "set": "classify", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C015", "set": "classify", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C016", "set": "classify", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "C017", "set": "classify", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A000", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A001", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A002", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A003", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A004", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A005", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A006", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A007", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A008", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A009", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A010", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A011", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A012", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A013", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A014", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "codestral", "model": "codestral-latest", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A000", "set": "numeric", "content": "", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A001", "set": "numeric", "content": "ANSWER: 19788000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A002", "set": "numeric", "content": "ANSWER: 613200", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A003", "set": "numeric", "content": "ANSWER: 1.40", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A004", "set": "numeric", "content": "ANSWER: 699307.06", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A005", "set": "numeric", "content": "ANSWER: 1252.4", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A006", "set": "numeric", "content": "ANSWER: -47.03", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A007", "set": "numeric", "content": "ANSWER: 782", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A008", "set": "numeric", "content": "ANSWER: 52444", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A009", "set": "numeric", "content": "ANSWER: 25389000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A010", "set": "numeric", "content": "ANSWER: 102200", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A011", "set": "numeric", "content": "ANSWER: 3.52", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A012", "set": "numeric", "content": "ANSWER: 353798.71", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A013", "set": "numeric", "content": "ANSWER: 59.9", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A014", "set": "numeric", "content": "ANSWER: -65.83", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A015", "set": "numeric", "content": "ANSWER: 1000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A016", "set": "numeric", "content": "ANSWER: 145926", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A017", "set": "numeric", "content": "ANSWER: 14600000", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A018", "set": "numeric", "content": "ANSWER: 919800", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A019", "set": "numeric", "content": "ANSWER: 29.00", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A020", "set": "numeric", "content": "ANSWER: 127809.36", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A021", "set": "numeric", "content": "ANSWER: 1208.0", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A022", "set": "numeric", "content": "ANSWER: 111.36", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "A023", "set": "numeric", "content": "ANSWER: 364", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B000", "set": "extract", "content": "ANSWER: QT-2025-6945", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B001", "set": "extract", "content": "ANSWER: 2441546", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B002", "set": "extract", "content": "ANSWER: 850", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B003", "set": "extract", "content": "ANSWER: ห้างหุ้นส่วนจำกัด ไทยรุ่งเรือง", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B004", "set": "extract", "content": "ANSWER: QT-2021-4920", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B005", "set": "extract", "content": "ANSWER: 3495784", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B006", "set": "extract", "content": "ANSWER: 300", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B007", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B008", "set": "extract", "content": "ANSWER: QT-2020-9248", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B009", "set": "extract", "content": "ANSWER: 8633487", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B010", "set": "extract", "content": "ANSWER: 830", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B011", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B012", "set": "extract", "content": "ANSWER: QT-2024-6573", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B013", "set": "extract", "content": "ANSWER: 2479586", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B014", "set": "extract", "content": "ANSWER: 340", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B015", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B016", "set": "extract", "content": "ANSWER: QT-2020-9388", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "B017", "set": "extract", "content": "ANSWER: 7033055", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C000", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C001", "set": "classify", "content": "ANSWER: โรงแรม", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C002", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C003", "set": "classify", "content": "ANSWER: คลังสินค้า", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C004", "set": "classify", "content": "ANSWER: อาคารสำนักงาน", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C005", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C006", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C007", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C008", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C009", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C010", "set": "classify", "content": "", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C011", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C012", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C013", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C014", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C015", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C016", "set": "classify", "content": "", "error": null}
+{"provider": "gpt-oss-20b", "model": "gpt-oss:20b", "item_id": "C017", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A000", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A001", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A002", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A003", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A004", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A005", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A006", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A007", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A008", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A009", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A010", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A011", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A012", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A013", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A014", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A000", "set": "numeric", "content": "ANSWER: <คำตอบ> ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A001", "set": "numeric", "content": "คำตอบ: 19,876,000 บาท\n\nคำอธิบาย: ราคา EPC ของระบบโซลาร์ 1020 kWp คือ 19.4 บาทต่อวัตต์ จึงคำนวณเงินลงทุนรวมได้ดังนี้:\n\n1020 kWp x 19.4 บาท/kWp = 19,876,000 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A002", "set": "numeric", "content": "คำตอบ: 630,000 kWh", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A003", "set": "numeric", "content": "ANSWER: <คืนทุน 1.42 ปี>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A004", "set": "numeric", "content": "ANSWER: 697,999.54 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A005", "set": "numeric", "content": "ANSWER: 1,252.9 ตัน\n\nคำอธิบาย: 2,703,234 kWh * 0.4633 kgCO2/kWh = 1,252,900.018 kgCO2 = 1,252.9 ตัน", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A006", "set": "numeric", "content": "ค่าใช้จ่ายเดิม 4,392 บาท ปัจจุบัน 2,327 บาท เปลี่ยนแปลง -47.05%", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A007", "set": "numeric", "content": "ANSWER: <คำตอบ> 800 แผง", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A008", "set": "numeric", "content": "ANSWER: <คำตอบ> ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A009", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A010", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A011", "set": "numeric", "content": "ANSWER: <คืนทุน 3.52 ปี>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A012", "set": "numeric", "content": "ANSWER: 354,239.44 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A013", "set": "numeric", "content": "ANSWER: 59.9 ตัน", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A014", "set": "numeric", "content": "ค่าใช้จ่ายเดิม 4,755 บาท ปัจจุบัน 1,625 บาท เปลี่ยนแปลง -66.00%", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A015", "set": "numeric", "content": "ANSWER: <คำตอบ> 1", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A016", "set": "numeric", "content": "ANSWER: <คำตอบ> ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A017", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A018", "set": "numeric", "content": "ANSWER: <คำตอบ> โดย <คำตอบ> ... ๆ ไม่มีหน่วย ...", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A019", "set": "numeric", "content": "ANSWER: 29.00", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A020", "set": "numeric", "content": "ANSWER: 127,356.48 บาท", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A021", "set": "numeric", "content": "ANSWER: 1,192.5 ตัน\n\nคำอธิบาย: ค่าปล่อย CO2 ต่อหน่วยไฟฟ้า (kWh) เป็น 0.4633 kgCO2/kWh ดังนั้นจึงคำนวณได้ว่า 2,607,370 kWh x 0.4633 kgCO2/kWh = 1,192.5 ตัน CO2", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A022", "set": "numeric", "content": "ค่าใช้จ่ายเดิม 2,007 บาท ปัจจุบัน 4,242 บาท เปลี่ยนแปลงกี่เปอร์เซ็นต์ (ติดลบถ้าลดลง ทศนิยม 2 ตำแหน่ง)\n\nANSWER: 111.58%", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "A023", "set": "numeric", "content": "ANSWER: <คำตอบ> 364 แผง", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B000", "set": "extract", "content": "ANSWER: QT-2025-6945", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B001", "set": "extract", "content": "ANSWER: 2441546", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B002", "set": "extract", "content": "ANSWER: 850", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B003", "set": "extract", "content": "ANSWER: ไทยรุ่งเรือง", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B004", "set": "extract", "content": "ANSWER: QT-2021-4920", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B005", "set": "extract", "content": "ANSWER: 3495784", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B006", "set": "extract", "content": "ANSWER: 300", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B007", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B008", "set": "extract", "content": "ANSWER: QT-2020-9248", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B009", "set": "extract", "content": "ANSWER: 8633487", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B010", "set": "extract", "content": "ANSWER: 830", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B011", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B012", "set": "extract", "content": "ANSWER: QT-2024-6573", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B013", "set": "extract", "content": "ANSWER: 2,479,586", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B014", "set": "extract", "content": "ANSWER: 340", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B015", "set": "extract", "content": "ANSWER: บริษัท นครชัยการช่าง จำกัด", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B016", "set": "extract", "content": "ANSWER: QT-2020-9388", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "B017", "set": "extract", "content": "ANSWER: 7033055", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C000", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C001", "set": "classify", "content": "ANSWER: โรงแรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C002", "set": "classify", "content": "ANSWER: โรงพยาบาล\n\nคำอธิบาย: เครื่อง MRI (Magnetic Resonance Imaging) เป็นเครื่องมือทางการแพทย์ที่ใช้ในการตรวจร่างกายโดยไม่ต้องใช้รังสี X-ray. มันพบได้ในโรงพยาบาลและศูนย์การแพทย์ต่าง ๆ.", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C003", "set": "classify", "content": "ANSWER: <คลังสินค้า>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C004", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C005", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C006", "set": "classify", "content": "ANSWER: <โรงงานอุตสาหกรรม>", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C007", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C008", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C009", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C010", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C011", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C012", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C013", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C014", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C015", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C016", "set": "classify", "content": "ANSWER: โรงพยาบาล", "error": null}
+{"provider": "mistral-nemo", "model": "mistral-Nemo-Instruct-2407", "item_id": "C017", "set": "classify", "content": "ANSWER: โรงงานอุตสาหกรรม", "error": null}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A000", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A001", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A002", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A003", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A004", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A005", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A006", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A007", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A008", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A009", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A010", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A011", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A012", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A013", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A014", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "gemini-flash-lite", "model": "gemini-3.1-flash-lite", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A000", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A001", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A002", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A003", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A004", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A005", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A006", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A007", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A008", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A009", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A010", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A011", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A012", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A013", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A014", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}

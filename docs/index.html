@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chat — หลายโมเดล ตรวจกันเอง</title>
+<style>
+  /* ── ธีม 5 แบบ · เปลี่ยนได้จากหัวหน้าจอ จำค่าไว้ใน localStorage ── */
+  :root,[data-theme="midnight"]{--bg:#0f172a;--panel:#1e293b;--line:#334155;--ink:#e2e8f0;--dim:#94a3b8;
+        --faint:#64748b;--amber:#f59e0b;--green:#10b981;--red:#f43f5e;--cyan:#22d3ee;--violet:#a78bfa;
+        --inbg:#0b1220;--me:#334155}
+  [data-theme="ocean"]{--bg:#0b1a2b;--panel:#12293f;--line:#1e4260;--ink:#e0f2fe;--dim:#93b8d4;
+        --faint:#5f89a8;--amber:#38bdf8;--green:#2dd4bf;--red:#fb7185;--cyan:#67e8f9;--violet:#818cf8;
+        --inbg:#081422;--me:#1e4260}
+  [data-theme="forest"]{--bg:#0c1a12;--panel:#14281c;--line:#22452f;--ink:#dcfce7;--dim:#9dc7ac;
+        --faint:#6b9a7c;--amber:#84cc16;--green:#34d399;--red:#f87171;--cyan:#5eead4;--violet:#a3e635;
+        --inbg:#08130d;--me:#22452f}
+  [data-theme="mono"]{--bg:#0a0a0a;--panel:#171717;--line:#333333;--ink:#f5f5f5;--dim:#a3a3a3;
+        --faint:#737373;--amber:#fafafa;--green:#d4d4d4;--red:#e5e5e5;--cyan:#d4d4d4;--violet:#a3a3a3;
+        --inbg:#000000;--me:#2a2a2a}
+  [data-theme="daylight"]{--bg:#f4f6fa;--panel:#ffffff;--line:#d7dfe8;--ink:#111827;--dim:#4b5563;
+        --faint:#7d8794;--amber:#b45309;--green:#047857;--red:#be123c;--cyan:#0e7490;--violet:#6d28d9;
+        --inbg:#f1f5f9;--me:#e2e8f0}
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);transition:background .2s,color .2s;
+       font-family:"IBM Plex Sans Thai","Noto Sans Thai","Prompt",system-ui,-apple-system,"Segoe UI",sans-serif;
+       font-size:14.5px;line-height:1.62;display:flex;flex-direction:column}
+  .mono{font-family:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace}
+
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:9px 14px;
+         display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:0 0 auto}
+  h1{font-size:15px;margin:0;font-weight:700;white-space:nowrap}
+  h1 small{font-size:10px;color:var(--dim);font-weight:400;display:block;line-height:1.2}
+  .grow{flex:1 1 auto}
+  select,input,textarea{background:var(--inbg);border:1px solid var(--line);color:var(--ink);
+       border-radius:8px;padding:7px 10px;font:inherit;font-size:13px}
+  select:focus,input:focus,textarea:focus{outline:0;border-color:var(--amber)}
+  button{background:var(--amber);color:var(--inbg);border:0;border-radius:8px;padding:8px 15px;
+         font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+  button:disabled{opacity:.45;cursor:default}
+  button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);font-weight:400}
+  button.ghost:hover{color:var(--ink)}
+
+  main{flex:1 1 auto;display:grid;grid-template-columns:1fr 330px;gap:12px;padding:12px;
+       max-width:1400px;width:100%;margin:0 auto;min-height:0}
+  @media(max-width:980px){main{grid-template-columns:1fr;padding:8px}
+    aside{order:2} .col{order:1}}
+  .col{display:flex;flex-direction:column;min-height:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+
+  #chat{flex:1 1 auto;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:240px}
+  .msg{max-width:90%;padding:10px 13px;border-radius:12px;word-wrap:break-word;overflow-wrap:anywhere}
+  .msg p{margin:0 0 .6em} .msg p:last-child{margin-bottom:0}
+  .msg ul,.msg ol{margin:.3em 0 .6em;padding-left:1.3em}
+  .msg code{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.88em}
+  .msg pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;
+           overflow-x:auto;margin:.4em 0} .msg pre code{border:0;background:0;padding:0}
+  .msg h3{font-size:1em;margin:.5em 0 .3em;color:var(--amber)}
+  .me{align-self:flex-end;background:var(--me)}
+  .bot{align-self:flex-start;background:var(--inbg);border:1px solid var(--line);width:100%;max-width:100%}
+  .sys{align-self:center;font-size:11.5px;color:var(--dim);background:transparent;
+       border:1px dashed var(--line);border-radius:8px;padding:6px 12px;max-width:100%}
+  .err{border-color:var(--red)} .err strong{color:var(--red)}
+
+  .tag{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);
+       color:var(--dim);white-space:nowrap;display:inline-block}
+  .tag.l1{color:var(--green);border-color:var(--green)}
+  .tag.l2{color:var(--cyan);border-color:var(--cyan)}
+  .tag.calc{color:var(--violet);border-color:var(--violet)}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+
+  .foot{border-top:1px dashed var(--line);margin-top:10px;padding-top:8px;font-size:11.5px;color:var(--dim)}
+  .foot summary{cursor:pointer;color:var(--cyan);font-size:11.5px}
+  .foot table{width:100%;border-collapse:collapse;margin-top:6px;font-size:11.5px}
+  .foot td{padding:4px 5px;border-bottom:1px solid var(--line);vertical-align:top}
+  .foot td:first-child{white-space:nowrap;color:var(--faint);width:1%}
+
+  form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);align-items:flex-end}
+  textarea{flex:1 1 auto;resize:none;max-height:140px;line-height:1.5}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px}
+  .chips button{background:var(--inbg);color:var(--cyan);border:1px solid var(--line);
+                font-size:11.5px;font-weight:400;padding:5px 10px}
+
+  aside{overflow-y:auto;min-height:0}
+  aside section{padding:12px;border-bottom:1px solid var(--line)}
+  aside section:last-child{border-bottom:0}
+  aside h2{font-size:11px;margin:0 0 8px;color:var(--cyan);letter-spacing:.05em;text-transform:uppercase}
+  .kv{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:12.5px}
+  .kv span:last-child{font-weight:700;text-align:right}
+  .note{font-size:11.5px;color:var(--dim);line-height:1.55}
+  .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:5px 0}
+  .bar>i{display:block;height:100%;background:var(--amber);width:0}
+  label.row{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer}
+  label.row input{width:auto;margin:0}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+  .dot.ok{background:var(--green)} .dot.bad{background:var(--red)} .dot.run{background:var(--amber)}
+  .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);
+        border-top-color:var(--amber);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI Chat<small>หลายโมเดลตอบพร้อมกัน แล้วตรวจกันเอง · ฟรี ไม่ต้องใส่ API key</small></h1>
+  <div class="grow"></div>
+  <select id="mode" title="จำนวนโมเดลที่ใช้ตอบ">
+    <option value="fast">โหมดเร็ว · 1 โมเดล</option>
+    <option value="std" selected>โหมดมาตรฐาน · 3 โมเดล</option>
+    <option value="deep">โหมดละเอียด · 5 โมเดล + สังเคราะห์</option>
+  </select>
+  <select id="theme" title="ธีม">
+    <option value="midnight">🌙 Midnight</option>
+    <option value="ocean">🌊 Ocean</option>
+    <option value="forest">🌿 Forest</option>
+    <option value="mono">⬜ Mono</option>
+    <option value="daylight">☀️ Daylight</option>
+  </select>
+  <button class="ghost" id="clear" title="ล้างบทสนทนา">ล้าง</button>
+</header>
+
+<main>
+  <div class="col card">
+    <div id="chat"></div>
+    <div class="chips" id="chips"></div>
+    <form id="f">
+      <textarea id="q" rows="1" placeholder="พิมพ์คำถาม… (Enter ส่ง · Shift+Enter ขึ้นบรรทัดใหม่)"></textarea>
+      <button id="send">ส่ง</button>
+      <button type="button" class="ghost" id="stop" style="display:none">หยุด</button>
+    </form>
+  </div>
+
+  <aside class="card">
+    <section>
+      <h2>สถานะรอบล่าสุด</h2>
+      <div class="kv"><span>โมเดลที่ตอบสำเร็จ</span><span id="s-ok">—</span></div>
+      <div class="kv"><span>ความสอดคล้องกัน</span><span id="s-agree">—</span></div>
+      <div class="bar"><i id="s-bar"></i></div>
+      <div class="kv"><span>วัดจาก</span><span id="s-kind" style="font-weight:400">—</span></div>
+      <div class="kv"><span>ถ้อยคำตรงกัน</span><span id="s-words" style="font-weight:400">—</span></div>
+      <div class="kv"><span>เวลาที่ใช้</span><span id="s-time">—</span></div>
+      <div class="note" id="s-note" style="margin-top:6px">ยังไม่ได้ถาม</div>
+    </section>
+
+    <section>
+      <h2>โมเดลที่เปิดใช้</h2>
+      <div id="models"></div>
+      <div class="note" style="margin-top:6px">
+        ผู้ให้บริการจำกัดอัตราเรียก <b>ต่อบัญชี</b> ไม่ใช่ต่อโมเดล จึงต้องยิงทีละตัวห่างกัน
+        <span id="gapNote">1.5</span> วินาที — เลือกโมเดลมาก = ตอบช้าลงตามจำนวน
+      </div>
+    </section>
+
+    <section>
+      <h2>สถาปัตยกรรม 3 ชั้น</h2>
+      <div class="note">
+        <b style="color:var(--green)">L1 — โค้ดคำนวณ</b><br>
+        ตัวเลขคำนวณด้วยโค้ดในหน้านี้เสมอ ไม่ให้โมเดลคิดเลข
+        <span class="mono" style="color:var(--faint)">(codestral เคยตอบ 100000÷5 = 40,000)</span><br><br>
+        <b style="color:var(--cyan)">L2 — โมเดลอ่านและอธิบาย</b><br>
+        ใช้หลายโมเดลตอบอิสระ แล้ววัดว่าตรงกันแค่ไหน ตามแนวคิด Self-Consistency / Mixture-of-Agents<br><br>
+        <b style="color:var(--amber)">L3 — คนตัดสิน</b><br>
+        เมื่อโมเดลขัดแย้งกัน ระบบจะบอกตรง ๆ ไม่กลบ ไม่เลือกข้างให้เอง
+      </div>
+    </section>
+
+    <section>
+      <h2>ความสอดคล้อง ≠ ความถูกต้อง</h2>
+      <div class="note">
+        ตัวเลข "ความสอดคล้อง" คือโมเดลตอบตรงกันแค่ไหน <b>ไม่ใช่</b>ความน่าจะเป็นที่คำตอบถูก
+        ถ้าโมเดลผิดเหมือนกันหมด ค่านี้จะสูงทั้งที่คำตอบผิด<br>
+        การแปลงค่านี้เป็นความแม่นยำต้อง calibrate ด้วยชุดทดสอบที่รู้เฉลย — งานวัดนั้นยังไม่เสร็จ
+        จึงยังไม่แสดงเป็นเปอร์เซ็นต์ความถูกต้อง
+      </div>
+    </section>
+
+    <section>
+      <h2>ตั้งค่า</h2>
+      <label class="row"><input type="checkbox" id="opt-calc" checked> ให้โค้ดคำนวณเลขแทนโมเดล (L1)</label>
+      <label class="row"><input type="checkbox" id="opt-mem" checked> จำบทสนทนาไว้ในเครื่อง</label>
+      <label class="row"><input type="checkbox" id="opt-raw"> กางคำตอบดิบของทุกโมเดลอัตโนมัติ</label>
+      <div style="margin-top:8px">
+        <div class="note" style="margin-bottom:4px">บทบาทของผู้ช่วย (system prompt)</div>
+        <textarea id="sys" rows="3" style="width:100%"></textarea>
+      </div>
+    </section>
+  </aside>
+</main>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════════
+   ค่าคงที่ของผู้ให้บริการ
+   จากการสำรวจจริง 45 โมเดลที่ประกาศไว้ ใช้ได้โดยไม่ต้องมี key 7 ตัว
+   (ดู research/02-providers/01-free-provider-survey.md)
+   CORS: api.llm7.io ส่ง access-control-allow-origin: * จึงเรียกจาก
+   หน้าเว็บได้ตรง ๆ ไม่ต้องมี backend (ยืนยันแล้ว 2026-08-23)
+   ══════════════════════════════════════════════════════════════════ */
+const ENDPOINT = 'https://api.llm7.io/v1/chat/completions';
+const MIN_GAP  = 1500;   // มิลลิวินาที ระหว่าง request — จำกัดต่อบัญชี ไม่ใช่ต่อโมเดล
+
+const MODELS = [
+  {id:'DeepSeek-V4-Flash-0731',           name:'DeepSeek V4 Flash',     fam:'DeepSeek',   on:true},
+  {id:'gemini-3.1-flash-lite',            name:'Gemini 3.1 Flash Lite', fam:'Google',     on:true},
+  {id:'gpt-oss:20b',                      name:'GPT-OSS 20B',           fam:'OpenAI-OSS', on:true},
+  {id:'minimax-m2.7',                     name:'MiniMax M2.7',          fam:'MiniMax',    on:true},
+  {id:'mistral-Nemo-Instruct-2407',       name:'Mistral Nemo',          fam:'Mistral',    on:true},
+  {id:'meta-Llama-3.1-8B-Instruct-Turbo', name:'Llama 3.1 8B',          fam:'Meta',       on:false},
+  {id:'codestral-latest',                 name:'Codestral',             fam:'Mistral',    on:false},
+];
+const MODE_N = {fast:1, std:3, deep:5};
+
+const DEFAULT_SYS =
+  'คุณเป็นผู้ช่วยที่ตอบเป็นภาษาไทย กระชับ ตรงประเด็น ' +
+  'ถ้าไม่รู้ให้บอกว่าไม่รู้ ห้ามเดาเป็นข้อเท็จจริง ' +
+  'ถ้าคำถามมีการคำนวณ ให้บอกวิธีคิดเป็นขั้นตอน';
+
+/* ── สถานะ ─────────────────────────────────────────────────────── */
+const S = {history: [], busy: false, abort: null, lastCall: 0};
+
+const $ = s => document.querySelector(s);
+const chat = $('#chat');
+
+/* ══════════════════════════════════════════════════════════════════
+   ธีม
+   ══════════════════════════════════════════════════════════════════ */
+function setTheme(name){
+  document.documentElement.setAttribute('data-theme', name);
+  $('#theme').value = name;
+  try { localStorage.setItem('aiChatTheme', name); } catch(e){}
+}
+$('#theme').addEventListener('change', e => setTheme(e.target.value));
+(function(){
+  let t = 'midnight';
+  try { t = localStorage.getItem('aiChatTheme') || 'midnight'; } catch(e){}
+  setTheme(t);
+})();
+
+/* ══════════════════════════════════════════════════════════════════
+   L1 — ชั้นคำนวณด้วยโค้ด
+   โมเดลฟรีคิดเลขพลาดจริง (codestral ตอบ 100000/5 = 40,000) จึงต้อง
+   ดักนิพจน์เลขคณิตแล้วคำนวณเองด้วย JS ผลที่ได้ถือเป็นข้อเท็จจริงที่
+   ป้อนกลับเข้า system prompt ให้โมเดลยึดตาม
+   ══════════════════════════════════════════════════════════════════ */
+const CALC = (() => {
+  function normalize(t){
+    let u = String(t).replace(/,/g, '');       // ตัดตัวคั่นหลักพันแบบจุลภาค
+    for (let i = 0; i < 4; i++){               // และแบบช่องว่าง ("85 000")
+      const n = u.replace(/(\d)[ \u00a0\u2009\u202f](\d{3})(?!\d)/g, '$1$2');
+      if (n === u) break;
+      u = n;
+    }
+    return u
+      .replace(/[×✕✖]/g, '*').replace(/[÷∕]/g, '/')
+      .replace(/[–—−]/g, '-')
+      .replace(/คูณ/g, '*').replace(/หารด้วย/g, '/').replace(/หาร/g, '/')
+      .replace(/บวก/g, '+').replace(/ลบ/g, '-')
+      .replace(/ยกกำลัง/g, '^');
+  }
+
+  // เครื่องคิดเลขเขียนเอง — ไม่ใช้ eval เพื่อไม่ให้ข้อความผู้ใช้กลายเป็นโค้ด
+  function evaluate(src){
+    const tok = src.match(/\d+\.?\d*|[+\-*/^()]/g);
+    if (!tok) return null;
+    let i = 0;
+    const eat = c => { if (tok[i] === c){ i++; return true; } return false; };
+    function primary(){
+      if (eat('(')){ const v = expr(); if (!eat(')')) throw new Error('paren'); return v; }
+      if (eat('-')) return -primary();
+      if (eat('+')) return primary();
+      const t = tok[i];
+      if (t === undefined || !/^\d/.test(t)) throw new Error('bad');
+      i++; return parseFloat(t);
+    }
+    function power(){
+      const b = primary();
+      if (eat('^')) return Math.pow(b, power());
+      return b;
+    }
+    function term(){
+      let v = power();
+      for(;;){
+        if (eat('*')) v *= power();
+        else if (eat('/')){ const d = power(); if (d === 0) throw new Error('div0'); v /= d; }
+        else return v;
+      }
+    }
+    function expr(){
+      let v = term();
+      for(;;){
+        if (eat('+')) v += term();
+        else if (eat('-')) v -= term();
+        else return v;
+      }
+    }
+    const v = expr();
+    if (i !== tok.length) throw new Error('trailing');
+    if (!isFinite(v)) throw new Error('inf');
+    return v;
+  }
+
+  const fmt = n => {
+    const r = Math.round(n * 1e6) / 1e6;
+    return r.toLocaleString('en-US', {maximumFractionDigits: 6});
+  };
+
+  // คืน [{label, value}] ของสิ่งที่คำนวณได้จากข้อความ
+  function scan(text){
+    const out = [];
+    const push = (label, value) => { if (!out.some(o => o.label === label)) out.push({label, value}); };
+    const t = normalize(text);
+    let m;
+
+    // 1) "X% ของ Y"
+    const pctOf = /(\d+\.?\d*)\s*%\s*(?:ของ|of)\s*(\d+\.?\d*)/gi;
+    while ((m = pctOf.exec(t))){
+      push(m[1] + '% ของ ' + fmt(+m[2]), fmt(parseFloat(m[1]) / 100 * parseFloat(m[2])));
+    }
+
+    // 2) VAT / ภาษี — เลขอยู่หลัง ("VAT 7% ของ 20000") หรืออยู่หน้า ("20000 + VAT 7%")
+    const addVat = (base, rate) =>
+      push(fmt(base) + ' + VAT ' + rate + '%', fmt(base * (1 + parseFloat(rate) / 100)));
+    const vatAfter = /(?:vat|แวต|ภาษี)\s*(\d+\.?\d*)\s*%[^0-9]{0,14}(\d+\.?\d*)/gi;
+    while ((m = vatAfter.exec(t))) addVat(parseFloat(m[2]), m[1]);
+    const vatBefore = /(\d+\.?\d*)[^0-9%]{0,14}(?:vat|แวต|ภาษี)\s*(\d+\.?\d*)\s*%/gi;
+    while ((m = vatBefore.exec(t))) addVat(parseFloat(m[1]), m[2]);
+
+    // 3) เปอร์เซ็นต์ที่อ้างถึงจำนวนเงินที่พูดไว้ก่อนหน้าในประโยคเดียวกัน
+    //    เช่น "ค่าไฟเดือนละ 85000 บาท ถ้าประหยัดได้ 30%" — ไม่มีคำว่า "ของ"
+    //    จึงต้องมองย้อนกลับไปหาจำนวนก้อนล่าสุด และต้องมีคำบอกเจตนากำกับ
+    //    ไม่งั้นจะไปจับ "ดอกเบี้ย 6.5%" ที่ไม่ได้หมายถึงเปอร์เซ็นต์ของอะไร
+    const INTENT = /(ประหยัด|ลด|ส่วนลด|เพิ่ม|โต|เติบโต|discount|off|ภาษี|vat|แวต)/i;
+    const loose = /(\d+\.?\d*)\s*%/g;
+    while ((m = loose.exec(t))){
+      const at = m.index;
+      const before = t.slice(0, at);
+      if (/(?:ของ|of)\s*$/.test(before.replace(/\d+\.?\d*\s*%\s*$/, ''))) continue;
+      const ctx = t.slice(Math.max(0, at - 40), at + 12);
+      if (!INTENT.test(ctx)) continue;
+      const prev = before.match(/(\d[\d.]*)(?!.*\d)/);   // จำนวนสุดท้ายก่อนหน้า %
+      if (!prev) continue;
+      const base = parseFloat(prev[1]);
+      if (!(base >= 100)) continue;                       // เล็กเกินไป ไม่น่าใช่จำนวนเงิน
+      const rate = parseFloat(m[1]);
+      push(m[1] + '% ของ ' + fmt(base) + ' (ตีความจากประโยค)', fmt(base * rate / 100));
+    }
+
+    // 4) นิพจน์เลขคณิตล้วน — ต้องมีตัวดำเนินการและตัวเลขอย่างน้อยสองตัว
+    const exprRe = /\(?\d+\.?\d*(?:\s*[+\-*/^]\s*\(?\d+\.?\d*\)?)+/g;
+    while ((m = exprRe.exec(t))){
+      const src = m[0].trim();
+      if ((src.match(/\d+\.?\d*/g) || []).length < 2) continue;
+      try {
+        const v = evaluate(src);
+        if (v !== null) push(src.replace(/\s+/g, ' '), fmt(v));
+      } catch(e){ /* นิพจน์ไม่สมบูรณ์ — ข้าม */ }
+    }
+    return out.slice(0, 6);
+  }
+
+  return {scan, evaluate, fmt, normalize};
+})();
+
+/* ══════════════════════════════════════════════════════════════════
+   L2 — เรียกโมเดล
+   ══════════════════════════════════════════════════════════════════ */
+async function waitTurn(){
+  const gap = MIN_GAP - (Date.now() - S.lastCall);
+  if (gap > 0) await new Promise(r => setTimeout(r, gap));
+  S.lastCall = Date.now();
+}
+
+async function askOne(model, messages, signal){
+  await waitTurn();
+  const t0 = performance.now();
+  const res = await fetch(ENDPOINT, {
+    method: 'POST', signal: signal,
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer unused'},
+    body: JSON.stringify({model: model.id, messages: messages, temperature: 0.3, max_tokens: 900}),
+  });
+  const secs = (performance.now() - t0) / 1000;
+  if (!res.ok){
+    const body = (await res.text().catch(() => '')).slice(0, 140).replace(/\s+/g, ' ');
+    throw Object.assign(new Error('HTTP ' + res.status + ' ' + body), {secs: secs});
+  }
+  const j = await res.json();
+  const text = ((((j.choices || [])[0] || {}).message || {}).content || '').trim();
+  if (!text) throw Object.assign(new Error('คำตอบว่าง'), {secs: secs});
+  return {text: text, secs: secs};
+}
+
+// แปลง error ของ fetch ให้เป็นสาเหตุที่ผู้ใช้ทำอะไรต่อได้
+function humanError(err){
+  if (err.name === 'TypeError') return 'เรียกไม่ถึงเซิร์ฟเวอร์ — เน็ตหลุด หรือถูกบล็อก';
+  const m = /^HTTP (\d+)/.exec(err.message || '');
+  if (m){
+    const c = m[1];
+    if (c === '429') return 'เรียกถี่เกินโควตา (429) — รอสักครู่';
+    if (c === '401' || c === '403') return 'โมเดลนี้ต้องมี API key (' + c + ')';
+    if (c === '404') return 'ไม่มีโมเดลนี้แล้ว (404)';
+    if (c[0] === '5') return 'ฝั่งผู้ให้บริการล่ม (' + c + ')';
+  }
+  return err.message;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   วัดความสอดคล้อง
+   คำตอบเป็นข้อความอิสระ จึงโหวตแบบตรงตัวไม่ได้ ใช้สองมุมแทน
+   1) ความคล้ายของถ้อยคำ (Jaccard บนคำ) เฉลี่ยทุกคู่
+   2) ตัวเลขสำคัญที่แต่ละโมเดลพูดถึง ตรงกันหรือไม่
+   แล้วเลือก "ตัวแทน" เป็นคำตอบที่คล้ายเพื่อนมากที่สุด (medoid)
+   ตามแนวคิด self-consistency ที่ปรับใช้กับคำตอบปลายเปิด
+   ══════════════════════════════════════════════════════════════════ */
+// รวมหลักพันที่คั่นด้วยช่องว่างแบบ SI ให้เป็นตัวเลขเดียว
+// GPT-OSS เขียน "25 500 บาท" ซึ่งถ้าไม่รวมก่อน จะถูกอ่านเป็น 25 กับ 500
+// แล้วทำให้ความสอดคล้องเชิงตัวเลขพังทั้งที่ตอบตรงกับโมเดลอื่น
+function joinSpacedDigits(str){
+  let out = String(str);
+  for (let i = 0; i < 4; i++){
+    const next = out.replace(/(\d)[ \u00a0\u2009\u202f](\d{3})(?!\d)/g, '$1$2');
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
+
+const STOP = new Set(['และ','หรือ','ที่','ของ','ใน','เป็น','การ','ได้','ให้','ก็','ว่า','จะ','กับ','มี','คือ',
+                      'the','a','an','is','are','to','of','and','or','in','for','it','this','that']);
+function bag(s){
+  const w = String(s).toLowerCase()
+    .replace(/[^\p{L}\p{N}\s.]/gu, ' ')
+    .split(/\s+/).filter(x => x.length > 1 && !STOP.has(x));
+  return new Set(w);
+}
+function jaccard(a, b){
+  if (!a.size && !b.size) return 1;
+  let inter = 0;
+  a.forEach(x => { if (b.has(x)) inter++; });
+  const uni = a.size + b.size - inter;
+  return uni ? inter / uni : 0;
+}
+function numbersIn(s){
+  // ตัดเลขลำดับหัวข้อ ("1." "2)") ทิ้งก่อน ไม่งั้นจะนับว่าโมเดล "เห็นตรงกันที่เลข 1"
+  // ทั้งที่เป็นแค่รูปแบบการจัดหน้า — ผลรันจริงเคยรายงาน 1 (2/2) · 2 (2/2) แบบนี้
+  const clean = joinSpacedDigits(String(s).replace(/,/g, ''))
+    .replace(/(^|\n)\s*\d+[.)]\s/g, '$1');
+  return (clean.match(/-?\d+\.?\d*/g) || [])
+    .map(Number).filter(n => isFinite(n) && Math.abs(n) >= 1);
+}
+// ตัวเลขที่ถือว่าเป็นสาระ ไม่ใช่เลขจิปาถะ — ใช้ทั้งตอนวัดและตอนแสดงผล
+// เกณฑ์ 10 ไม่ใช่ 100 เพราะขนาดระบบ (42 / 47 / 53 kWp) คือจุดที่โมเดล
+// เห็นต่างกันจริง ถ้าตัดทิ้งจะมองไม่เห็นข้อขัดแย้งที่สำคัญที่สุดในคำตอบ
+// เลขลำดับหัวข้อถูกตัดไปแล้วตั้งแต่ numbersIn จึงไม่กลับมาปนอีก
+const SIGNIFICANT = v => Math.abs(v) >= 10 || !Number.isInteger(v);
+
+function consensus(answers, askedNums){
+  const n = answers.length;
+  if (n === 0) return null;
+  if (n === 1) return {pick: 0, agree: null, words: null, nums: null,
+                       shared: [], unanimous: [], lone: 0, lopsided: false};
+  const bags = answers.map(a => bag(a.text));
+  // ตัวเลขสำคัญเท่านั้น — จำนวนเต็มเล็ก ๆ มักเป็นหน่วยเวลา เลขลำดับ หรือค่าคงที่
+  // ที่โมเดลอีกตัวไม่มีเหตุต้องพูดถึง ถ้านับรวมจะดึงคะแนนลงโดยไม่มีความหมาย
+  const nums = answers.map(a => new Set(numbersIn(a.text).filter(SIGNIFICANT)));
+  const hasNums = nums.every(s => s.size > 0);
+  const sum = new Array(n).fill(0);
+  let tw = 0, tn = 0, pairs = 0;
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++){
+      const w = jaccard(bags[i], bags[j]);
+      const v = hasNums ? jaccard(nums[i], nums[j]) : 0;
+      // เลือกตัวแทนด้วยคะแนนรวม แต่รายงานแยกกันเพื่อไม่ให้ตัวเลขเดียวกลบสองเรื่อง
+      const combined = hasNums ? (0.4 * w + 0.6 * v) : w;
+      sum[i] += combined; sum[j] += combined;
+      tw += w; tn += v; pairs++;
+    }
+  const agreeWords = pairs ? tw / pairs : null;
+  const agreeNums  = hasNums && pairs ? tn / pairs : null;
+  const agree = agreeNums !== null ? agreeNums : agreeWords;
+  let pick = 0;
+  for (let i = 1; i < n; i++) if (sum[i] > sum[pick]) pick = i;
+
+  // ตัวเลขที่ปรากฏในคำตอบตั้งแต่ครึ่งหนึ่งขึ้นไป = ตัวเลขที่โมเดลเห็นตรงกัน
+  const counts = new Map();
+  answers.forEach(a => new Set(numbersIn(a.text))
+    .forEach(v => counts.set(v, (counts.get(v) || 0) + 1)));
+  // ตัดตัวเลขที่ลอกมาจากคำถามทิ้ง — พูดซ้ำโจทย์ไม่ใช่การเห็นตรงกัน
+  const asked = askedNums instanceof Set ? askedNums : new Set();
+  const sig = Array.from(counts.entries())
+    .filter(e => SIGNIFICANT(e[0]) && !asked.has(e[0]));
+  const byCount = c => sig.filter(e => e[1] === c)
+    .sort((a, b) => Math.abs(b[0]) - Math.abs(a[0]));
+  const unanimous = byCount(n);                      // ทุกโมเดลพูดตรงกัน
+  const lone = sig.filter(e => e[1] === 1).length;   // มีโมเดลเดียวที่พูดถึง
+  const shared = sig.filter(e => e[1] >= Math.ceil(n / 2) && e[1] > 1)
+    .sort((a, b) => b[1] - a[1] || Math.abs(b[0]) - Math.abs(a[0])).slice(0, 5);
+
+  const sizes = nums.map(x => x.size);
+  const lopsided = hasNums && Math.max.apply(null, sizes) >= 2 * Math.min.apply(null, sizes);
+  return {pick: pick, agree: agree, words: agreeWords, nums: agreeNums,
+          shared: shared, unanimous: unanimous, lone: lone, lopsided: lopsided};
+}
+
+// สรุปด้วยจำนวนจริง ไม่ใช่คำตัดสินจากคะแนนเดียว
+// เพราะคะแนน Jaccard ต่ำได้ทั้งที่ข้อสรุปตรงกัน เพียงเพราะแต่ละโมเดล
+// แสดงตัวเลขระหว่างทางคนละชุด — ผลจริงเคยขึ้น 'ไม่ตรงกัน' ทั้งที่
+// ตัวเลขคำตอบตรงกัน 3/3 ทุกตัว
+function verdict(con, n){
+  if (!con || con.unanimous === undefined)
+    return {t: 'วัดไม่ได้ (โมเดลเดียว)', c: 'var(--faint)', bad: false};
+  const u = con.unanimous.length;
+  if (u === 0) return {t: 'ไม่มีตัวเลขที่ทุกโมเดลตรงกัน', c: 'var(--red)', bad: true};
+  if (con.lone === 0) return {t: 'ตัวเลขตรงกันทั้งหมด (' + u + ')', c: 'var(--green)', bad: false};
+  return {t: 'ตรงกัน ' + u + ' · ต่างกัน ' + con.lone, c: 'var(--amber)', bad: false};
+}
+function agreeLabel(a, isNum){
+  if (a === null || a === undefined) return {t: 'วัดไม่ได้ (โมเดลเดียว)', c: 'var(--faint)'};
+  const what = isNum ? 'ตัวเลข' : 'เนื้อความ';
+  if (a >= 0.55) return {t: what + 'ตรงกันมาก', c: 'var(--green)'};
+  if (a >= 0.30) return {t: what + 'ตรงกันบางส่วน', c: 'var(--amber)'};
+  return {t: what + 'ไม่ตรงกัน', c: 'var(--red)'};
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   แสดงผล
+   ══════════════════════════════════════════════════════════════════ */
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// markdown แบบย่อ — escape ก่อนเสมอ แล้วค่อยใส่แท็กที่อนุญาต
+function md(src){
+  let s = esc(src);
+  const blocks = [];
+  s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, function(m, lang, code){
+    blocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+    return '␄BLK' + (blocks.length - 1) + '␄';
+  });
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+  s = s.replace(/(^|\n)[ \t]*#{1,6}[ \t]*([^\n]+)/g, '$1<h3>$2</h3>');
+  s = s.replace(/(^|\n)[ \t]*[-*•][ \t]+([^\n]+)/g, '$1<li>$2</li>');
+  s = s.replace(/(^|\n)[ \t]*\d+[.)][ \t]+([^\n]+)/g, '$1<li>$2</li>');
+  s = s.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, '<ul>$1</ul>');
+  s = s.split(/\n{2,}/).map(function(p){
+    const q = p.trim();
+    return (!q || /^(<(ul|h3|pre)|␄BLK)/.test(q)) ? p : '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+  s = s.replace(/␄BLK(\d+)␄/g, function(m, i){ return blocks[+i]; });
+  return s;
+}
+
+function add(cls, html){
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.innerHTML = html;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+const sysline = html => add('sys', html);
+
+function renderModels(){
+  const box = $('#models');
+  box.innerHTML = '';
+  MODELS.forEach(function(m, i){
+    const l = document.createElement('label');
+    l.className = 'row';
+    l.innerHTML = '<input type="checkbox" ' + (m.on ? 'checked' : '') + '>' +
+                  '<span class="dot" id="dot-' + i + '"></span>' +
+                  '<span style="flex:1">' + esc(m.name) + '</span>' +
+                  '<span class="tag">' + esc(m.fam) + '</span>';
+    l.querySelector('input').addEventListener('change', function(e){
+      MODELS[i].on = e.target.checked;
+      saveCfg();
+    });
+    box.appendChild(l);
+  });
+}
+function dot(i, cls){ const d = $('#dot-' + i); if (d) d.className = 'dot ' + (cls || ''); }
+
+/* ══════════════════════════════════════════════════════════════════
+   วงจรหลัก
+   ══════════════════════════════════════════════════════════════════ */
+function pickModels(){
+  const on = MODELS.map(function(m, i){ return {m: m, i: i}; }).filter(x => x.m.on);
+  return on.slice(0, MODE_N[$('#mode').value] || 3);
+}
+
+async function ask(text){
+  if (S.busy) return;
+  S.busy = true;
+  $('#send').disabled = true;
+  $('#stop').style.display = '';
+  S.abort = new AbortController();
+  const t0 = performance.now();
+
+  add('me', md(text));
+  S.history.push({role: 'user', content: text});
+
+  // ── L1 · ให้โค้ดคำนวณก่อน ─────────────────────────────────────
+  let facts = [];
+  if ($('#opt-calc').checked){
+    facts = CALC.scan(text);
+    if (facts.length){
+      sysline('<span class="tag calc">L1 · คำนวณด้วยโค้ด</span> ' +
+        facts.map(f => '<span class="mono">' + esc(f.label) + ' = <b>' + esc(f.value) + '</b></span>')
+             .join(' · '));
+    }
+  }
+
+  const chosen = pickModels();
+  if (!chosen.length){
+    add('bot err', '<strong>ยังไม่ได้เลือกโมเดล</strong> — ติ๊กอย่างน้อยหนึ่งตัวในแผงขวา');
+    return done();
+  }
+
+  const sys = ($('#sys').value.trim() || DEFAULT_SYS) +
+    (facts.length
+      ? '\n\nผลการคำนวณที่ตรวจแล้ว (คำนวณด้วยโปรแกรม ให้ยึดตามนี้ ห้ามคำนวณใหม่): ' +
+        facts.map(f => f.label + ' = ' + f.value).join(' ; ')
+      : '');
+
+  const msgs = [{role: 'system', content: sys}].concat(S.history.slice(-10));
+
+  const holder = add('bot',
+    '<div class="meta"><span class="tag l2">L2 · ' + chosen.length + ' โมเดล</span>' +
+    '<span class="mono" id="prog">กำลังถาม… <span class="spin"></span></span></div>');
+  const prog = holder.querySelector('#prog');
+
+  const answers = [], failures = [];
+  chosen.forEach(c => dot(c.i, 'run'));
+
+  for (const c of chosen){
+    if (S.abort.signal.aborted) break;
+    prog.innerHTML = 'ถาม ' + esc(c.m.name) + '… <span class="spin"></span> (' +
+                     (answers.length + failures.length + 1) + '/' + chosen.length + ')';
+    try {
+      const r = await askOne(c.m, msgs, S.abort.signal);
+      answers.push({model: c.m, text: r.text, secs: r.secs});
+      dot(c.i, 'ok');
+    } catch(err){
+      if (err.name === 'AbortError'){ dot(c.i, ''); break; }
+      failures.push({model: c.m, err: humanError(err)});
+      dot(c.i, 'bad');
+    }
+  }
+
+  const secs = ((performance.now() - t0) / 1000).toFixed(1);
+
+  if (!answers.length){
+    holder.className = 'msg bot err';
+    holder.innerHTML =
+      '<strong>ไม่มีโมเดลไหนตอบได้</strong><div class="foot"><table>' +
+      failures.map(f => '<tr><td>' + esc(f.model.name) + '</td><td class="mono">' +
+                        esc(f.err) + '</td></tr>').join('') +
+      '</table></div><div class="note" style="margin-top:6px">มักเกิดจากเรียกถี่เกิน (429) ' +
+      'หรือผู้ให้บริการล่มชั่วคราว — ลองใหม่อีกครั้งใน 10 วินาที</div>';
+    updatePanel(0, null, secs, 'ทุกโมเดลล้มเหลว', false, null, null);
+    return done();
+  }
+
+  // ── สังเคราะห์ (โหมดละเอียด) ─────────────────────────────────
+  const con = consensus(answers, new Set(numbersIn(text)));
+  let finalText = answers[con.pick].text;
+  let synth = false;
+
+  if ($('#mode').value === 'deep' && answers.length >= 2 && !S.abort.signal.aborted){
+    prog.innerHTML = 'สังเคราะห์คำตอบ… <span class="spin"></span>';
+    const brief = answers.map((a, k) => '[คำตอบที่ ' + (k + 1) + ']\n' + a.text).join('\n\n');
+    try {
+      const r = await askOne(answers[con.pick].model, [
+        {role: 'system', content:
+          'รวมคำตอบหลายฉบับให้เป็นฉบับเดียวที่ถูกต้องที่สุด ' +
+          'ถ้าฉบับไหนขัดแย้งกันให้ระบุความขัดแย้งไว้ตรง ๆ ห้ามกลบ ' +
+          'ห้ามเพิ่มข้อมูลที่ไม่มีอยู่ในฉบับใดเลย ตอบเป็นภาษาไทย'},
+        {role: 'user', content: 'คำถาม: ' + text + '\n\n' + brief},
+      ], S.abort.signal);
+      finalText = r.text;
+      synth = true;
+    } catch(e){ /* สังเคราะห์ไม่สำเร็จ — ใช้คำตอบตัวแทนเดิม */ }
+  }
+
+  S.history.push({role: 'assistant', content: finalText});
+  saveHistory();
+
+  // ── ประกอบผลลัพธ์ ─────────────────────────────────────────────
+  const al = con.nums !== null ? verdict(con, answers.length)
+                              : agreeLabel(con.agree, false);
+  let html = '<div class="meta">' +
+      '<span class="tag l2">L2 · ' + answers.length + '/' + chosen.length + ' โมเดลตอบ</span>' +
+      (synth ? '<span class="tag l2">สังเคราะห์แล้ว</span>'
+             : (answers.length > 1
+                ? '<span class="tag">ตัวแทน: ' + esc(answers[con.pick].model.name) + '</span>' : '')) +
+      '<span class="tag" style="color:' + al.c + ';border-color:' + al.c + '">' + al.t + '</span>' +
+      '<span class="tag">' + secs + ' วิ</span></div>' + md(finalText);
+
+  const warn = con.nums !== null ? al.bad : (con.agree !== null && con.agree < 0.30);
+  if (warn){
+    html += '<div class="foot" style="border-color:var(--red)">' +
+      '<b style="color:var(--red)">⚠ ไม่มีข้อสรุปที่โมเดลตรงกันเลย</b> (วัดจาก' +
+      (con.nums !== null ? 'ตัวเลขในคำตอบ' : 'ถ้อยคำ') + ') — มักแปลว่าคำถามกำกวม ' +
+      'หรือเป็นเรื่องที่โมเดลไม่รู้จริง ควรกางคำตอบดิบทั้งหมดแล้วตัดสินเอง (ชั้น L3)</div>';
+  }
+  if (con.lopsided && con.shared && con.shared.length){
+    html += '<div class="foot">โมเดลให้รายละเอียดไม่เท่ากัน — บางตัวเลี่ยงไม่ตอบบางส่วน ' +
+      'ยอด "ต่างกัน" จึงสูงจากการที่ตัวเลขมีไม่เท่ากัน ไม่ใช่จากการขัดแย้งกัน</div>';
+  }
+  if (con.shared && con.shared.length){
+    const row = (list, head, color) => list.length
+      ? '<div class="foot"><span style="color:' + color + '">' + head + '</span> ' +
+        list.map(e => '<span class="mono"><b>' + CALC.fmt(e[0]) + '</b> (' +
+                      e[1] + '/' + answers.length + ')</span>').join(' · ') + '</div>'
+      : '';
+    const uni = con.unanimous.slice(0, 5);
+    const uniSet = new Set(uni.map(e => e[0]));
+    html += row(uni, 'ตัวเลขที่ทุกโมเดลตรงกัน:', 'var(--green)');
+    html += row(con.shared.filter(e => !uniSet.has(e[0])), 'ตัวเลขที่ส่วนใหญ่ตรงกัน:', 'var(--dim)');
+  }
+  if (failures.length){
+    html += '<div class="foot">ไม่ตอบ ' + failures.length + ' ตัว: ' +
+      failures.map(f => '<span class="mono">' + esc(f.model.name) + ' — ' +
+                        esc(f.err) + '</span>').join(' · ') + '</div>';
+  }
+  if (answers.length > 1){
+    html += '<details class="foot"' + ($('#opt-raw').checked ? ' open' : '') + '>' +
+      '<summary>ดูคำตอบดิบของแต่ละโมเดล (' + answers.length + ')</summary><table>' +
+      answers.map((a, k) => '<tr><td>' + esc(a.model.name) + '<br><span class="mono" ' +
+        'style="color:var(--faint)">' + a.secs.toFixed(1) + ' วิ' +
+        (k === con.pick ? ' · ตัวแทน' : '') + '</span></td><td>' + md(a.text) + '</td></tr>')
+        .join('') + '</table></details>';
+  }
+
+  holder.innerHTML = html;
+  chat.scrollTop = chat.scrollHeight;
+  chosen.forEach(c => dot(c.i, ''));
+  updatePanel(answers.length, con.agree, secs,
+              failures.length ? failures.length + ' โมเดลไม่ตอบ' : 'สำเร็จ',
+              con.nums !== null, con.words, al);
+  done();
+}
+
+function done(){
+  S.busy = false;
+  $('#send').disabled = false;
+  $('#stop').style.display = 'none';
+  S.abort = null;
+  $('#q').focus();
+}
+
+function updatePanel(ok, agree, secs, note, isNum, words, verdictLabel){
+  // ใช้คำตัดสินชุดเดียวกับกล่องคำตอบ ไม่งั้นสองที่จะบอกคนละอย่าง
+  // ปัดเศษก่อนแล้วค่อยตัดสินสี ไม่งั้นแผงจะโชว์ 30% ขณะที่ป้ายใช้เกณฑ์ <30%
+  const rounded = (agree === null || agree === undefined)
+    ? agree : Math.round(agree * 100) / 100;
+  const al = verdictLabel || agreeLabel(rounded, isNum);
+  $('#s-ok').textContent = String(ok || 0);
+  $('#s-agree').textContent = (agree === null || agree === undefined)
+    ? '—' : (agree * 100).toFixed(0) + '%';
+  $('#s-agree').style.color = al.c;
+  $('#s-bar').style.width = (agree === null || agree === undefined)
+    ? '0' : (agree * 100).toFixed(0) + '%';
+  $('#s-bar').style.background = al.c;
+  $('#s-time').textContent = secs + ' วิ';
+  $('#s-kind').textContent = (agree === null || agree === undefined) ? '—'
+    : (isNum ? 'วัดจากตัวเลขในคำตอบ' : 'วัดจากถ้อยคำ');
+  $('#s-words').textContent = (words === null || words === undefined)
+    ? '—' : (words * 100).toFixed(0) + '%';
+  $('#s-note').textContent = note + ((agree === null || agree === undefined) ? '' : ' · ' + al.t);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   เก็บค่าในเครื่อง (ไม่มี server ข้อมูลอยู่ในเบราว์เซอร์เท่านั้น)
+   ══════════════════════════════════════════════════════════════════ */
+function saveCfg(){
+  try {
+    localStorage.setItem('aiChatCfg', JSON.stringify({
+      mode: $('#mode').value,
+      sys:  $('#sys').value,
+      on:   MODELS.map(m => m.on),
+      calc: $('#opt-calc').checked,
+      mem:  $('#opt-mem').checked,
+      raw:  $('#opt-raw').checked,
+    }));
+  } catch(e){}
+}
+function saveHistory(){
+  if (!$('#opt-mem').checked) return;
+  try { localStorage.setItem('aiChatHist', JSON.stringify(S.history.slice(-40))); } catch(e){}
+}
+function loadAll(){
+  $('#sys').value = DEFAULT_SYS;
+  try {
+    const c = JSON.parse(localStorage.getItem('aiChatCfg') || '{}');
+    if (c.mode) $('#mode').value = c.mode;
+    if (c.sys)  $('#sys').value = c.sys;
+    if (Array.isArray(c.on)) c.on.forEach(function(v, i){ if (MODELS[i]) MODELS[i].on = !!v; });
+    if (c.calc !== undefined) $('#opt-calc').checked = c.calc;
+    if (c.mem  !== undefined) $('#opt-mem').checked  = c.mem;
+    if (c.raw  !== undefined) $('#opt-raw').checked  = c.raw;
+  } catch(e){}
+  renderModels();
+  if ($('#opt-mem').checked){
+    try {
+      const h = JSON.parse(localStorage.getItem('aiChatHist') || '[]');
+      if (Array.isArray(h) && h.length){
+        S.history = h;
+        h.forEach(m => add(m.role === 'user' ? 'me' : 'bot', md(m.content)));
+        sysline('บทสนทนาเก่าถูกกู้จากเครื่องนี้ · กด "ล้าง" เพื่อเริ่มใหม่');
+      }
+    } catch(e){}
+  }
+  if (!S.history.length) welcome();
+}
+function welcome(){
+  sysline('พิมพ์อะไรก็ได้ — ระบบจะให้หลายโมเดลตอบ แล้วบอกตรง ๆ ว่าตรงกันแค่ไหน');
+}
+
+/* ── ตัวอย่างคำถาม ─────────────────────────────────────────────── */
+const CHIPS = [
+  'สรุปความต่างของ NPV กับ IRR แบบเข้าใจง่าย',
+  'ค่าไฟ 85,000 บาทต่อเดือน ควรติดโซลาร์กี่ kWp',
+  '1250000 / 22 เท่ากับเท่าไร',
+  'เขียนอีเมลปฏิเสธข้อเสนอราคาแบบสุภาพ',
+  'ข้อดีข้อเสียของการเช่าเทียบกับซื้อขาด',
+];
+(function(){
+  const box = $('#chips');
+  CHIPS.forEach(function(c){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = c;
+    b.addEventListener('click', function(){ $('#q').value = c; $('#q').focus(); autosize(); });
+    box.appendChild(b);
+  });
+})();
+
+/* ── อินพุต ───────────────────────────────────────────────────── */
+function autosize(){
+  const q = $('#q');
+  q.style.height = 'auto';
+  q.style.height = Math.min(q.scrollHeight, 140) + 'px';
+}
+$('#q').addEventListener('input', autosize);
+$('#q').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#f').requestSubmit(); }
+});
+$('#f').addEventListener('submit', function(e){
+  e.preventDefault();
+  const t = $('#q').value.trim();
+  if (!t || S.busy) return;
+  $('#q').value = '';
+  autosize();
+  ask(t);
+});
+$('#stop').addEventListener('click', function(){ if (S.abort) S.abort.abort(); });
+$('#clear').addEventListener('click', function(){
+  S.history = [];
+  chat.innerHTML = '';
+  try { localStorage.removeItem('aiChatHist'); } catch(e){}
+  updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม', false, null, null);
+  welcome();
+});
+['#mode', '#sys', '#opt-calc', '#opt-mem', '#opt-raw']
+  .forEach(s => $(s).addEventListener('change', saveCfg));
+
+$('#gapNote').textContent = (MIN_GAP / 1000).toFixed(1);
+loadAll();
+autosize();
+</script>
+</body>
+</html>
