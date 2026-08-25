@@ -191,8 +191,14 @@ def main():
     for r in raw:
         if r.get('error') and not r.get('content'):
             # ย่อข้อความ error ให้เหลือชนิด เพื่อให้เห็นว่าล้มเพราะอะไรจริง ๆ
-            m = re.search(r'HTTP(?:\s*Error)?\s*(\d{3})', str(r['error']))
-            kind = f'HTTP {m.group(1)}' if m else str(r['error']).split(':')[0][:40]
+            e = str(r['error'])
+            m = re.search(r'HTTP(?:\s*Error)?\s*(\d{3})', e)
+            if 'MODEL_UNAVAILABLE' in e or 'model_unavailable' in e:
+                kind = 'โมเดลไม่พร้อมใช้งาน (' + (f'HTTP {m.group(1)}' if m else '?') + ')'
+            elif 'temporarily_unavailable' in e or 'temporarily busy' in e:
+                kind = 'โมเดลไม่ว่าง (HTTP 503)'
+            else:
+                kind = f'HTTP {m.group(1)}' if m else e.split(':')[0][:40]
             err_kinds[r['provider']][kind] += 1
     # นับจากข้อที่ยิงจริง ไม่ใช่ขนาดชุดทดสอบเต็ม เพราะ --limit ยิงไม่ครบชุด
     # ไม่งั้นรอบที่ยิง 60 จาก 100 จะรายงานว่าตอบ 53% ทั้งที่ตอบ 53 จาก 60 = 88%

@@ -136,6 +136,11 @@ def main():
                         except Exception:
                             pass
                         error = f'{type(e).__name__}: {e}' + (f' | {body}' if body else '')
+                        # ผู้ให้บริการรายนี้ส่ง 400 เมื่อโมเดลไม่พร้อมใช้งาน
+                        # ทั้งที่ 400 แปลว่า "คำขอผิด" ตามมาตรฐาน HTTP
+                        # ถ้าไม่ดักไว้ ระบบจะเลิกลองทันทีทั้งที่ควรลองใหม่ทีหลัง
+                        if 'model_unavailable' in body or 'currently unavailable' in body:
+                            error = 'MODEL_UNAVAILABLE: ' + error
                         time.sleep(min(2 ** attempt * max(prov['min_gap'], args.gap), 45))
                 last_call[prov['key']] = time.time()
                 fh.write(json.dumps({'provider': prov['key'], 'model': prov['model'],
