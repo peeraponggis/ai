@@ -61,6 +61,12 @@ def check_write(item, raw):
     for w in c.get('forbid', []):
         if w in t:
             fail.append(f"ใช้คำต้องห้าม: {w}")
+    if 'on_topic' in c:
+        # ต้องแตะเรื่องที่สั่งอย่างน้อยหนึ่งคำ — จับคำตอบที่หลุดเรื่องไปเลย
+        # ไม่ใช่การวัดว่าเขียนดี แค่ยืนยันว่าตอบเรื่องที่ถาม
+        low = t.lower()
+        if not any(w.lower() in low for w in c['on_topic']):
+            fail.append('ไม่ได้ตอบเรื่องที่สั่ง')
     if 'thai_ratio' in c:
         th = sum(1 for ch in t if '\u0e00' <= ch <= '\u0e7f')
         letters = sum(1 for ch in t if ch.isalpha())

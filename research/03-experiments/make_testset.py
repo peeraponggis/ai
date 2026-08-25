@@ -132,31 +132,36 @@ def write_items(rnd, n=30):
                  f'ข้อกำหนด: ความยาวไม่เกิน {limit} ตัวอักษร · ต้องมีตัวเลข {kwp} และ {yrs} '
                  f'· ห้ามใช้คำโฆษณาเกินจริง · ห้ามอ้างตัวเลขอื่นที่ไม่ได้ให้มา')
             checks = {'max_chars': limit, 'must_include': [str(kwp), str(yrs)],
-                      'forbid': BANNED, 'allowed_numbers': [bill, kwp, yrs]}
+                      'forbid': BANNED, 'allowed_numbers': [bill, kwp, yrs],
+                      'on_topic': ['โซลาร์', 'พลังงาน', 'ค่าไฟ', 'ไฟฟ้า', 'kwp']}
         elif kind == 1:
             q = (f'เขียนอีเมลแจ้งลูกค้าว่าใบเสนอราคาระบบ {kwp} kWp ส่งให้แล้ว\n'
                  f'ข้อกำหนด: ขึ้นต้นด้วยคำว่า "เรียน" · ความยาวไม่เกิน {limit} ตัวอักษร '
                  f'· ต้องมีตัวเลข {kwp} · ห้ามอ้างตัวเลขอื่นที่ไม่ได้ให้มา')
             checks = {'must_start': 'เรียน', 'max_chars': limit,
-                      'must_include': [str(kwp)], 'allowed_numbers': [kwp]}
+                      'must_include': [str(kwp)], 'allowed_numbers': [kwp],
+                      'on_topic': ['ใบเสนอราคา', 'เสนอราคา', 'ระบบ', 'โซลาร์', 'kwp']}
         elif kind == 2:
             q = (f'สรุปข้อดีของการติดโซลาร์เป็นรายการ 3 ข้อ สำหรับโรงงานที่ค่าไฟเดือนละ {bill:,} บาท\n'
                  f'ข้อกำหนด: ต้องมี 3 บรรทัดขึ้นไป · ห้ามใช้คำโฆษณาเกินจริง '
                  f'· ห้ามอ้างตัวเลขอื่นที่ไม่ได้ให้มา · ต้องเป็นภาษาไทย')
             checks = {'min_lines': 3, 'forbid': BANNED,
-                      'allowed_numbers': [bill, 3], 'thai_ratio': 0.5}
+                      'allowed_numbers': [bill, 3], 'thai_ratio': 0.5,
+                      'on_topic': ['โซลาร์', 'ค่าไฟ', 'ไฟฟ้า', 'พลังงาน']}
         elif kind == 3:
             q = (f'เขียนคำตอบปฏิเสธข้อเสนอราคาอย่างสุภาพ โดยไม่ระบุเหตุผลด้านราคา\n'
                  f'ข้อกำหนด: ความยาวไม่เกิน {limit} ตัวอักษร · ห้ามมีคำว่า "แพง" หรือ "ราคาสูง" '
                  f'· ต้องมีคำว่า "ขอบคุณ" · ต้องเป็นภาษาไทย')
             checks = {'max_chars': limit, 'forbid': ['แพง', 'ราคาสูง'],
-                      'must_include': ['ขอบคุณ'], 'thai_ratio': 0.5}
+                      'must_include': ['ขอบคุณ'], 'thai_ratio': 0.5,
+                      'on_topic': ['ข้อเสนอ', 'เสนอราคา', 'ใบเสนอ', 'พิจารณา']}
         else:
             q = (f'เขียนหัวข้อโพสต์ประชาสัมพันธ์ 1 บรรทัด เกี่ยวกับระบบ {kwp} kWp คืนทุน {yrs} ปี\n'
                  f'ข้อกำหนด: ต้องมีบรรทัดเดียว · ไม่เกิน 90 ตัวอักษร · ต้องมีตัวเลข {kwp} '
                  f'· ห้ามใช้คำโฆษณาเกินจริง')
             checks = {'max_lines': 1, 'max_chars': 90,
-                      'must_include': [str(kwp)], 'forbid': BANNED}
+                      'must_include': [str(kwp)], 'forbid': BANNED,
+                      'on_topic': ['โซลาร์', 'พลังงาน', 'ไฟฟ้า', 'kwp', 'คืนทุน']}
 
         out.append({'id': f'D{i:03d}', 'set': 'write', 'question': q,
                     'type': 'write', 'checks': checks, 'system': WRITE_SYSTEM})
