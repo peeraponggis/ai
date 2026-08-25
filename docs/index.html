@@ -109,8 +109,16 @@
   .filechip b{font-weight:400;color:var(--dim)}
   .filechip span.x{cursor:pointer;color:var(--faint)}
   .filechip span.x:hover{color:var(--red)}
-  .runbtn{background:transparent;color:var(--green);border:1px solid var(--green);
-          border-radius:6px;font-size:11px;font-weight:400;padding:2px 10px;margin:6px 0}
+  .codebar{display:flex;align-items:center;gap:6px;margin:.5em 0 -.4em;flex-wrap:wrap}
+  .codelang{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;
+            color:var(--faint);text-transform:lowercase}
+  .codenote{font-size:10.5px;color:var(--faint)}
+  .codebtn{background:transparent;color:var(--dim);border:1px solid var(--line);
+           border-radius:6px;font-size:11px;font-weight:400;padding:2px 10px}
+  .codebtn:hover{color:var(--ink);border-color:var(--dim)}
+  .codebtn.done{color:var(--green);border-color:var(--green)}
+  .codebtn.run{color:var(--green);border-color:var(--green)}
+  .codebtn.run:hover{background:color-mix(in srgb, var(--green) 14%, transparent)}
   .runout{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;
           margin-top:6px;font-size:12px;white-space:pre-wrap;max-height:220px;overflow:auto}
   .runout.bad{border-color:var(--red)}
@@ -983,8 +991,11 @@ const esc = s => String(s).replace(/[&<>"]/g,
 function md(src){
   let s = esc(src);
   const blocks = [];
-  s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, function(m, lang, code){
-    blocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+  s = s.replace(/```([\w+#.-]*)\n?([\s\S]*?)```/g, function(m, lang, code){
+    // เก็บชื่อภาษาไว้ใน data-lang เพื่อให้แถบเครื่องมือรู้ว่ารันได้หรือไม่
+    // โดยไม่ต้องเดาจากเนื้อโค้ดอย่างเดียว
+    blocks.push('<pre data-lang="' + esc(lang || '') + '"><code>' +
+                code.replace(/\n$/, '') + '</code></pre>');
     return '␄BLK' + (blocks.length - 1) + '␄';
   });
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
@@ -1336,7 +1347,7 @@ async function ask(text){
 
   holder.innerHTML = html;
   attachCopy(holder, finalText);
-  attachRun(holder);
+  decorateCode(holder);
   chat.scrollTop = chat.scrollHeight;
   chosen.forEach(c => dot(c.i, ''));
   updatePanel(answers.length, con.agree, secs,
@@ -1390,37 +1401,91 @@ function runJS(code){
 }
 
 // เติมปุ่มรันให้ทุกบล็อกโค้ด JavaScript ในคำตอบ
-function attachRun(holder){
-  holder.querySelectorAll('pre > code').forEach(function(code){
+function decorateCode(holder){
+  holder.querySelectorAll('pre').forEach(function(pre){
+    const code = pre.querySelector('code');
+    if (!code || pre.dataset.done) return;
+    pre.dataset.done = '1';
     const src = code.textContent;
-    // ดูจากเนื้อโค้ดว่าเป็น JavaScript หรือไม่ เพราะ md ที่ใช้ไม่เก็บชื่อภาษาไว้
-    const looksJS = /(^|\n)\s*(const|let|var|function|class|=>|console\.log|document\.)/.test(src);
+    const declared = (pre.dataset.lang || '').toLowerCase();
+
+    // ใช้ชื่อภาษาที่โมเดลระบุมาก่อน ถ้าไม่ระบุจึงเดาจากเนื้อโค้ด
+    const JS  = ['js', 'javascript', 'jsx', 'node', 'mjs'];
+    const PY  = ['py', 'python', 'python3'];
+    const looksJS = /(^|\n)\s*(const |let |var |function |class |=>|console\.log|document\.)/.test(src);
     const looksPy = /(^|\n)\s*(def |import |print\(|elif |#!\/usr\/bin\/env python)/.test(src);
-    if (looksPy){
-      const note = document.createElement('div');
-      note.className = 'note';
-      note.style.marginTop = '4px';
-      note.textContent = 'โค้ด Python รันในหน้านี้ไม่ได้ — รันได้เฉพาะ JavaScript';
-      code.parentNode.after(note);
-      return;
-    }
-    if (!looksJS || src.length > 20000) return;
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'runbtn'; b.textContent = '▶ รันโค้ดนี้';
+    const isJS = declared ? JS.indexOf(declared) >= 0 : (looksJS && !looksPy);
+    const isPy = declared ? PY.indexOf(declared) >= 0 : looksPy;
+
+    const bar = document.createElement('div');
+    bar.className = 'codebar';
+    const tag = document.createElement('span');
+    tag.className = 'codelang';
+    tag.textContent = declared || (isJS ? 'javascript' : isPy ? 'python' : 'โค้ด');
+    bar.appendChild(tag);
+
+    const spacer = document.createElement('span');
+    spacer.style.flex = '1';
+    bar.appendChild(spacer);
+
+    // คัดลอกเฉพาะบล็อกนี้ แยกจากปุ่มคัดลอกคำตอบทั้งก้อนด้านบน
+    const cp = document.createElement('button');
+    cp.type = 'button'; cp.className = 'codebtn'; cp.textContent = 'คัดลอก';
+    cp.addEventListener('click', async function(){
+      const ok = await copyText(src);
+      cp.textContent = ok ? '✓ คัดลอกแล้ว' : 'คัดลอกไม่ได้';
+      cp.classList.toggle('done', ok);
+      setTimeout(function(){ cp.textContent = 'คัดลอก'; cp.classList.remove('done'); }, 1800);
+    });
+    bar.appendChild(cp);
+
     const out = document.createElement('div');
     out.className = 'runout'; out.style.display = 'none';
-    b.addEventListener('click', async function(){
-      b.disabled = true; b.textContent = 'กำลังรัน…';
-      const r = await runJS(src);
-      b.disabled = false; b.textContent = '▶ รันอีกครั้ง';
-      out.style.display = '';
-      out.className = 'runout' + (r.err ? ' bad' : '');
-      out.textContent = r.err ? ('ผิดพลาด: ' + r.err)
-                              : (r.out || '(รันแล้ว แต่ไม่มีผลลัพธ์ที่พิมพ์ออกมา)');
-    });
-    code.parentNode.after(out);
-    code.parentNode.after(b);
+
+    if (isJS && src.length <= 20000){
+      const rb = document.createElement('button');
+      rb.type = 'button'; rb.className = 'codebtn run'; rb.textContent = '▶ รัน';
+      rb.addEventListener('click', async function(){
+        rb.disabled = true; rb.textContent = 'กำลังรัน…';
+        const r = await runJS(src);
+        rb.disabled = false; rb.textContent = '▶ รันอีกครั้ง';
+        out.style.display = '';
+        out.className = 'runout' + (r.err ? ' bad' : '');
+        out.textContent = r.err ? ('ผิดพลาด: ' + r.err)
+                                : (r.out || '(รันแล้ว แต่ไม่มีผลลัพธ์ที่พิมพ์ออกมา)');
+      });
+      bar.appendChild(rb);
+    } else if (isPy){
+      const n = document.createElement('span');
+      n.className = 'codenote';
+      n.textContent = 'รันในหน้านี้ไม่ได้';
+      bar.appendChild(n);
+    }
+
+    pre.parentNode.insertBefore(bar, pre);
+    pre.after(out);
   });
+}
+
+// คัดลอกข้อความ พร้อมทางสำรองเมื่อไม่มีสิทธิ์ใช้ clipboard
+// (เช่นเปิดหน้าจากไฟล์โดยตรง หรือเบราว์เซอร์เก่า) และบอกตรง ๆ เมื่อทำไม่ได้
+async function copyText(text){
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch(e){
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch(e2){ return false; }
+  }
 }
 
 // ปุ่มคัดลอกคำตอบ — คัดลอกเฉพาะเนื้อคำตอบ ไม่รวมป้ายกำกับและตารางท้าย
@@ -1432,23 +1497,7 @@ function attachCopy(holder, text){
   b.className = 'copybtn';
   b.textContent = 'คัดลอก';
   b.addEventListener('click', async function(){
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      ok = true;
-    } catch(e){
-      // ทางสำรองเมื่อไม่มีสิทธิ์ใช้ clipboard (เช่น เปิดจากไฟล์ หรือเบราว์เซอร์เก่า)
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        ok = document.execCommand('copy');
-        document.body.removeChild(ta);
-      } catch(e2){ ok = false; }
-    }
+    const ok = await copyText(text);
     b.textContent = ok ? '✓ คัดลอกแล้ว' : 'คัดลอกไม่ได้';
     b.className = 'copybtn' + (ok ? ' done' : '');
     setTimeout(function(){ b.textContent = 'คัดลอก'; b.className = 'copybtn'; }, 1800);
