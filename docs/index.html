@@ -293,6 +293,11 @@
 const ENDPOINT = 'https://api.llm7.io/v1/chat/completions';
 const MIN_GAP  = 1500;   // มิลลิวินาที ระหว่าง request — จำกัดต่อบัญชี ไม่ใช่ต่อโมเดล
 
+// เพดาน token ต่อคำตอบ แยกตามประเภทงาน
+// 900 พอสำหรับคำอธิบายสั้น ๆ แต่ไม่พอสำหรับโค้ด ซึ่งเป็นเหตุที่คำตอบขาดกลางคัน
+const MAX_TOK = {code: 2600, write: 1400, extract: 1400};
+const MAX_TOK_DEFAULT = 900;
+
 const MODELS = [
   // ตรวจซ้ำ 2026-08-25 09:35 UTC — ใช้ได้จริง 5 ตัวจาก 46 ที่ประกาศไว้
   // deepseek-v4-flash และ gpt-oss:20b ซึ่งเคยแม่นที่สุด ตอนนี้ไม่พร้อมใช้งาน
@@ -376,7 +381,7 @@ const DEFAULT_SYS =
   'ถ้าคำถามมีการคำนวณ ให้บอกวิธีคิดเป็นขั้นตอน';
 
 /* ── สถานะ ─────────────────────────────────────────────────────── */
-const S = {history: [], busy: false, abort: null, lastCall: 0};
+const S = {history: [], busy: false, abort: null, lastCall: 0, lastCode: ''};
 
 const $ = s => document.querySelector(s);
 const chat = $('#chat');
@@ -844,9 +849,12 @@ async function askOne(model, messages, signal, maxTok){
     throw Object.assign(new Error('HTTP ' + res.status + ' ' + body), {secs: secs});
   }
   const j = await res.json();
-  const text = ((((j.choices || [])[0] || {}).message || {}).content || '').trim();
+  const ch = (j.choices || [])[0] || {};
+  const text = ((ch.message || {}).content || '').trim();
   if (!text) throw Object.assign(new Error('คำตอบว่าง'), {secs: secs});
-  return {text: text, secs: secs};
+  // finish_reason === 'length' แปลว่าคำตอบถูกตัดกลางคันเพราะชนเพดาน token
+  // เดิมไม่ได้อ่านค่านี้เลย คำตอบที่ขาดครึ่งจึงถูกแสดงเหมือนเขียนจบแล้ว
+  return {text: text, secs: secs, cut: ch.finish_reason === 'length'};
 }
 
 // แปลง error ของ fetch ให้เป็นสาเหตุที่ผู้ใช้ทำอะไรต่อได้
@@ -1208,14 +1216,22 @@ async function ask(text){
     write:    ' เขียนให้ใช้งานได้จริง กระชับ ไม่ใช้คำโฆษณาเกินจริง ' +
               'ห้ามอ้างตัวเลขหรือข้อเท็จจริงที่ผู้ใช้ไม่ได้ให้มา',
   };
-  const sys = ($('#sys').value.trim() || DEFAULT_SYS) + (ROLE_SYS[role] || '') +
+  // ปักโค้ดล่าสุดไว้ในคำสั่งเสมอเมื่อเป็นงานโค้ด
+  // ประวัติแบบตัดท้าย N ข้อความ ทำให้โค้ดที่คุยกันอยู่หลุดหายไปเมื่อคุยยาว
+  // แล้วโมเดลก็เขียนใหม่ทั้งหมดแทนที่จะแก้ของเดิม ซึ่งเป็นอาการที่ผู้ใช้เจอ
+  const codeCtx = (role === 'code' && S.lastCode)
+    ? '\n\nโค้ดล่าสุดที่กำลังคุยกันอยู่ ให้แก้จากฉบับนี้ ห้ามเขียนใหม่ทั้งหมด' +
+      'เว้นแต่ผู้ใช้สั่งให้เขียนใหม่:\n```\n' + S.lastCode + '\n```'
+    : '';
+  const sys = ($('#sys').value.trim() || DEFAULT_SYS) + (ROLE_SYS[role] || '') + codeCtx +
     (facts.length
       ? '\n\nผลการคำนวณที่ตรวจแล้ว (คำนวณด้วยโปรแกรม ให้ยึดตามนี้ ห้ามคำนวณใหม่): ' +
         facts.map(f => f.label + ' = ' + f.value).join(' ; ')
       : '');
 
   // เนื้อไฟล์ถูกส่งไปกับคำถามนี้เท่านั้น ไม่ได้เก็บไว้ที่ใด
-  const hist = S.history.slice(-10);
+  // งานโค้ดเก็บประวัติยาวกว่า เพราะการแก้โค้ดต้องอ้างของเดิม
+  const hist = S.history.slice(role === 'code' ? -16 : -10);
   if (ATTACHED.length){
     const docs = ATTACHED.map(f =>
       '--- ไฟล์: ' + f.name + ' ---\n' + f.text).join('\n\n');
@@ -1241,8 +1257,8 @@ async function ask(text){
     prog.innerHTML = 'ถาม ' + esc(c.m.name) + '… <span class="spin"></span> (' +
                      (answers.length + failures.length + 1) + '/' + chosen.length + ')';
     try {
-      const r = await askOne(c.m, msgs, S.abort.signal);
-      answers.push({model: c.m, text: r.text, secs: r.secs});
+      const r = await askOne(c.m, msgs, S.abort.signal, MAX_TOK[role] || MAX_TOK_DEFAULT);
+      answers.push({model: c.m, text: r.text, secs: r.secs, cut: r.cut});
       dot(c.i, 'ok');
     } catch(err){
       if (err.name === 'AbortError'){ dot(c.i, ''); break; }
@@ -1289,6 +1305,7 @@ async function ask(text){
   }
 
   S.history.push({role: 'assistant', content: finalText});
+  rememberCode(finalText);
   saveHistory();
 
   // ── ประกอบผลลัพธ์ ─────────────────────────────────────────────
@@ -1348,6 +1365,9 @@ async function ask(text){
   holder.innerHTML = html;
   attachCopy(holder, finalText);
   decorateCode(holder);
+  // ถ้าคำตอบที่เลือกมาแสดงถูกตัดกลางคัน ต้องบอกและให้เขียนต่อได้
+  if (!synth && answers[con.pick] && answers[con.pick].cut)
+    markCut(holder, answers[con.pick].model, finalText);
   chat.scrollTop = chat.scrollHeight;
   chosen.forEach(c => dot(c.i, ''));
   updatePanel(answers.length, con.agree, secs,
@@ -1467,6 +1487,86 @@ function decorateCode(holder){
   });
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   คำตอบที่ถูกตัดกลางคัน และการเขียนต่อ
+   ผู้ให้บริการหยุดเขียนเมื่อชนเพดาน token แล้วส่งคำตอบครึ่ง ๆ กลับมา
+   ถ้าไม่บอก ผู้ใช้จะเข้าใจว่าโมเดลเขียนจบแล้ว และถ้าเก็บฉบับที่ขาดนั้น
+   ไว้เป็นประวัติ รอบถัดไปโมเดลจะเห็นโค้ดที่ไม่สมบูรณ์แล้วเขียนใหม่หมด
+   ══════════════════════════════════════════════════════════════════ */
+
+// เก็บบล็อกโค้ดที่ยาวที่สุดจากคำตอบไว้ ใช้ปักเป็นบริบทของรอบถัดไป
+function rememberCode(text){
+  const blocks = [];
+  const re = /```[\w+#.-]*\n?([\s\S]*?)```/g;
+  let m;
+  while ((m = re.exec(text))) blocks.push(m[1]);
+  if (!blocks.length) return;
+  blocks.sort((a, b) => b.length - a.length);
+  S.lastCode = blocks[0].slice(0, 8000);
+  try { localStorage.setItem('aiChatLastCode', S.lastCode); } catch(e){}
+}
+
+// ขอให้เขียนต่อจากจุดที่ค้าง แล้วต่อท้ายของเดิม ไม่ใช่แทนที่
+async function continueAnswer(holder, model, baseText, btn){
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = 'กำลังเขียนต่อ…';
+  const tail = baseText.slice(-1500);   // ส่งเฉพาะท้าย ๆ พอให้รู้ว่าค้างตรงไหน
+  try {
+    const r = await askOne(model, [
+      {role: 'system', content:
+        'เขียนต่อจากข้อความที่ค้างอยู่ให้จบพอดี ' +
+        'ห้ามทวนสิ่งที่เขียนไปแล้ว ห้ามเริ่มใหม่ ห้ามใส่คำนำ ' +
+        'ต่อจากตัวอักษรสุดท้ายทันที ถ้าค้างกลางบล็อกโค้ดให้เขียนโค้ดต่อและปิดบล็อกให้เรียบร้อย'},
+      {role: 'user', content: 'นี่คือส่วนท้ายของสิ่งที่เขียนค้างไว้:\n\n' + tail +
+                              '\n\n(เขียนต่อจากตรงนี้)'},
+    ], null, MAX_TOK.code);
+
+    // ต่อชนกันตรง ๆ ห้ามแทรกอะไรคั่น เพราะจุดที่ถูกตัดมักอยู่กลางคำหรือกลางบรรทัด
+    // การใส่ขึ้นบรรทัดใหม่คั่นจะทำให้ 'it.pri' + 'ce;' กลายเป็น 'it.pri\nce;' ซึ่งโค้ดพัง
+    const joined = baseText + r.text;
+    // แทนที่เนื้อคำตอบเดิมด้วยฉบับที่ต่อแล้ว โดยคงแถบป้ายกำกับไว้
+    const meta = holder.querySelector('.meta');
+    holder.innerHTML = (meta ? meta.outerHTML : '') + md(joined);
+    attachCopy(holder, joined);
+    decorateCode(holder);
+    if (r.cut) markCut(holder, model, joined);
+    // ประวัติต้องเก็บฉบับที่ต่อแล้ว ไม่ใช่ฉบับที่ขาด
+    for (let i = S.history.length - 1; i >= 0; i--){
+      if (S.history[i].role === 'assistant'){ S.history[i].content = joined; break; }
+    }
+    rememberCode(joined);
+    saveHistory();
+    chat.scrollTop = chat.scrollHeight;
+  } catch(err){
+    btn.disabled = false;
+    btn.textContent = old;
+    const w = document.createElement('div');
+    w.className = 'note';
+    w.style.color = 'var(--red)';
+    w.textContent = 'เขียนต่อไม่สำเร็จ: ' + humanError(err);
+    holder.appendChild(w);
+  }
+}
+
+// แถบเตือนว่าคำตอบยังไม่จบ พร้อมปุ่มเขียนต่อ
+function markCut(holder, model, text){
+  const box = document.createElement('div');
+  box.className = 'foot';
+  box.style.borderColor = 'var(--amber)';
+  box.innerHTML = '<b style="color:var(--amber)">⚠ คำตอบยังไม่จบ</b> — ' +
+    'ชนเพดานความยาวของผู้ให้บริการ จึงถูกตัดกลางคัน ';
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'codebtn';
+  b.style.marginLeft = '6px';
+  b.textContent = '⏩ เขียนต่อ';
+  b.addEventListener('click', function(){ continueAnswer(holder, model, text, b); });
+  box.appendChild(b);
+  holder.appendChild(box);
+}
+
 // คัดลอกข้อความ พร้อมทางสำรองเมื่อไม่มีสิทธิ์ใช้ clipboard
 // (เช่นเปิดหน้าจากไฟล์โดยตรง หรือเบราว์เซอร์เก่า) และบอกตรง ๆ เมื่อทำไม่ได้
 async function copyText(text){
@@ -1568,6 +1668,7 @@ function loadAll(){
     if (c.mem  !== undefined) $('#opt-mem').checked  = c.mem;
     if (c.raw  !== undefined) $('#opt-raw').checked  = c.raw;
   } catch(e){}
+  try { S.lastCode = localStorage.getItem('aiChatLastCode') || ''; } catch(e){}
   renderModels();
   if ($('#opt-mem').checked){
     try {
@@ -1618,7 +1719,8 @@ $('#stop').addEventListener('click', function(){ if (S.abort) S.abort.abort(); }
 $('#clear').addEventListener('click', function(){
   S.history = [];
   chat.innerHTML = '';
-  try { localStorage.removeItem('aiChatHist'); } catch(e){}
+  S.lastCode = '';
+  try { localStorage.removeItem('aiChatHist'); localStorage.removeItem('aiChatLastCode'); } catch(e){}
   updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม', false, null, null);
   welcome();
 });
