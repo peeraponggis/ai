@@ -1,0 +1,116 @@
+name: Pages Check
+
+# ตรวจเว็บที่เผยแพร่จริงบน GitHub Pages — โหลดขึ้นไหม และเรียกโมเดลได้ไหม
+# จาก origin จริง (https) ซึ่งต่างจากการเปิดไฟล์จากเครื่อง
+# สั่ง: git push origin HEAD:pages/now
+on:
+  push:
+    branches: ['pages/*']
+
+permissions:
+  contents: write
+
+env:
+  SITE: https://peeraponggis.github.io/ai/
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: 1) เว็บขึ้นหรือยัง
+        run: |
+          set +e
+          {
+            echo "# ตรวจเว็บที่เผยแพร่จริง"
+            echo
+            echo "URL: \`$SITE\` · ตรวจเมื่อ $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo
+            echo '## ส่วนที่ 1 — HTTP'
+            echo
+            echo '```'
+            curl -sS -i -L --max-time 30 "$SITE" 2>&1 | head -20
+            echo
+            echo "ขนาดหน้า: $(curl -sS -L --max-time 30 "$SITE" | wc -c) ไบต์"
+            echo "มีคำว่า AI Chat ในหน้า: $(curl -sS -L --max-time 30 "$SITE" | grep -c 'AI Chat') ครั้ง"
+            echo '```'
+            echo
+          } > /tmp/pages.md
+          cat /tmp/pages.md
+          exit 0
+
+      - name: 2) เปิดในเบราว์เซอร์จริงแล้วถามจริง
+        run: |
+          set +e
+          npm i -D playwright@1.47.2 2>&1 | tail -2
+          npx playwright install --with-deps chromium 2>&1 | tail -2
+          cat > pages.js <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch();
+            const p = await b.newPage({viewport:{width:1280,height:900}});
+            const errs = [];
+            p.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
+            const res = await p.goto(process.env.SITE, {waitUntil: 'load', timeout: 60000});
+            console.log('HTTP ' + res.status() + ' · origin ที่หน้าเห็น: ' +
+                        await p.evaluate(() => location.origin));
+            await p.waitForTimeout(500);
+            console.log('ธีมที่เลือกได้: ' +
+              (await p.$$eval('#theme option', o => o.map(x => x.value))).join(', '));
+
+            await p.selectOption('#mode', 'std');
+            await p.fill('#q', 'ค่าไฟเดือนละ 85000 บาท ถ้าประหยัดได้ 30% จะประหยัดปีละเท่าไร');
+            await p.click('#send');
+            await p.waitForFunction(() => !document.querySelector('#send').disabled,
+                                    null, {timeout: 180000}).catch(() => console.log('TIMEOUT'));
+            console.log('=== บทสนทนา ===');
+            console.log(await p.$eval('#chat', e => e.innerText));
+            console.log('=== แผงสถานะ ===');
+            console.log(await p.$eval('aside section', e => e.innerText.replace(/\n/g, ' | ')));
+            await p.screenshot({path: 'pages-live.png'});
+            console.log('=== JS ERRORS ===');
+            console.log(errs.length ? errs.join('\n') : 'ไม่มี');
+            await b.close();
+          })().catch(e => { console.log('FATAL ' + e.message); process.exit(0); });
+          JS
+          node pages.js > /tmp/browser.txt 2>&1
+          rm -f pages.js
+          {
+            echo '## ส่วนที่ 2 — เบราว์เซอร์จริง เรียกโมเดลจริง'
+            echo
+            echo '```'
+            cat /tmp/browser.txt
+            echo '```'
+          } >> /tmp/pages.md
+          cat /tmp/browser.txt
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pages-live
+          path: pages-live.png
+
+      - name: 3) บันทึกผล
+        run: |
+          mkdir -p research/05-product
+          cp /tmp/pages.md research/05-product/03-pages-check.md
+          cp pages-live.png docs/shots/pages-live.png 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/05-product/03-pages-check.md docs/shots
+          git commit -m "ผลตรวจเว็บที่เผยแพร่บน GitHub Pages" || exit 0
+          git push origin HEAD:claude/list-github-files-25syp1
+
+      - name: สรุป
+        if: always()
+        run: cat /tmp/pages.md >> $GITHUB_STEP_SUMMARY || true
+
+      - name: ลบ branch ที่ใช้สั่งงาน
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || true
