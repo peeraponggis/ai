@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: ตรวจทุกเจ้า
-        if: "!contains(github.ref_name, 'cache')"
+        if: "!contains(github.ref_name, 'cache') && !contains(github.ref_name, 'write400')"
         working-directory: research/03-experiments
         run: python3 -u probe_providers.py
 
@@ -24,6 +24,11 @@ jobs:
         if: contains(github.ref_name, 'cache')
         working-directory: research/03-experiments
         run: python3 -u probe_cache.py
+
+      - name: หาสาเหตุ HTTP 400 ของงานเขียน
+        if: contains(github.ref_name, 'write400')
+        working-directory: research/03-experiments
+        run: python3 -u probe_write400.py
 
       - name: ทดสอบทุกโมเดลในลิสต์ว่าตัวไหนฟรีจริง
         if: contains(github.ref_name, 'all')

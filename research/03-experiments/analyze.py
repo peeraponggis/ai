@@ -35,7 +35,71 @@ def norm_text(s):
     return re.sub(r'\s+', ' ', str(s)).strip().lower() if s is not None else None
 
 
+
+# ── ตรวจงานเขียน: ผ่านก็ต่อเมื่อทำครบทุกข้อกำหนด ────────────────
+# วัด "ทำตามที่สั่งได้ไหม" ไม่ใช่ "เขียนดีไหม" เพราะดีไม่มีเฉลย
+def is_degenerate(t):
+    """ข้อความที่แทบไม่มีตัวอักษรเลย เช่น '... ... ...' ซ้ำ ๆ
+    ถือว่าไม่ได้ตอบ ไม่ใช่ตอบผิด — ต่างกันคนละเรื่องเวลาสรุปผล"""
+    t = str(t).strip()
+    if not t:
+        return True
+    letters = sum(1 for c in t if c.isalnum())
+    return letters / max(len(t), 1) < 0.25
+
+
+def check_write(item, raw):
+    """คืน (ผ่านไหม, รายชื่อข้อกำหนดที่ตก)"""
+    if not raw:
+        return False, ['ไม่มีคำตอบ']
+    if is_degenerate(raw):
+        return False, ['ข้อความเสีย (สัญลักษณ์ซ้ำ ไม่ใช่คำตอบ)']
+    t = str(raw).strip()
+    c = item.get('checks', {})
+    fail = []
+
+    if 'max_chars' in c and len(t) > c['max_chars']:
+        fail.append(f"ยาวเกิน ({len(t)}>{c['max_chars']})")
+    lines = [x for x in t.split('\n') if x.strip()]
+    if 'min_lines' in c and len(lines) < c['min_lines']:
+        fail.append(f"บรรทัดน้อยไป ({len(lines)}<{c['min_lines']})")
+    if 'max_lines' in c and len(lines) > c['max_lines']:
+        fail.append(f"บรรทัดเกิน ({len(lines)}>{c['max_lines']})")
+    if 'must_start' in c and not t.startswith(c['must_start']):
+        fail.append(f"ไม่ขึ้นต้นด้วย {c['must_start']}")
+    for w in c.get('must_include', []):
+        if w not in t.replace(',', ''):
+            fail.append(f"ขาดคำที่ต้องมี: {w}")
+    for w in c.get('forbid', []):
+        if w in t:
+            fail.append(f"ใช้คำต้องห้าม: {w}")
+    if 'on_topic' in c:
+        # ต้องแตะเรื่องที่สั่งอย่างน้อยหนึ่งคำ — จับคำตอบที่หลุดเรื่องไปเลย
+        # ไม่ใช่การวัดว่าเขียนดี แค่ยืนยันว่าตอบเรื่องที่ถาม
+        low = t.lower()
+        if not any(w.lower() in low for w in c['on_topic']):
+            fail.append('ไม่ได้ตอบเรื่องที่สั่ง')
+    if 'thai_ratio' in c:
+        th = sum(1 for ch in t if '\u0e00' <= ch <= '\u0e7f')
+        letters = sum(1 for ch in t if ch.isalpha())
+        if letters and th / letters < c['thai_ratio']:
+            fail.append('ไม่ใช่ภาษาไทยเป็นหลัก')
+    if 'allowed_numbers' in c:
+        # ตัวเลขที่โผล่มาโดยไม่ได้อยู่ในโจทย์ = แต่งข้อมูลขึ้นเอง
+        ok = set()
+        for v in c['allowed_numbers']:
+            ok.add(float(v))
+            ok.add(float(v) / 1000 if float(v) >= 1000 else float(v))
+        found = [float(x) for x in re.findall(r'\d+(?:\.\d+)?', t.replace(',', ''))]
+        extra = [x for x in found if x >= 10 and x not in ok]
+        if extra:
+            fail.append('ตัวเลขที่ไม่ได้ให้มา: ' + ', '.join(str(int(x)) for x in extra[:3]))
+    return (len(fail) == 0), fail
+
+
 def is_correct(item, raw):
+    if item.get('type') == 'write':
+        return check_write(item, raw)[0]
     got = extract_answer(raw)
     if got is None:
         return False
@@ -50,6 +114,8 @@ def is_correct(item, raw):
 
 
 def answer_key(item, raw):
+    if item.get('type') == 'write':
+        return None
     """คีย์สำหรับจัดกลุ่มคำตอบก่อนโหวต — ตัวเลขปัดตามความละเอียด, ข้อความ normalize"""
     got = extract_answer(raw)
     if got is None:
@@ -125,8 +191,14 @@ def main():
     for r in raw:
         if r.get('error') and not r.get('content'):
             # ย่อข้อความ error ให้เหลือชนิด เพื่อให้เห็นว่าล้มเพราะอะไรจริง ๆ
-            m = re.search(r'HTTP(?:\s*Error)?\s*(\d{3})', str(r['error']))
-            kind = f'HTTP {m.group(1)}' if m else str(r['error']).split(':')[0][:40]
+            e = str(r['error'])
+            m = re.search(r'HTTP(?:\s*Error)?\s*(\d{3})', e)
+            if 'MODEL_UNAVAILABLE' in e or 'model_unavailable' in e:
+                kind = 'โมเดลไม่พร้อมใช้งาน (' + (f'HTTP {m.group(1)}' if m else '?') + ')'
+            elif 'temporarily_unavailable' in e or 'temporarily busy' in e:
+                kind = 'โมเดลไม่ว่าง (HTTP 503)'
+            else:
+                kind = f'HTTP {m.group(1)}' if m else e.split(':')[0][:40]
             err_kinds[r['provider']][kind] += 1
     # นับจากข้อที่ยิงจริง ไม่ใช่ขนาดชุดทดสอบเต็ม เพราะ --limit ยิงไม่ครบชุด
     # ไม่งั้นรอบที่ยิง 60 จาก 100 จะรายงานว่าตอบ 53% ทั้งที่ตอบ 53 จาก 60 = 88%
@@ -161,6 +233,30 @@ def main():
     # เทียบ φ และการโหวตได้เฉพาะข้อที่โมเดลที่ผ่านเกณฑ์ตอบครบทุกตัว
     common = sorted(set.intersection(*[set(correct[p]) for p in keep])) if keep else []
     L.append(f'\nข้อที่โมเดลผ่านเกณฑ์ตอบครบทุกตัว: {len(common)} ข้อ\n')
+
+    # งานเขียน: แจกแจงว่าตกข้อกำหนดชนิดไหน
+    wfail = defaultdict(lambda: defaultdict(int))
+    wtotal = defaultdict(int)
+    for r in raw:
+        it = items.get(r['item_id'])
+        if not it or it.get('type') != 'write' or not r.get('content'):
+            continue
+        wtotal[r['provider']] += 1
+        for f in check_write(it, r['content'])[1]:
+            wfail[r['provider']][f.split(' (')[0].split(':')[0]] += 1
+    if wtotal:
+        L.append('### งานเขียน — ตกข้อกำหนดเรื่องอะไร\n')
+        L.append('> วัดว่าทำตามข้อกำหนดที่ตรวจได้ด้วยเครื่องครบหรือไม่ '
+                 '**ไม่ได้วัดว่าเขียนดีหรือไม่** เพราะ "ดี" ไม่มีเฉลย\n')
+        L.append('| โมเดล | ผ่านครบ | ข้อกำหนดที่ตกบ่อยที่สุด |')
+        L.append('|---|---|---|')
+        for p_ in sorted(wtotal):
+            ids = [i for i in correct.get(p_, {}) if items[i].get('type') == 'write']
+            k = sum(correct[p_][i] for i in ids)
+            top = sorted(wfail[p_].items(), key=lambda kv: -kv[1])[:3]
+            L.append(f'| `{p_}` | {k}/{len(ids)} | ' +
+                     (' · '.join(f'{a} ×{b}' for a, b in top) if top else '—') + ' |')
+        L.append('')
 
     if any(err_kinds.values()):
         L.append('### สาเหตุที่เรียกไม่สำเร็จ\n')

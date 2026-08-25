@@ -38,10 +38,10 @@ SYSTEM = ('คุณเป็นผู้ช่วยวิเคราะห์
           '"ANSWER: <คำตอบ>" โดย <คำตอบ> ต้องเป็นค่าเดียวสั้น ๆ ไม่มีหน่วย ไม่มีเครื่องหมายคั่นหลักพัน')
 
 
-def ask(provider, question, timeout=25):
+def ask(provider, question, timeout=25, system=None):
     body = json.dumps({
         'model': provider['model'],
-        'messages': [{'role': 'system', 'content': SYSTEM},
+        'messages': [{'role': 'system', 'content': system or SYSTEM},
                      {'role': 'user', 'content': question}],
         'temperature': 0.0,
         'max_tokens': 600,
@@ -63,12 +63,18 @@ def main():
     ap.add_argument('--retries', type=int, default=2)
     ap.add_argument('--only', default='', help='รันเฉพาะ provider นี้ (ใช้แบ่งงานเป็นก้อนแล้ว commit ทีละก้อน)')
     ap.add_argument('--timeout', type=int, default=25, help='วินาทีต่อ 1 request')
+    ap.add_argument('--sets', default='', help='ยิงเฉพาะหมวดนี้ คั่นด้วยจุลภาค เช่น write')
     ap.add_argument('--gap', type=float, default=0.0,
                     help='บังคับระยะห่างขั้นต่ำระหว่าง request (วินาที) — โควตาจำกัดต่อบัญชี '
                          'รอบ 1.5 วิ เจอ 429 ประมาณครึ่งหนึ่งของการเรียก')
     args = ap.parse_args()
 
     items = [json.loads(l) for l in open(args.testset, encoding='utf-8')]
+    if args.sets:
+        want = {x.strip() for x in args.sets.split(',') if x.strip()}
+        items = [it for it in items if it.get('set') in want]
+        print(f'ยิงเฉพาะหมวด {sorted(want)} = {len(items)} ข้อ', flush=True)
+
     if args.limit and args.limit < len(items):
         # สุ่มแบบแบ่งชั้น ไม่ใช่ตัดหัวมา N ข้อ
         # ชุดทดสอบเรียงตามหมวด (A numeric, B extract, C classify) ถ้าตัดหัว
@@ -119,10 +125,22 @@ def main():
                 content, error = None, None
                 for attempt in range(args.retries + 1):
                     try:
-                        content = ask(prov, it['question'], timeout=args.timeout)
+                        content = ask(prov, it['question'], timeout=args.timeout,
+                                      system=it.get('system'))
                         break
                     except Exception as e:
-                        error = f'{type(e).__name__}: {e}'
+                        # เก็บ body ของ error ด้วย ไม่งั้น 400 Bad Request จะบอกอะไรไม่ได้เลย
+                        body = ''
+                        try:
+                            body = e.read().decode('utf-8', 'replace')[:300]
+                        except Exception:
+                            pass
+                        error = f'{type(e).__name__}: {e}' + (f' | {body}' if body else '')
+                        # ผู้ให้บริการรายนี้ส่ง 400 เมื่อโมเดลไม่พร้อมใช้งาน
+                        # ทั้งที่ 400 แปลว่า "คำขอผิด" ตามมาตรฐาน HTTP
+                        # ถ้าไม่ดักไว้ ระบบจะเลิกลองทันทีทั้งที่ควรลองใหม่ทีหลัง
+                        if 'model_unavailable' in body or 'currently unavailable' in body:
+                            error = 'MODEL_UNAVAILABLE: ' + error
                         time.sleep(min(2 ** attempt * max(prov['min_gap'], args.gap), 45))
                 last_call[prov['key']] = time.time()
                 fh.write(json.dumps({'provider': prov['key'], 'model': prov['model'],
