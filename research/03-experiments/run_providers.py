@@ -129,7 +129,13 @@ def main():
                                       system=it.get('system'))
                         break
                     except Exception as e:
-                        error = f'{type(e).__name__}: {e}'
+                        # เก็บ body ของ error ด้วย ไม่งั้น 400 Bad Request จะบอกอะไรไม่ได้เลย
+                        body = ''
+                        try:
+                            body = e.read().decode('utf-8', 'replace')[:300]
+                        except Exception:
+                            pass
+                        error = f'{type(e).__name__}: {e}' + (f' | {body}' if body else '')
                         time.sleep(min(2 ** attempt * max(prov['min_gap'], args.gap), 45))
                 last_call[prov['key']] = time.time()
                 fh.write(json.dumps({'provider': prov['key'], 'model': prov['model'],

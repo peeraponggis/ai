@@ -38,10 +38,22 @@ def norm_text(s):
 
 # ── ตรวจงานเขียน: ผ่านก็ต่อเมื่อทำครบทุกข้อกำหนด ────────────────
 # วัด "ทำตามที่สั่งได้ไหม" ไม่ใช่ "เขียนดีไหม" เพราะดีไม่มีเฉลย
+def is_degenerate(t):
+    """ข้อความที่แทบไม่มีตัวอักษรเลย เช่น '... ... ...' ซ้ำ ๆ
+    ถือว่าไม่ได้ตอบ ไม่ใช่ตอบผิด — ต่างกันคนละเรื่องเวลาสรุปผล"""
+    t = str(t).strip()
+    if not t:
+        return True
+    letters = sum(1 for c in t if c.isalnum())
+    return letters / max(len(t), 1) < 0.25
+
+
 def check_write(item, raw):
     """คืน (ผ่านไหม, รายชื่อข้อกำหนดที่ตก)"""
     if not raw:
         return False, ['ไม่มีคำตอบ']
+    if is_degenerate(raw):
+        return False, ['ข้อความเสีย (สัญลักษณ์ซ้ำ ไม่ใช่คำตอบ)']
     t = str(raw).strip()
     c = item.get('checks', {})
     fail = []
