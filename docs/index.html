@@ -116,6 +116,10 @@
   label.row{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer}
   label.row input{width:auto;margin:0}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+  .dot.down{background:var(--red)}
+  label.row.isdown span{color:var(--faint);text-decoration:line-through}
+  .downwhy{font-size:10.5px;color:var(--red);padding:0 0 4px 15px;line-height:1.4}
+  .downwhy a{color:var(--cyan);cursor:pointer;text-decoration:underline}
   .dot.ok{background:var(--green)} .dot.bad{background:var(--red)} .dot.run{background:var(--amber)}
   .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);
         border-top-color:var(--amber);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
@@ -194,6 +198,11 @@
     <section>
       <h2>โมเดลที่เปิดใช้</h2>
       <div id="models"></div>
+      <div style="margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="ghost" id="healthBtn"
+                style="font-size:11px;padding:4px 10px">ตรวจสถานะโมเดล</button>
+        <span class="note" id="healthNote"></span>
+      </div>
       <div class="note" style="margin-top:6px">
         ผู้ให้บริการจำกัดอัตราเรียก <b>ต่อบัญชี</b> ไม่ใช่ต่อโมเดล จึงต้องยิงทีละตัวห่างกัน
         <span id="gapNote">1.5</span> วินาที — เลือกโมเดลมาก = ตอบช้าลงตามจำนวน
@@ -690,6 +699,92 @@ $('#fileInput').addEventListener('change', function(e){
   });
 });
 
+
+/* ══════════════════════════════════════════════════════════════════
+   สถานะของโมเดล — โมเดลฟรีล่มและกลับมาเองตลอดเวลา
+   วัดจริงเมื่อ 2026-08-25 พบว่า 2 ใน 5 ตัวที่แม่นที่สุดใช้ไม่ได้พร้อมกัน
+   ถ้าไม่จัดการ ผู้ใช้จะเจอ "ไม่มีโมเดลไหนตอบได้" เองโดยไม่รู้สาเหตุ
+
+   ทำสามชั้น เรียงตามความสิ้นเปลืองโควตาจากน้อยไปมาก
+   1. ตอนเปิดหน้า เทียบกับรายการ /v1/models — ไม่เปลืองโควตาเลย
+      บอกได้แค่ว่าโมเดลยังอยู่ในสารบบไหม ไม่ได้บอกว่าเรียกได้จริง
+   2. ระหว่างใช้งาน เจอ error แบบไหนก็จำไว้แล้วปิดตัวนั้นอัตโนมัติ
+      ได้ข้อมูลจริงโดยไม่ต้องยิงเพิ่มแม้แต่ครั้งเดียว
+   3. ปุ่มตรวจสถานะ ยิงจริงตัวละครั้ง เมื่อผู้ใช้สั่งเอง เพราะกินโควตา
+   ══════════════════════════════════════════════════════════════════ */
+const MODELS_URL = 'https://api.llm7.io/v1/models';
+
+// error แบบไหนแปลว่าโมเดลใช้ไม่ได้ ต่างจากแบบที่แค่ต้องรอ
+function downReason(msg){
+  const m = String(msg);
+  if (/model_unavailable|currently unavailable|ไม่มีโมเดลนี้|404/.test(m))
+    return 'ผู้ให้บริการปิดโมเดลนี้อยู่';
+  if (/401|403|API key/.test(m)) return 'ต้องมี API key';
+  if (/temporarily busy|temporarily_unavailable|503/.test(m)) return 'โมเดลไม่ว่าง';
+  return null;   // 429 กับเน็ตหลุด ไม่นับว่าโมเดลตาย แค่ต้องรอ
+}
+
+function markDown(model, reason){
+  model.down = reason;
+  model.on = false;
+  renderModels();
+  saveCfg();
+}
+
+function renderHealthNote(text, color){
+  const n = $('#healthNote');
+  n.textContent = text || '';
+  n.style.color = color || 'var(--dim)';
+}
+
+// ชั้นที่ 1 — เทียบกับสารบบ ไม่เปลืองโควตา
+async function checkCatalogue(){
+  try {
+    const res = await fetch(MODELS_URL, {headers: {'Authorization': 'Bearer unused'}});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    const ids = new Set((j.data || j || []).map(x => (x && (x.id || x.name)) || x));
+    let gone = 0;
+    MODELS.forEach(function(m){
+      if (ids.size && !ids.has(m.id)){ m.down = 'ไม่มีอยู่ในรายการของผู้ให้บริการแล้ว'; m.on = false; gone++; }
+    });
+    renderModels();
+    renderHealthNote(gone ? `ปิดไปแล้ว ${gone} ตัวที่ไม่มีในรายการ`
+                          : `ตรวจกับรายการของผู้ให้บริการแล้ว (${ids.size} โมเดล)`);
+  } catch(e){
+    renderHealthNote('ตรวจรายการโมเดลไม่ได้ — ' + e.message, 'var(--amber)');
+  }
+}
+
+// ชั้นที่ 3 — ยิงจริงตัวละครั้ง เมื่อผู้ใช้กดเอง
+async function healthCheck(){
+  const btn = $('#healthBtn');
+  btn.disabled = true;
+  const list = MODELS.slice();
+  let ok = 0, down = 0;
+  for (let i = 0; i < list.length; i++){
+    const m = list[i];
+    btn.textContent = `กำลังตรวจ ${i + 1}/${list.length}…`;
+    try {
+      await askOne(m, [{role: 'user', content: 'ตอบว่า ok'}], null, 20);
+      m.down = null;
+      if (!m.on) m.on = true;
+      ok++;
+    } catch(err){
+      const why = downReason(err.message) ||
+                  (/429/.test(err.message) ? null : 'เรียกไม่สำเร็จ');
+      if (why){ m.down = why; m.on = false; down++; }
+    }
+    renderModels();
+  }
+  btn.disabled = false;
+  btn.textContent = 'ตรวจสถานะโมเดล';
+  renderHealthNote(`ใช้ได้ ${ok} ตัว · ใช้ไม่ได้ ${down} ตัว · ` +
+                   'ตรวจเมื่อ ' + new Date().toLocaleTimeString('th-TH'),
+                   down ? 'var(--amber)' : 'var(--green)');
+  saveCfg();
+}
+
 /* ══════════════════════════════════════════════════════════════════
    L2 — เรียกโมเดล
    ══════════════════════════════════════════════════════════════════ */
@@ -699,13 +794,14 @@ async function waitTurn(){
   S.lastCall = Date.now();
 }
 
-async function askOne(model, messages, signal){
+async function askOne(model, messages, signal, maxTok){
   await waitTurn();
   const t0 = performance.now();
   const res = await fetch(ENDPOINT, {
     method: 'POST', signal: signal,
     headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer unused'},
-    body: JSON.stringify({model: model.id, messages: messages, temperature: 0.3, max_tokens: 900}),
+    body: JSON.stringify({model: model.id, messages: messages,
+                          temperature: 0.3, max_tokens: maxTok || 900}),
   });
   const secs = (performance.now() - t0) / 1000;
   if (!res.ok){
@@ -894,8 +990,10 @@ function renderModels(){
   MODELS.forEach(function(m, i){
     const l = document.createElement('label');
     l.className = 'row';
-    l.innerHTML = '<input type="checkbox" ' + (m.on ? 'checked' : '') + '>' +
-                  '<span class="dot" id="dot-' + i + '"></span>' +
+    l.className = 'row' + (m.down ? ' isdown' : '');
+    l.innerHTML = '<input type="checkbox" ' + (m.on ? 'checked' : '') +
+                  (m.down ? ' disabled' : '') + '>' +
+                  '<span class="dot' + (m.down ? ' down' : '') + '" id="dot-' + i + '"></span>' +
                   '<span style="flex:1">' + esc(m.name) + '</span>' +
                   '<span class="tag">' + esc(m.fam) + '</span>';
     l.querySelector('input').addEventListener('change', function(e){
@@ -903,7 +1001,38 @@ function renderModels(){
       saveCfg();
     });
     box.appendChild(l);
+    if (m.down){
+      const w = document.createElement('div');
+      w.className = 'downwhy';
+      w.innerHTML = esc(m.down) + ' · <a>เปิดใช้อีกครั้ง</a>';
+      w.querySelector('a').addEventListener('click', function(){
+        m.down = null; m.on = true; renderModels(); saveCfg();
+      });
+      box.appendChild(w);
+    }
   });
+
+  // ถ้าโดนปิดจนไม่เหลือเลย ต้องมีทางกลับ ไม่งั้นผู้ใช้ติดตายโดยไม่รู้ว่าทำอะไรได้
+  if (!MODELS.some(m => m.on)){
+    const box2 = document.createElement('div');
+    box2.className = 'note';
+    box2.style.cssText = 'color:var(--red);border:1px solid var(--red);border-radius:8px;' +
+                         'padding:8px;margin-top:8px';
+    box2.innerHTML = '<b>ไม่เหลือโมเดลที่ใช้ได้เลย</b><br>' +
+      'ทุกตัวถูกปิดเพราะผู้ให้บริการแจ้งว่าใช้ไม่ได้ ' +
+      'โมเดลฟรีมักกลับมาเองภายในไม่กี่ชั่วโมง<br>';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.style.cssText = 'font-size:11px;padding:4px 10px;margin-top:6px';
+    b.textContent = 'เปิดใช้ทุกตัวอีกครั้ง';
+    b.addEventListener('click', function(){
+      MODELS.forEach(function(m){ m.down = null; m.on = true; });
+      renderModels(); saveCfg();
+      renderHealthNote('เปิดใช้ทุกตัวแล้ว — ถ้ายังใช้ไม่ได้จะถูกปิดอีกครั้งเอง', 'var(--dim)');
+    });
+    box2.appendChild(b);
+    box.appendChild(box2);
+  }
 }
 function dot(i, cls){ const d = $('#dot-' + i); if (d) d.className = 'dot ' + (cls || ''); }
 
@@ -1016,7 +1145,15 @@ async function ask(text){
   const chosen = pickModels(role);
   renderRolePanel(role, chosen);
   if (!chosen.length){
-    add('bot err', '<strong>ยังไม่ได้เลือกโมเดล</strong> — ติ๊กอย่างน้อยหนึ่งตัวในแผงขวา');
+    const auto = MODELS.filter(m => m.down);
+    add('bot err', auto.length
+      ? '<strong>ไม่เหลือโมเดลที่ใช้ได้</strong> — ระบบปิด ' + auto.length +
+        ' ตัวอัตโนมัติเพราะผู้ให้บริการแจ้งว่าใช้ไม่ได้<br>' +
+        '<span class="note">' +
+        auto.slice(0, 3).map(m => esc(m.name) + ': ' + esc(m.down)).join(' · ') +
+        '</span><br><span class="note">กด "เปิดใช้ทุกตัวอีกครั้ง" ในแผงขวาเพื่อลองใหม่ ' +
+        'โมเดลฟรีมักกลับมาเองภายในไม่กี่ชั่วโมง</span>'
+      : '<strong>ยังไม่ได้เลือกโมเดล</strong> — ติ๊กอย่างน้อยหนึ่งตัวในแผงขวา');
     return done();
   }
 
@@ -1073,6 +1210,8 @@ async function ask(text){
       if (err.name === 'AbortError'){ dot(c.i, ''); break; }
       failures.push({model: c.m, err: humanError(err)});
       dot(c.i, 'bad');
+      const why = downReason(err.message);
+      if (why) markDown(c.m, why);   // ปิดตัวที่ใช้ไม่ได้ ไม่ต้องให้ผู้ใช้เจอซ้ำ
     }
   }
 
@@ -1329,6 +1468,7 @@ function saveCfg(){
       role: $('#role').value,
       sys:  $('#sys').value,
       on:   MODELS.map(m => m.on),
+      down: MODELS.map(m => m.down || null),
       calc: $('#opt-calc').checked,
       mem:  $('#opt-mem').checked,
       raw:  $('#opt-raw').checked,
@@ -1347,6 +1487,7 @@ function loadAll(){
     if (c.role) $('#role').value = c.role;
     if (c.sys)  $('#sys').value = c.sys;
     if (Array.isArray(c.on)) c.on.forEach(function(v, i){ if (MODELS[i]) MODELS[i].on = !!v; });
+    if (Array.isArray(c.down)) c.down.forEach(function(v, i){ if (MODELS[i]) MODELS[i].down = v || null; });
     if (c.calc !== undefined) $('#opt-calc').checked = c.calc;
     if (c.mem  !== undefined) $('#opt-mem').checked  = c.mem;
     if (c.raw  !== undefined) $('#opt-raw').checked  = c.raw;
@@ -1410,9 +1551,11 @@ $('#role').addEventListener('change', function(){
   }
 });
 
+$('#healthBtn').addEventListener('click', healthCheck);
 $('#gapNote').textContent = (MIN_GAP / 1000).toFixed(1);
 loadAll();
 autosize();
+checkCatalogue();   // ตรวจสารบบตอนเปิดหน้า ไม่เปลืองโควตา
 </script>
 </body>
 </html>
