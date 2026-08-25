@@ -106,6 +106,14 @@
 <header>
   <h1>AI Chat<small>หลายโมเดลตอบพร้อมกัน แล้วตรวจกันเอง · ฟรี ไม่ต้องใส่ API key</small></h1>
   <div class="grow"></div>
+  <select id="role" title="ประเภทงาน — กำหนดว่าจะใช้โมเดลไหนตอบ">
+    <option value="auto" selected>🎯 เลือกโมเดลอัตโนมัติ</option>
+    <option value="numeric">🔢 คำนวณตัวเลข</option>
+    <option value="extract">📄 สกัดข้อมูล</option>
+    <option value="classify">🏷️ จำแนกประเภท</option>
+    <option value="write">✍️ เขียนงาน / การตลาด</option>
+    <option value="general">💬 ทั่วไป</option>
+  </select>
   <select id="mode" title="จำนวนโมเดลที่ใช้ตอบ">
     <option value="fast">โหมดเร็ว · 1 โมเดล</option>
     <option value="std" selected>โหมดมาตรฐาน · 3 โมเดล</option>
@@ -142,6 +150,13 @@
       <div class="kv"><span>ถ้อยคำตรงกัน</span><span id="s-words" style="font-weight:400">—</span></div>
       <div class="kv"><span>เวลาที่ใช้</span><span id="s-time">—</span></div>
       <div class="note" id="s-note" style="margin-top:6px">ยังไม่ได้ถาม</div>
+    </section>
+
+    <section>
+      <h2>ประเภทงานและโมเดลที่ใช้</h2>
+      <div class="kv"><span>ประเภทงาน</span><span id="s-role">—</span></div>
+      <div id="roleTable"></div>
+      <div class="note" id="s-rolenote" style="margin-top:6px"></div>
     </section>
 
     <section>
@@ -212,6 +227,56 @@ const MODELS = [
   {id:'codestral-latest',                 name:'Codestral',             fam:'Mistral',    on:false},
 ];
 const MODE_N = {fast:1, std:3, deep:5};
+
+/* ══════════════════════════════════════════════════════════════════
+   ความแม่นรายหมวดที่วัดมาจริง — ชุดทดสอบภาษาไทย 60 ข้อ 2026-08-23
+   ตัวเลขทุกตัวมาจาก research/03-experiments/02-error-correlation-finding.md
+   หมวดที่ไม่มีตัวเลข = ยังไม่ได้วัด ห้ามเดาแล้วแสดงเป็นคำแนะนำ
+   ══════════════════════════════════════════════════════════════════ */
+const MEASURED = {
+  'DeepSeek-V4-Flash-0731':      {numeric:[24,24], extract:[17,17], classify:[6,12]},
+  'gpt-oss:20b':                 {numeric:[23,24], extract:[18,18], classify:[7,18]},
+  'mistral-Nemo-Instruct-2407':  {numeric:[9,24],  extract:[17,18], classify:[6,18]},
+};
+
+/* บทบาทของงาน — แต่ละบทบาทบอกว่าใช้อะไรตัดสิน และวัดมาแล้วหรือยัง */
+const ROLES = {
+  auto:     {name:'เลือกอัตโนมัติ', measured:null},
+  numeric:  {name:'คำนวณตัวเลข',    measured:'numeric',
+             note:'ตัวเลขคำนวณด้วยโค้ด (L1) อยู่แล้ว โมเดลมีหน้าที่อธิบายวิธีคิดเท่านั้น'},
+  extract:  {name:'สกัดข้อมูล',      measured:'extract',
+             note:'หมวดที่โมเดลทำได้ดีที่สุดจากที่วัดมา'},
+  classify: {name:'จำแนกประเภท',     measured:'classify',
+             note:'ตัวที่ดีที่สุดยังได้แค่ 50% และทุกตัวผิดข้อเดียวกัน (φ = +1.000) ต้องมีคนตรวจเสมอ'},
+  write:    {name:'เขียนงาน / การตลาด', measured:null,
+             note:'ยังไม่ได้วัดความแม่นของงานประเภทนี้ จึงยังไม่มีเหตุผลจะเลือกโมเดลใดเป็นพิเศษ'},
+  general:  {name:'ทั่วไป',          measured:null,
+             note:'ยังไม่ได้วัด ใช้หลายโมเดลแล้วดูว่าตรงกันแค่ไหน'},
+};
+
+// อัตราถูกที่วัดได้ของโมเดลในหมวดหนึ่ง — คืน null ถ้าไม่มีข้อมูล
+function scoreOf(modelId, cat){
+  const m = MEASURED[modelId];
+  if (!m || !cat || !m[cat]) return null;
+  const [k, n] = m[cat];
+  return {k: k, n: n, p: k / n};
+}
+
+/* จับบทบาทจากคำถาม — เป็นกฎที่อ่านได้ ไม่ใช่การเดาของโมเดล
+   ผลที่ได้จะแสดงให้ผู้ใช้เห็นเสมอ และเปลี่ยนเองได้จากเมนู */
+function detectRole(t){
+  const s = String(t).toLowerCase();
+  if (/(จัดประเภท|ประเภทไหน|จัดหมวด|หมวดไหน|เลือกหนึ่ง|classify|ชนิดใด)/.test(s))
+    return 'classify';
+  if (/(สกัด|ดึงข้อมูล|อ่านจากเอกสาร|จากใบเสนอราคา|extract|มีข้อมูลอะไรบ้าง)/.test(s))
+    return 'extract';
+  if (/(เขียน|ร่าง|อีเมล|จดหมาย|โฆษณา|แคปชัน|โพสต์|คำโปรย|การตลาด|สโลแกน)/.test(s))
+    return 'write';
+  // มีตัวดำเนินการคณิตศาสตร์หรือเปอร์เซ็นต์ พร้อมตัวเลขอย่างน้อยสองจำนวน
+  if (/[+\-*/×÷^%]/.test(s) && (s.match(/\d/g) || []).length >= 2) return 'numeric';
+  if (/(คำนวณ|กี่บาท|เท่ากับเท่าไร|เท่าไหร่|ผลลัพธ์)/.test(s) && /\d/.test(s)) return 'numeric';
+  return 'general';
+}
 
 const DEFAULT_SYS =
   'คุณเป็นผู้ช่วยที่ตอบเป็นภาษาไทย กระชับ ตรงประเด็น ' +
@@ -584,9 +649,59 @@ function dot(i, cls){ const d = $('#dot-' + i); if (d) d.className = 'dot ' + (c
 /* ══════════════════════════════════════════════════════════════════
    วงจรหลัก
    ══════════════════════════════════════════════════════════════════ */
-function pickModels(){
+// เรียงโมเดลตามความแม่นที่วัดได้ในหมวดนั้น
+// หมวดที่ยังไม่ได้วัด คงลำดับเดิมไว้ ไม่จัดอันดับให้ เพราะไม่มีอะไรจะใช้จัด
+function rankFor(cat, list){
+  if (!cat) return list;
+  return list.slice().sort(function(a, b){
+    const sa = scoreOf(a.m.id, cat), sb = scoreOf(b.m.id, cat);
+    if (sa && sb) return sb.p - sa.p;
+    if (sa) return -1;
+    if (sb) return 1;
+    return 0;
+  });
+}
+
+function activeRole(text){
+  const pick = $('#role').value;
+  return pick === 'auto' ? detectRole(text || '') : pick;
+}
+
+function pickModels(role){
   const on = MODELS.map(function(m, i){ return {m: m, i: i}; }).filter(x => x.m.on);
-  return on.slice(0, MODE_N[$('#mode').value] || 3);
+  const cat = (ROLES[role] || {}).measured;
+  const n = MODE_N[$('#mode').value] || 3;
+  // งานคำนวณ: L1 ได้คำตอบแล้ว โมเดลแค่อธิบาย ใช้ตัวเดียวที่แม่นที่สุดพอ
+  const want = (role === 'numeric' && $('#opt-calc').checked) ? Math.min(1, n) : n;
+  return rankFor(cat, on).slice(0, Math.max(1, want));
+}
+
+// แสดงว่าบทบาทนี้มีตัวเลขวัดรองรับหรือไม่ และแต่ละโมเดลได้เท่าไร
+function renderRolePanel(role, chosen){
+  const R = ROLES[role] || ROLES.general;
+  const cat = R.measured;
+  $('#s-role').textContent = R.name;
+  const box = $('#roleTable');
+  if (!cat){
+    box.innerHTML = '<div class="note" style="color:var(--amber);padding:4px 0">' +
+      '⚠ ยังไม่ได้วัดความแม่นของงานประเภทนี้ — ลำดับโมเดลจึงเป็นลำดับที่ตั้งไว้ ' +
+      'ไม่ใช่การจัดอันดับตามผลทดสอบ</div>';
+  } else {
+    const rows = (chosen || []).map(function(c){
+      const sc = scoreOf(c.m.id, cat);
+      const val = sc ? (sc.p * 100).toFixed(0) + '% <span style="color:var(--faint)">(' +
+                       sc.k + '/' + sc.n + ')</span>'
+                     : '<span style="color:var(--faint)">ไม่มีข้อมูล</span>';
+      const col = sc ? (sc.p >= 0.9 ? 'var(--green)' : sc.p >= 0.6 ? 'var(--amber)' : 'var(--red)')
+                     : 'var(--faint)';
+      return '<div class="kv"><span>' + esc(c.m.name) + '</span>' +
+             '<span style="color:' + col + ';font-weight:400">' + val + '</span></div>';
+    }).join('');
+    box.innerHTML = rows +
+      '<div class="note" style="margin-top:4px">วัดจากชุดทดสอบภาษาไทย 60 ข้อ ' +
+      'เมื่อ 2026-08-23 · ตัวเลขในวงเล็บคือ ถูก/ที่ตอบ</div>';
+  }
+  $('#s-rolenote').textContent = R.note || '';
 }
 
 async function ask(text){
@@ -611,13 +726,25 @@ async function ask(text){
     }
   }
 
-  const chosen = pickModels();
+  const role = activeRole(text);
+  const chosen = pickModels(role);
+  renderRolePanel(role, chosen);
   if (!chosen.length){
     add('bot err', '<strong>ยังไม่ได้เลือกโมเดล</strong> — ติ๊กอย่างน้อยหนึ่งตัวในแผงขวา');
     return done();
   }
 
-  const sys = ($('#sys').value.trim() || DEFAULT_SYS) +
+  const ROLE_SYS = {
+    numeric:  ' ผลการคำนวณถูกคำนวณด้วยโปรแกรมมาแล้ว หน้าที่ของคุณคืออธิบายวิธีคิดเป็นขั้นตอน ' +
+              'ห้ามคำนวณตัวเลขใหม่และห้ามเสนอตัวเลขที่ขัดกับที่ให้มา',
+    extract:  ' ดึงเฉพาะข้อมูลที่ปรากฏในข้อความที่ผู้ใช้ให้มา ห้ามเติมสิ่งที่ไม่มีในต้นฉบับ ' +
+              'ถ้าข้อมูลที่ถามหาไม่มีอยู่ ให้ตอบว่าไม่มี',
+    classify: ' ตอบเป็นประเภทเดียวสั้น ๆ แล้วบอกเหตุผลหนึ่งบรรทัดว่าอ้างอิงข้อความส่วนไหน ' +
+              'ถ้าข้อมูลไม่พอจะแยกประเภท ให้บอกว่าไม่พอและขอข้อมูลเพิ่ม',
+    write:    ' เขียนให้ใช้งานได้จริง กระชับ ไม่ใช้คำโฆษณาเกินจริง ' +
+              'ห้ามอ้างตัวเลขหรือข้อเท็จจริงที่ผู้ใช้ไม่ได้ให้มา',
+  };
+  const sys = ($('#sys').value.trim() || DEFAULT_SYS) + (ROLE_SYS[role] || '') +
     (facts.length
       ? '\n\nผลการคำนวณที่ตรวจแล้ว (คำนวณด้วยโปรแกรม ให้ยึดตามนี้ ห้ามคำนวณใหม่): ' +
         facts.map(f => f.label + ' = ' + f.value).join(' ; ')
@@ -625,8 +752,11 @@ async function ask(text){
 
   const msgs = [{role: 'system', content: sys}].concat(S.history.slice(-10));
 
+  const roleTag = ROLES[role].name +
+    ($('#role').value === 'auto' ? ' (ระบบเดาจากคำถาม)' : ' (คุณเลือกเอง)');
   const holder = add('bot',
-    '<div class="meta"><span class="tag l2">L2 · ' + chosen.length + ' โมเดล</span>' +
+    '<div class="meta"><span class="tag">' + esc(roleTag) + '</span>' +
+    '<span class="tag l2">L2 · ' + chosen.length + ' โมเดล</span>' +
     '<span class="mono" id="prog">กำลังถาม… <span class="spin"></span></span></div>');
   const prog = holder.querySelector('#prog');
 
@@ -690,6 +820,7 @@ async function ask(text){
   const al = con.nums !== null ? verdict(con, answers.length)
                               : agreeLabel(con.agree, false);
   let html = '<div class="meta">' +
+      '<span class="tag">' + esc(roleTag) + '</span>' +
       '<span class="tag l2">L2 · ' + answers.length + '/' + chosen.length + ' โมเดลตอบ</span>' +
       (synth ? '<span class="tag l2">สังเคราะห์แล้ว</span>'
              : (answers.length > 1
@@ -707,6 +838,12 @@ async function ask(text){
   if (con.lopsided && con.shared && con.shared.length){
     html += '<div class="foot">โมเดลให้รายละเอียดไม่เท่ากัน — บางตัวเลี่ยงไม่ตอบบางส่วน ' +
       'ยอด "ต่างกัน" จึงสูงจากการที่ตัวเลขมีไม่เท่ากัน ไม่ใช่จากการขัดแย้งกัน</div>';
+  }
+  if (role === 'classify'){
+    html += '<div class="foot" style="border-color:var(--red)">' +
+      '<b style="color:var(--red)">⚠ งานจำแนกประเภท</b> — จากการวัดจริง โมเดลที่ดีที่สุด ' +
+      'ถูกเพียง 50% และทุกตัวผิดข้อเดียวกัน (φ = +1.000) การที่โมเดลตอบตรงกัน ' +
+      '<b>ไม่ได้แปลว่าถูก</b> ต้องตรวจเอง</div>';
   }
   if (con.shared && con.shared.length){
     const row = (list, head, color) => list.length
@@ -778,6 +915,7 @@ function saveCfg(){
   try {
     localStorage.setItem('aiChatCfg', JSON.stringify({
       mode: $('#mode').value,
+      role: $('#role').value,
       sys:  $('#sys').value,
       on:   MODELS.map(m => m.on),
       calc: $('#opt-calc').checked,
@@ -795,6 +933,7 @@ function loadAll(){
   try {
     const c = JSON.parse(localStorage.getItem('aiChatCfg') || '{}');
     if (c.mode) $('#mode').value = c.mode;
+    if (c.role) $('#role').value = c.role;
     if (c.sys)  $('#sys').value = c.sys;
     if (Array.isArray(c.on)) c.on.forEach(function(v, i){ if (MODELS[i]) MODELS[i].on = !!v; });
     if (c.calc !== undefined) $('#opt-calc').checked = c.calc;
@@ -863,8 +1002,20 @@ $('#clear').addEventListener('click', function(){
   updatePanel(0, null, '0.0', 'ยังไม่ได้ถาม', false, null, null);
   welcome();
 });
-['#mode', '#sys', '#opt-calc', '#opt-mem', '#opt-raw']
+['#mode', '#role', '#sys', '#opt-calc', '#opt-mem', '#opt-raw']
   .forEach(s => $(s).addEventListener('change', saveCfg));
+
+// เปลี่ยนเมนูแล้วต้องเห็นผลทันที ไม่ต้องรอถามก่อน
+$('#role').addEventListener('change', function(){
+  const r = $('#role').value;
+  if (r === 'auto'){
+    $('#s-role').textContent = 'เลือกอัตโนมัติ';
+    $('#roleTable').innerHTML = '';
+    $('#s-rolenote').textContent = 'ระบบจะเดาประเภทงานจากคำถาม แล้วแสดงให้เห็นว่าเดาเป็นอะไร';
+  } else {
+    renderRolePanel(r, pickModels(r));
+  }
+});
 
 $('#gapNote').textContent = (MIN_GAP / 1000).toFixed(1);
 loadAll();
