@@ -18,6 +18,15 @@
   [data-theme="mono"]{--bg:#0a0a0a;--panel:#171717;--line:#333333;--ink:#f5f5f5;--dim:#a3a3a3;
         --faint:#737373;--amber:#fafafa;--green:#d4d4d4;--red:#e5e5e5;--cyan:#d4d4d4;--violet:#a3a3a3;
         --inbg:#000000;--me:#2a2a2a}
+  [data-theme="clay"]{--bg:#262624;--panel:#30302e;--line:#3f3f3b;--ink:#f5f4ef;--dim:#b4b2a8;
+        --faint:#87857c;--amber:#d97757;--green:#7fa87f;--red:#c96442;--cyan:#a8b3a0;--violet:#b9a48b;
+        --inbg:#1f1f1d;--me:#3a3a36}
+  [data-theme="aurora"]{--bg:#131314;--panel:#1e1f20;--line:#2f3033;--ink:#e3e3e3;--dim:#a8abb4;
+        --faint:#7c7f88;--amber:#8ab4f8;--green:#81c995;--red:#f28b82;--cyan:#78d9ec;--violet:#c58af9;
+        --inbg:#0e0e0f;--me:#2a2b2e}
+  [data-theme="paper"]{--bg:#faf9f5;--panel:#ffffff;--line:#e6e2d8;--ink:#1f1e1d;--dim:#5c5850;
+        --faint:#8a857a;--amber:#c15f3c;--green:#3f7d52;--red:#b3412b;--cyan:#3d6b7d;--violet:#7a5c8f;
+        --inbg:#f3f1ea;--me:#eceadf}
   [data-theme="daylight"]{--bg:#f4f6fa;--panel:#ffffff;--line:#d7dfe8;--ink:#111827;--dim:#4b5563;
         --faint:#7d8794;--amber:#b45309;--green:#047857;--red:#be123c;--cyan:#0e7490;--violet:#6d28d9;
         --inbg:#f1f5f9;--me:#e2e8f0}
@@ -70,6 +79,10 @@
   .tag.l2{color:var(--cyan);border-color:var(--cyan)}
   .tag.calc{color:var(--violet);border-color:var(--violet)}
   .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+  .copybtn{background:transparent;color:var(--dim);border:1px solid var(--line);
+           border-radius:999px;font-size:10.5px;font-weight:400;padding:2px 10px;margin-left:auto}
+  .copybtn:hover{color:var(--ink);border-color:var(--dim)}
+  .copybtn.done{color:var(--green);border-color:var(--green)}
 
   .foot{border-top:1px dashed var(--line);margin-top:10px;padding-top:8px;font-size:11.5px;color:var(--dim)}
   .foot summary{cursor:pointer;color:var(--cyan);font-size:11.5px}
@@ -78,10 +91,7 @@
   .foot td:first-child{white-space:nowrap;color:var(--faint);width:1%}
 
   form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);align-items:flex-end}
-  textarea{flex:1 1 auto;resize:none;max-height:140px;line-height:1.5}
-  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px}
-  .chips button{background:var(--inbg);color:var(--cyan);border:1px solid var(--line);
-                font-size:11.5px;font-weight:400;padding:5px 10px}
+  textarea{flex:1 1 auto;resize:none;max-height:240px;line-height:1.55}
 
   aside{overflow-y:auto;min-height:0}
   aside section{padding:12px;border-bottom:1px solid var(--line)}
@@ -125,6 +135,9 @@
     <option value="forest">🌿 Forest</option>
     <option value="mono">⬜ Mono</option>
     <option value="daylight">☀️ Daylight</option>
+    <option value="clay">🏺 Clay</option>
+    <option value="aurora">🌌 Aurora</option>
+    <option value="paper">📄 Paper</option>
   </select>
   <button class="ghost" id="clear" title="ล้างบทสนทนา">ล้าง</button>
 </header>
@@ -132,9 +145,8 @@
 <main>
   <div class="col card">
     <div id="chat"></div>
-    <div class="chips" id="chips"></div>
     <form id="f">
-      <textarea id="q" rows="1" placeholder="พิมพ์คำถาม… (Enter ส่ง · Shift+Enter ขึ้นบรรทัดใหม่)"></textarea>
+      <textarea id="q" rows="3" placeholder="พิมพ์คำถาม… (Enter ส่ง · Shift+Enter ขึ้นบรรทัดใหม่)"></textarea>
       <button id="send">ส่ง</button>
       <button type="button" class="ghost" id="stop" style="display:none">หยุด</button>
     </form>
@@ -878,12 +890,46 @@ async function ask(text){
   }
 
   holder.innerHTML = html;
+  attachCopy(holder, finalText);
   chat.scrollTop = chat.scrollHeight;
   chosen.forEach(c => dot(c.i, ''));
   updatePanel(answers.length, con.agree, secs,
               failures.length ? failures.length + ' โมเดลไม่ตอบ' : 'สำเร็จ',
               con.nums !== null, con.words, al);
   done();
+}
+
+// ปุ่มคัดลอกคำตอบ — คัดลอกเฉพาะเนื้อคำตอบ ไม่รวมป้ายกำกับและตารางท้าย
+function attachCopy(holder, text){
+  const meta = holder.querySelector('.meta');
+  if (!meta) return;
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'copybtn';
+  b.textContent = 'คัดลอก';
+  b.addEventListener('click', async function(){
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch(e){
+      // ทางสำรองเมื่อไม่มีสิทธิ์ใช้ clipboard (เช่น เปิดจากไฟล์ หรือเบราว์เซอร์เก่า)
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch(e2){ ok = false; }
+    }
+    b.textContent = ok ? '✓ คัดลอกแล้ว' : 'คัดลอกไม่ได้';
+    b.className = 'copybtn' + (ok ? ' done' : '');
+    setTimeout(function(){ b.textContent = 'คัดลอก'; b.className = 'copybtn'; }, 1800);
+  });
+  meta.appendChild(b);
 }
 
 function done(){
@@ -964,30 +1010,12 @@ function welcome(){
   sysline('พิมพ์อะไรก็ได้ — ระบบจะให้หลายโมเดลตอบ แล้วบอกตรง ๆ ว่าตรงกันแค่ไหน');
 }
 
-/* ── ตัวอย่างคำถาม ─────────────────────────────────────────────── */
-const CHIPS = [
-  'สรุปความต่างของ NPV กับ IRR แบบเข้าใจง่าย',
-  'ค่าไฟ 85,000 บาทต่อเดือน ควรติดโซลาร์กี่ kWp',
-  '1250000 / 22 เท่ากับเท่าไร',
-  'เขียนอีเมลปฏิเสธข้อเสนอราคาแบบสุภาพ',
-  'ข้อดีข้อเสียของการเช่าเทียบกับซื้อขาด',
-];
-(function(){
-  const box = $('#chips');
-  CHIPS.forEach(function(c){
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = c;
-    b.addEventListener('click', function(){ $('#q').value = c; $('#q').focus(); autosize(); });
-    box.appendChild(b);
-  });
-})();
 
 /* ── อินพุต ───────────────────────────────────────────────────── */
 function autosize(){
   const q = $('#q');
   q.style.height = 'auto';
-  q.style.height = Math.min(q.scrollHeight, 140) + 'px';
+  q.style.height = Math.min(Math.max(q.scrollHeight, 72), 240) + 'px';
 }
 $('#q').addEventListener('input', autosize);
 $('#q').addEventListener('keydown', function(e){
