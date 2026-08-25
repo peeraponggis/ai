@@ -250,3 +250,24 @@
 {"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A015", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
 {"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A016", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
 {"provider": "llama-3.1-8b", "model": "meta-Llama-3.1-8B-Instruct-Turbo", "item_id": "A017", "set": "numeric", "content": null, "error": "HTTPError: HTTP Error 429: Too Many Requests"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D000", "set": "write", "content": "โซลาร์รูฟท็อป 120 kWp ใช้เงิน 85,000 บาท คืนทุนใน 5 ปี ประหยัดค่าไฟทันที พร้อมลดคาร์บอน", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D001", "set": "write", "content": "เรียน ท่านลูกค้า ระบบผลิตไฟฟ้า 80 kWp ส่งมอบและเชื่อมต่อเรียบร้อยแล้วครับ พร้อมใช้งานเต็มประสิทธิภาพ", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D002", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D003", "set": "write", "content": "... ... ... ... ๆ เพิ่มความสุขให้หัวใจ  \nขอบคุณทุกช่วงเวลาที่ได้อยู่ด้วยกัน  \nแม้ทางไกลแค่ไหนก็ยังอบอุ่น  \nเพราะมีเธอเติมเต็มให้กันเสมอ  \n... ... ... ... ๆ เพิ่มรอยยิ้มให้วันนี้  \nขอบคุณที่ยังอยู่ข้างกัน  \nไม่ต้องมากคำก็เข้าใจ  \nแค่มีเธอก็พอแล้วจริง ๆ  \n... ... ... ... ๆ", "error": null}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D004", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D005", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D006", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D007", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D008", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D009", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D010", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D011", "set": "write", "content": null, "error": "HTTPError: HTTP Error 403: Forbidden"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D012", "set": "write", "content": null, "error": "HTTPError: HTTP Error 403: Forbidden"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D013", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D014", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D015", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D016", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D017", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D018", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D019", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
+{"provider": "deepseek-v4-flash", "model": "DeepSeek-V4-Flash-0731", "item_id": "D020", "set": "write", "content": null, "error": "HTTPError: HTTP Error 503: Service Unavailable"}
